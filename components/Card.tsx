@@ -8,9 +8,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ variant = "default", padding = "md", className = "", children, ...props }, ref) => {
     const variants = {
-      default: "bg-white shadow-sm",
-      elevated: "bg-white shadow-lg",
-      outlined: "bg-white border border-slate-200"
+      default: "bg-paper-card shadow-sm border border-line",
+      elevated: "bg-paper-card shadow-lg border border-line",
+      outlined: "bg-paper-card border-2 border-line"
     };
 
     const paddings = {
@@ -23,7 +23,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`rounded-2xl ${variants[variant]} ${paddings[padding]} ${className}`}
+        className={`rounded-card ${variants[variant]} ${paddings[padding]} ${className}`}
         {...props}
       >
         {children}
@@ -43,14 +43,14 @@ CardHeader.displayName = "CardHeader";
 
 export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className = "", children, ...props }, ref) => (
-    <h3 ref={ref} className={`text-xl font-semibold text-slate-900 ${className}`} {...props}>{children}</h3>
+    <h3 ref={ref} className={`text-xl font-semibold font-display text-text ${className}`} {...props}>{children}</h3>
   )
 );
 CardTitle.displayName = "CardTitle";
 
 export const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
   ({ className = "", children, ...props }, ref) => (
-    <p ref={ref} className={`text-slate-500 mt-1 ${className}`} {...props}>{children}</p>
+    <p ref={ref} className={`text-text-muted mt-1 ${className}`} {...props}>{children}</p>
   )
 );
 CardDescription.displayName = "CardDescription";

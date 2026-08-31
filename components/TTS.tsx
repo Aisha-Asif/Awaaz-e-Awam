@@ -86,10 +86,10 @@ export function TTSButton({ text, lang = "ur-PK", className = "", disabled = fal
       type="button"
       onClick={handleClick}
       disabled={disabled || !text.trim()}
-      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors
+      className={`inline-flex items-center gap-2 px-3 py-2 rounded-card text-sm font-medium font-body transition-colors
         ${speaking
-          ? "bg-red-100 text-red-700 hover:bg-red-200"
-          : "bg-slate-100 text-slate-700 hover:bg-slate-200"}
+          ? "bg-rani/10 text-rani hover:bg-rani/20"
+          : "bg-line text-text-muted hover:bg-on-ink"}
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       aria-label={speaking ? "Stop reading" : "Read aloud"}
       aria-pressed={speaking}

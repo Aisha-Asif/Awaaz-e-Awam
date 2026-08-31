@@ -24,13 +24,13 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
       <div ref={ref} className={className} {...props}>
         {(showLabel || label) && (
           <div className="flex justify-between text-sm mb-1.5">
-            <span className="font-medium text-slate-700">{label || `Progress: ${Math.round(percentage)}%`}</span>
-            {showLabel && <span className="text-slate-500">{Math.round(percentage)}%</span>}
+            <span className="font-medium font-body text-text">{label || `Progress: ${Math.round(percentage)}%`}</span>
+            {showLabel && <span className="text-text-muted">{Math.round(percentage)}%</span>}
           </div>
         )}
-        <div className={`w-full bg-slate-200 rounded-full overflow-hidden ${sizes[size]}`}>
+        <div className={`w-full bg-line rounded-full overflow-hidden ${sizes[size]}`}>
           <div
-            className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-ink rounded-full transition-all duration-300 ease-out"
             style={{ width: `${percentage}%` }}
             role="progressbar"
             aria-valuenow={value}
@@ -66,16 +66,16 @@ export function StepProgress({ steps, currentStep, completedSteps = [], classNam
             {!isLast && (
               <div
                 className="absolute top-3 left-1/2 w-full h-1 -translate-x-1/2 z-0"
-                style={{ backgroundColor: isCompleted ? "#3b82f6" : "#e2e8f0" }}
+                style={{ backgroundColor: isCompleted ? "#12302B" : "#E4D9BC" }}
               />
             )}
             <div
-              className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
+              className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium font-display transition-all duration-300
                 ${isCompleted
-                  ? "bg-blue-600 text-white"
+                  ? "bg-ink text-on-ink"
                   : isCurrent
-                  ? "bg-blue-600 text-white ring-4 ring-blue-200"
-                  : "bg-slate-200 text-slate-500"}`}
+                  ? "bg-ink text-on-ink ring-4 ring-line"
+                  : "bg-line text-text-muted"}`}
             >
               {isCompleted && (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,8 +84,8 @@ export function StepProgress({ steps, currentStep, completedSteps = [], classNam
               )}
               {!isCompleted && index + 1}
             </div>
-            <p className={`mt-2 text-xs text-center transition-colors duration-300 ${
-              isCompleted || isCurrent ? "text-blue-600 font-medium" : "text-slate-400"
+            <p className={`mt-2 text-xs text-center transition-colors duration-300 font-body ${
+              isCompleted || isCurrent ? "text-ink font-medium" : "text-text-muted"
             }`}>
               {step}
             </p>

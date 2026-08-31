@@ -11,14 +11,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "primary", size = "md", loading, disabled, children, className = "", ...props }, ref) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center font-medium rounded-card transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-body";
 
     const variants = {
-      primary: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-sm",
-      secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-400",
-      outline: "border-2 border-slate-300 text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-400",
-      ghost: "text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-400",
-      danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm"
+      primary: "bg-marigold text-ink-2 hover:bg-[#f0ac4d] focus-visible:ring-marigold shadow-sm",
+      secondary: "bg-on-ink text-ink hover:bg-line focus-visible:ring-on-ink",
+      outline: "border-2 border-on-ink text-on-ink hover:border-on-ink focus-visible:ring-on-ink",
+      ghost: "text-text-muted hover:bg-paper-card focus-visible:ring-jade",
+      danger: "bg-rani text-white hover:bg-[#c34840] focus-visible:ring-rani shadow-sm"
     };
 
     const sizes = {

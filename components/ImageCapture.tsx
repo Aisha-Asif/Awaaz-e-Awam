@@ -2,7 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
 
 interface ImageCaptureProps {
   onImageCapture: (file: File) => void;
@@ -127,8 +126,8 @@ export function ImageCapture({
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
       {isCameraOpen && (
-        <Card variant="outlined" padding="none" className="overflow-hidden">
-          <div className="relative aspect-[4/3] bg-black">
+        <div className="rounded-card border-2 border-line overflow-hidden">
+          <div className="relative aspect-[4/3] bg-ink-2">
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -138,20 +137,20 @@ export function ImageCapture({
             />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-3/4 h-3/4 border-2 border-white/50 rounded-xl" />
+              <div className="w-3/4 h-3/4 border-2 border-on-ink/50 rounded-card" />
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
                 <Button
                   variant="ghost"
                   size="lg"
                   onClick={stopCamera}
-                  className="bg-white/90 text-slate-700 px-6 py-3"
+                  className="bg-on-ink/90 text-ink px-6 py-3"
                 >
                   Cancel
                 </Button>
                 <Button
                   size="lg"
                   onClick={capturePhoto}
-                  className="bg-blue-600 px-6 py-3"
+                  className="bg-jade px-6 py-3"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -162,13 +161,13 @@ export function ImageCapture({
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {!isCameraOpen && !preview && (
         <div className="space-y-4">
           <Button
-            variant="outline"
+            variant="primary"
             size="lg"
             onClick={startCamera}
             disabled={disabled}
@@ -182,10 +181,10 @@ export function ImageCapture({
           </Button>
 
           <div className="relative">
-            <div className="flex items-center gap-3 text-slate-500 text-sm">
-              <div className="flex-1 h-px bg-slate-200" />
+            <div className="flex items-center gap-3 text-text-muted text-sm">
+              <div className="flex-1 h-px bg-line" />
               <span>or</span>
-              <div className="flex-1 h-px bg-slate-200" />
+              <div className="flex-1 h-px bg-line" />
             </div>
             <label className="mt-4 block">
               <input
@@ -195,7 +194,7 @@ export function ImageCapture({
                 className="sr-only"
                 disabled={disabled}
               />
-              <Button variant="outline" size="lg" className="w-full" disabled={disabled}>
+              <Button variant="ghost" size="lg" className="w-full" disabled={disabled}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
@@ -204,41 +203,37 @@ export function ImageCapture({
             </label>
           </div>
 
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-text-muted font-body">
             Take a clear photo of the entire form with good lighting.
           </p>
         </div>
       )}
 
       {preview && !isCameraOpen && (
-        <Card variant="outlined" padding="none" className="overflow-hidden">
-          <div className="relative aspect-[4/3] bg-slate-100">
+        <div className="rounded-card border-2 border-line overflow-hidden">
+          <div className="relative aspect-[4/3] bg-line">
             <img
               src={preview}
               alt="Form preview"
               className="w-full h-full object-contain p-4"
             />
             <div className="absolute top-3 right-3 flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={removeImage}
-                className="bg-white/90 text-slate-700"
+                className="bg-on-ink/90 text-text-muted p-2 rounded-full hover:bg-on-ink transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+              </button>
+              <button
                 onClick={() => setIsCameraOpen(true)}
-                className="bg-white/90 text-slate-700"
+                className="bg-on-ink/90 text-text-muted p-2 rounded-full hover:bg-on-ink transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 </svg>
-              </Button>
+              </button>
             </div>
           </div>
           <div className="p-4 flex justify-end">
@@ -249,11 +244,11 @@ export function ImageCapture({
               Use This Image
             </Button>
           </div>
-        </Card>
+        </div>
       )}
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center" role="alert">
+        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
           {error}
         </div>
       )}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback } from "react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
@@ -20,6 +21,33 @@ const REQUIRED_FIELD_ORDER = [
   "address",
   "district"
 ];
+
+function PageHeader() {
+  return (
+    <header>
+      <div className="headerbar">
+        <Link href="/" className="wordmark">
+          <span className="lat">Awaaz-e-Awam</span>
+          <span className="urd urdu">آواز عوام</span>
+        </Link>
+        <nav><Link href="/">Back to home</Link></nav>
+      </div>
+    </header>
+  );
+}
+
+function PageFooter() {
+  return (
+    <footer>
+      <div className="wrap">
+        <div className="foot-bottom">
+          <span>Awaaz-e-Awam — Multi-Dialect Urdu Voice-to-Form Assistant</span>
+          <span>Your voice. Your forms.</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 export default function SpeakPage() {
   const [step, setStep] = useState<"record" | "review" | "interview" | "complete">("record");
@@ -62,8 +90,6 @@ export default function SpeakPage() {
       }
       setAnswers(extractedAnswers);
 
-      // Use the freshly-built schema (not the stale `formSchema` state) so the
-      // very first next-question lookup has fields to match against.
       const nextQ = await getNextQuestion(schema.fields, extractedAnswers);
       if (nextQ.nextField) {
         setCurrentFieldId(nextQ.nextField);
@@ -151,40 +177,42 @@ export default function SpeakPage() {
   };
 
   const getFilledFields = () => {
-    return Object.entries(answers).filter(([_, value]) => value !== null);
+    return Object.entries(answers).filter(([, value]) => value !== null);
   };
 
   if (step === "record") {
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-slate-900">Speak Naturally</h1>
-            <p className="mt-2 text-slate-600">
-              Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.
+      <>
+        <PageHeader />
+        <section className="section">
+          <div className="wrap" style={{maxWidth:720}}>
+            <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
+              <h2>Speak Naturally</h2>
+              <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
+            </div>
+
+            <Card variant="elevated" padding="lg">
+              <CardContent>
+                <AudioRecorder
+                  onRecordingComplete={handleRecordingComplete}
+                  disabled={loading}
+                />
+              </CardContent>
+            </Card>
+
+            {error && (
+              <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4" role="alert">
+                {error}
+              </div>
+            )}
+
+            <p className="text-center text-sm text-text-muted mt-6 font-body" style={{maxWidth:520,margin:"24px auto 0"}}>
+              Example: &quot;Mera naam Ali Raza hai, mere abu ka naam Ahmed Raza hai, main Lahore mein rehta hoon.&quot;
             </p>
           </div>
-
-          <Card variant="elevated">
-            <CardContent className="pt-0">
-              <AudioRecorder
-                onRecordingComplete={handleRecordingComplete}
-                disabled={loading}
-              />
-            </CardContent>
-          </Card>
-
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-center" role="alert">
-              {error}
-            </div>
-          )}
-
-          <div className="text-center text-sm text-slate-500">
-            <p>Example: &quot;Mera naam Ali Raza hai, mere abu ka naam Ahmed Raza hai, main Lahore mein rehta hoon.&quot;</p>
-          </div>
-        </div>
-      </div>
+        </section>
+        <PageFooter />
+      </>
     );
   }
 
@@ -193,87 +221,96 @@ export default function SpeakPage() {
     const missingFields = getMissingRequiredFields();
 
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-slate-900">Review Information</h1>
-            <Button variant="ghost" onClick={() => setStep("record")}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+      <>
+        <PageHeader />
+        <section className="section">
+          <div className="wrap" style={{maxWidth:720}}>
+            <div className="section-head">
+              <h2>Review Information</h2>
+              <p>Check what we extracted from your recording.</p>
+            </div>
 
-          {speechResponse && (
-            <Card variant="elevated">
+            {speechResponse && (
+              <Card variant="elevated" padding="lg">
+                <CardHeader>
+                  <CardTitle>Transcript</CardTitle>
+                  <CardDescription>What we heard from your recording</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="bg-paper p-4 rounded-card text-text font-body whitespace-pre-wrap">{speechResponse.transcript}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card variant="elevated" padding="lg">
               <CardHeader>
-                <CardTitle>Transcript</CardTitle>
-                <CardDescription>What we heard from your recording</CardDescription>
+                <CardTitle>Extracted Information</CardTitle>
+                <CardDescription>{filledFields.length} fields filled, {missingFields.length} required fields missing</CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="bg-slate-50 p-4 rounded-xl text-slate-700 whitespace-pre-wrap">{speechResponse.transcript}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle>Extracted Information</CardTitle>
-              <CardDescription>{filledFields.length} fields filled, {missingFields.length} required fields missing</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {filledFields.map(([fieldId, value]) => {
-                const field = formSchema?.fields.find(f => f.id === fieldId);
-                return (
-                  <div key={fieldId} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                    <div className="flex-1">
-                      <p className="text-sm text-slate-500">{field?.label || fieldId}</p>
-                      <p className="font-medium text-slate-900">{value}</p>
+              <CardContent className="space-y-4">
+                {filledFields.map(([fieldId, value]) => {
+                  const field = formSchema?.fields.find(f => f.id === fieldId);
+                  return (
+                    <div key={fieldId} className="flex items-center justify-between p-3 bg-paper rounded-card">
+                      <div className="flex-1">
+                        <p className="text-sm text-text-muted font-body">{field?.label || fieldId}</p>
+                        <p className="font-medium text-text font-body">{value}</p>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditField(fieldId)}>
+                        Edit
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleEditField(fieldId)}>
-                      Edit
-                    </Button>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              {missingFields.length > 0 && (
-                <div className="pt-4 border-t border-slate-200">
-                  <p className="text-sm font-medium text-slate-700 mb-3">Missing required fields:</p>
-                  <ul className="space-y-2">
-                    {missingFields.map(fieldId => {
-                      const field = formSchema?.fields.find(f => f.id === fieldId);
-                      return (
-                        <li key={fieldId} className="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
-                          <div>
-                            <p className="text-sm text-amber-800">{field?.label || fieldId}</p>
-                            <p className="text-xs text-amber-600">Required</p>
-                          </div>
-                          <Button variant="outline" size="sm" onClick={() => handleEditField(fieldId)}>
-                            Fill
-                          </Button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter>
-              {missingFields.length > 0 && (
-                <Button size="lg" className="w-full" onClick={() => handleEditField(missingFields[0])}>
-                  Continue to Interview
-                </Button>
-              )}
-              {missingFields.length === 0 && (
-                <Button size="lg" className="w-full" onClick={() => setStep("complete")}>
-                  View Complete Form
-                </Button>
-              )}
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+                {missingFields.length > 0 && (
+                  <div className="pt-4 border-t border-line">
+                    <p className="text-sm font-medium text-text mb-3 font-body">Missing required fields:</p>
+                    <ul className="space-y-2">
+                      {missingFields.map(fieldId => {
+                        const field = formSchema?.fields.find(f => f.id === fieldId);
+                        return (
+                          <li key={fieldId} className="flex items-center justify-between p-3 bg-marigold/10 rounded-card">
+                            <div>
+                              <p className="text-sm text-marigold font-body">{field?.label || fieldId}</p>
+                              <p className="text-xs text-marigold/70 font-body">Required</p>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => handleEditField(fieldId)}>
+                              Fill
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                {missingFields.length > 0 && (
+                  <Button size="lg" className="w-full" onClick={() => handleEditField(missingFields[0])}>
+                    Continue to Interview
+                  </Button>
+                )}
+                {missingFields.length === 0 && (
+                  <Button size="lg" className="w-full" onClick={() => setStep("complete")}>
+                    View Complete Form
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+
+            <div className="mt-4">
+              <Button variant="ghost" onClick={() => setStep("record")}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Recording
+              </Button>
+            </div>
+          </div>
+        </section>
+        <PageFooter />
+      </>
     );
   }
 
@@ -283,165 +320,177 @@ export default function SpeakPage() {
     const totalRequired = REQUIRED_FIELD_ORDER.filter(id => formSchema?.fields.find(f => f.id === id)?.required).length;
 
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Progress value={progress} max={totalRequired} showLabel label="Interview Progress" size="lg" />
-
-          <Card variant="elevated">
-            <CardContent className="pt-0 text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-blue-100 flex items-center justify-center">
-                <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">{field?.questionUrdu || currentQuestion}</h2>
-              <TTSButton text={field?.questionUrdu || currentQuestion || ""} className="mx-auto" />
-              {field?.questionEnglish && (
-                <p className="mt-2 text-slate-500">{field.questionEnglish}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card variant="elevated">
-            <CardContent className="pt-0">
-              <AudioRecorder
-                onRecordingComplete={async (blob) => {
-                  // NOTE: Speech-to-text transcription of interview answers is
-                  // Agent 1 / backend responsibility (process-answer expects a
-                  // transcript string). Until that's wired up, voice recording
-                  // here just captures audio; the text field below is the
-                  // reliable path for the frontend demo.
-                }}
-                showUploadFallback={false}
-                disabled={loading}
-              />
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Or type your answer:</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="Answer in Urdu or English..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                      handleAnswerSubmit(e.currentTarget.value.trim());
-                      e.currentTarget.value = "";
-                    }
-                  }}
-                  disabled={loading}
-                  autoFocus
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-center" role="alert">
-              {error}
+      <>
+        <PageHeader />
+        <section className="section">
+          <div className="wrap" style={{maxWidth:640}}>
+            <div className="mb-6">
+              <Progress value={progress} max={totalRequired} showLabel label="Interview Progress" size="lg" />
             </div>
-          )}
 
-          {showConfirmation && (
-            <Card variant="outlined" className="border-amber-300 bg-amber-50">
-              <CardContent className="pt-0 text-center py-6">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <Card variant="elevated" padding="lg">
+              <CardContent className="text-center py-8">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-rani" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-amber-900 mb-2">Confirm Important Information</h3>
-                <p className="text-amber-800 mb-2">{showConfirmation.questionUrdu}</p>
-                <p className="text-2xl font-mono font-bold text-amber-900 mb-4">{showConfirmation.value}</p>
-                <div className="flex gap-3 justify-center">
-                  <Button variant="outline" onClick={() => handleConfirm(false)}>
-                    Edit
-                  </Button>
-                  <Button onClick={() => handleConfirm(true)}>
-                    ✓ Correct
-                  </Button>
+                <h2 className="text-2xl font-bold font-display text-text mb-2">{field?.questionUrdu || currentQuestion}</h2>
+                <div className="mt-3 flex justify-center">
+                  <TTSButton text={field?.questionUrdu || currentQuestion || ""} />
+                </div>
+                {field?.questionEnglish && (
+                  <p className="mt-2 text-text-muted font-body">{field.questionEnglish}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card variant="elevated" padding="lg">
+              <CardContent>
+                <AudioRecorder
+                  onRecordingComplete={async () => {}}
+                  showUploadFallback={false}
+                  disabled={loading}
+                />
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 rounded-card border-2 border-line bg-paper-card text-text placeholder-text-muted focus:border-marigold focus:ring-0 focus:outline-none font-body"
+                    placeholder="Answer in Urdu or English..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                        handleAnswerSubmit(e.currentTarget.value.trim());
+                        e.currentTarget.value = "";
+                      }
+                    }}
+                    disabled={loading}
+                    autoFocus
+                  />
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => setStep("review")}>
-              Back to Review
-            </Button>
+            {error && (
+              <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body" role="alert">
+                {error}
+              </div>
+            )}
+
+            {showConfirmation && (
+              <Card variant="outlined" padding="lg" className="border-marigold bg-marigold/10">
+                <CardContent className="text-center py-6">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-marigold/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-marigold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold font-display text-marigold mb-2">Confirm Important Information</h3>
+                  <p className="text-text-muted mb-2 font-body">{showConfirmation.questionUrdu}</p>
+                  <p className="text-2xl font-mono font-bold text-text mb-4">{showConfirmation.value}</p>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="ghost" onClick={() => handleConfirm(false)}>
+                      Edit
+                    </Button>
+                    <Button onClick={() => handleConfirm(true)}>
+                      Correct
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="mt-4">
+              <Button variant="ghost" onClick={() => setStep("review")}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Review
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+        <PageFooter />
+      </>
     );
   }
 
   if (step === "complete") {
     return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="text-center">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-slate-900">Form Complete!</h1>
-            <p className="mt-2 text-slate-600">All required fields have been filled.</p>
-          </div>
-
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle>Your Information</CardTitle>
-              <CardDescription>Ready to copy or use on your physical form</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {REQUIRED_FIELD_ORDER.map(fieldId => {
-                const value = answers[fieldId];
-                const field = formSchema?.fields.find(f => f.id === fieldId);
-                if (!field || !value) return null;
-                return (
-                  <div key={fieldId} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                    <div>
-                      <p className="text-sm text-slate-500">{field.label}</p>
-                      <p className="font-medium text-slate-900">{value}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <TTSButton text={value} />
-                      <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(value)}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
-                        </svg>
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-            <CardFooter>
-              <Button size="lg" className="w-full" onClick={() => {
-                const json = JSON.stringify(answers, null, 2);
-                navigator.clipboard.writeText(json);
-                alert("JSON copied to clipboard!");
-              }}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
+      <>
+        <PageHeader />
+        <section className="section">
+          <div className="wrap" style={{maxWidth:720}}>
+            <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 flex items-center justify-center">
+                <svg className="w-10 h-10 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
-                Copy All as JSON
-              </Button>
-            </CardFooter>
-          </Card>
+              </div>
+              <h2>Form Complete!</h2>
+              <p>All required fields have been filled.</p>
+            </div>
 
-          <div className="text-center">
-            <Button variant="outline" onClick={() => {
-              setStep("record");
-              setSpeechResponse(null);
-              setAnswers({});
-              setCurrentFieldId(null);
-              setCurrentQuestion(null);
-            }}>
-              Start New Form
-            </Button>
+            <Card variant="elevated" padding="lg">
+              <CardHeader>
+                <CardTitle>Your Information</CardTitle>
+                <CardDescription>Ready to copy or use on your physical form</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {REQUIRED_FIELD_ORDER.map(fieldId => {
+                  const value = answers[fieldId];
+                  const field = formSchema?.fields.find(f => f.id === fieldId);
+                  if (!field || !value) return null;
+                  return (
+                    <div key={fieldId} className="flex items-center justify-between p-3 bg-paper rounded-card">
+                      <div>
+                        <p className="text-sm text-text-muted font-body">{field.label}</p>
+                        <p className="font-medium text-text font-body">{value}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TTSButton text={value} />
+                        <button
+                          onClick={() => navigator.clipboard.writeText(value)}
+                          className="p-2 text-text-muted hover:text-text hover:bg-line rounded-card transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+              <CardFooter>
+                <Button size="lg" className="w-full" onClick={() => {
+                  const json = JSON.stringify(answers, null, 2);
+                  navigator.clipboard.writeText(json);
+                  alert("JSON copied to clipboard!");
+                }}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
+                  </svg>
+                  Copy All as JSON
+                </Button>
+              </CardFooter>
+            </Card>
+
+            <div className="mt-4 flex justify-center">
+              <Button variant="ghost" onClick={() => {
+                setStep("record");
+                setSpeechResponse(null);
+                setAnswers({});
+                setCurrentFieldId(null);
+                setCurrentQuestion(null);
+              }}>
+                Start New Form
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+        <PageFooter />
+      </>
     );
   }
 

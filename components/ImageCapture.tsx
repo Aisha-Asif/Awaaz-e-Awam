@@ -2,7 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
 
 interface ImageCaptureProps {
   onImageCapture: (file: File) => void;
@@ -21,9 +20,11 @@ export function ImageCapture({
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -40,9 +41,7 @@ export function ImageCapture({
         video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      // Set camera open FIRST so the video element renders
       setIsCameraOpen(true);
     } catch (err) {
       if (err instanceof DOMException && err.name === "NotAllowedError") {
@@ -54,33 +53,18 @@ export function ImageCapture({
     }
   }, [onError]);
 
-  const capturePhoto = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-
-    if (!context) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0);
-
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const capturedFile = new File([blob], `form-${Date.now()}.jpg`, { type: "image/jpeg" });
-        handleFileSelect(capturedFile);
-        stopCamera();
-      }
-    }, "image/jpeg", 0.9);
-  }, [stopCamera]);
+  // Attach stream to video element once it's mounted
+  useEffect(() => {
+    if (isCameraOpen && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraOpen]);
 
   const handleFileSelect = useCallback((selectedFile: File) => {
     setError(null);
 
     if (!selectedFile.type.startsWith("image/")) {
-      setError("Please select an image file.");
+      setError("Please select a valid image.");
       return;
     }
 
@@ -94,12 +78,90 @@ export function ImageCapture({
     setFile(selectedFile);
   }, [maxSizeMB]);
 
+  const capturePhoto = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) {
+      setError("Camera not available. Please try again.");
+      return;
+    }
+
+    setIsCapturing(true);
+    setError(null);
+
+    // Check if video is ready
+    if (video.readyState < 2) {
+      setError("Camera is not ready yet. Please wait a moment and try again.");
+      setIsCapturing(false);
+      return;
+    }
+
+    // Validate video dimensions
+    if (video.videoWidth <= 0 || video.videoHeight <= 0) {
+      setError("Camera is not ready yet. Please wait a moment and try again.");
+      setIsCapturing(false);
+      return;
+    }
+
+    // Create canvas dynamically if ref is null
+    let canvas = canvasRef.current;
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvasRef.current = canvas;
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setError("Unable to capture the image. Please try again.");
+      setIsCapturing(false);
+      return;
+    }
+
+    // Set canvas dimensions to video dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw the current video frame
+    try {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } catch {
+      setError("Unable to capture the image. Please try again.");
+      setIsCapturing(false);
+      return;
+    }
+
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+      if (!blob || blob.size === 0) {
+        setError("Unable to create the captured image. Please try again.");
+        setIsCapturing(false);
+        return;
+      }
+
+      const capturedFile = new File([blob], `form-${Date.now()}.jpg`, { type: "image/jpeg" });
+
+      // Stop camera AFTER capturing the image
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      setIsCameraOpen(false);
+
+      // Set the captured image
+      handleFileSelect(capturedFile);
+      setIsCapturing(false);
+    }, "image/jpeg", 0.9);
+  }, [handleFileSelect]);
+
   const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       handleFileSelect(selectedFile);
     }
   }, [handleFileSelect]);
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
 
   const removeImage = useCallback(() => {
     if (preview) {
@@ -117,18 +179,21 @@ export function ImageCapture({
 
   useEffect(() => {
     return () => {
-      stopCamera();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
       if (preview) {
         URL.revokeObjectURL(preview);
       }
     };
-  }, [preview, stopCamera]);
+  }, [preview]);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
       {isCameraOpen && (
-        <Card variant="outlined" padding="none" className="overflow-hidden">
-          <div className="relative aspect-[4/3] bg-black">
+        <div className="rounded-card border-2 border-line overflow-hidden">
+          <div className="relative aspect-[4/3] bg-ink-2">
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -136,39 +201,40 @@ export function ImageCapture({
               playsInline
               muted
             />
-            <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-3/4 h-3/4 border-2 border-white/50 rounded-xl" />
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={stopCamera}
-                  className="bg-white/90 text-slate-700 px-6 py-3"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={capturePhoto}
-                  className="bg-blue-600 px-6 py-3"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Capture
-                </Button>
-              </div>
+              <div className="w-3/4 h-3/4 border-2 border-on-ink/50 rounded-card" />
+            </div>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 pointer-events-auto">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={stopCamera}
+                disabled={isCapturing}
+                className="bg-on-ink/90 text-ink px-6 py-3"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="lg"
+                onClick={capturePhoto}
+                disabled={isCapturing}
+                className="bg-jade px-6 py-3"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {isCapturing ? "Capturing..." : "Capture"}
+              </Button>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {!isCameraOpen && !preview && (
         <div className="space-y-4">
           <Button
-            variant="outline"
+            variant="primary"
             size="lg"
             onClick={startCamera}
             disabled={disabled}
@@ -182,63 +248,64 @@ export function ImageCapture({
           </Button>
 
           <div className="relative">
-            <div className="flex items-center gap-3 text-slate-500 text-sm">
-              <div className="flex-1 h-px bg-slate-200" />
+            <div className="flex items-center gap-3 text-text-muted text-sm">
+              <div className="flex-1 h-px bg-line" />
               <span>or</span>
-              <div className="flex-1 h-px bg-slate-200" />
+              <div className="flex-1 h-px bg-line" />
             </div>
-            <label className="mt-4 block">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileInputChange}
-                className="sr-only"
-                disabled={disabled}
-              />
-              <Button variant="outline" size="lg" className="w-full" disabled={disabled}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Upload Image
-              </Button>
-            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileInputChange}
+              className="sr-only"
+              disabled={disabled}
+            />
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full mt-4"
+              disabled={disabled}
+              onClick={handleUploadClick}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Upload Image
+            </Button>
           </div>
 
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-text-muted font-body">
             Take a clear photo of the entire form with good lighting.
           </p>
         </div>
       )}
 
       {preview && !isCameraOpen && (
-        <Card variant="outlined" padding="none" className="overflow-hidden">
-          <div className="relative aspect-[4/3] bg-slate-100">
+        <div className="rounded-card border-2 border-line overflow-hidden">
+          <div className="relative aspect-[4/3] bg-line">
             <img
               src={preview}
               alt="Form preview"
               className="w-full h-full object-contain p-4"
             />
             <div className="absolute top-3 right-3 flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={removeImage}
-                className="bg-white/90 text-slate-700"
+                className="bg-on-ink/90 text-text-muted p-2 rounded-full hover:bg-on-ink transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+              </button>
+              <button
                 onClick={() => setIsCameraOpen(true)}
-                className="bg-white/90 text-slate-700"
+                className="bg-on-ink/90 text-text-muted p-2 rounded-full hover:bg-on-ink transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 </svg>
-              </Button>
+              </button>
             </div>
           </div>
           <div className="p-4 flex justify-end">
@@ -249,11 +316,11 @@ export function ImageCapture({
               Use This Image
             </Button>
           </div>
-        </Card>
+        </div>
       )}
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center" role="alert">
+        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
           {error}
         </div>
       )}

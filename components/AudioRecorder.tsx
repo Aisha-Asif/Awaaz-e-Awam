@@ -99,7 +99,7 @@ export function useAudioRecorder({
         stopTimer();
       };
 
-      mediaRecorder.onerror = (event) => {
+      mediaRecorder.onerror = () => {
         const err = new Error("Recording failed");
         setError("Recording failed. Please try again.");
         onError?.(err);
@@ -222,11 +222,11 @@ export function AudioRecorder({
   };
 
   const statusColors: Record<RecordingStatus, string> = {
-    idle: "text-slate-600",
-    recording: "text-red-600",
-    processing: "text-blue-600",
-    success: "text-green-600",
-    error: "text-red-600"
+    idle: "text-text-muted",
+    recording: "text-rani",
+    processing: "text-jade",
+    success: "text-jade",
+    error: "text-rani"
   };
 
   return (
@@ -235,57 +235,57 @@ export function AudioRecorder({
         <div
           className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
             status === "recording"
-              ? "bg-red-100 animate-pulse ring-4 ring-red-200"
+              ? "bg-rani/10 animate-pulse ring-4 ring-rani/30"
               : status === "processing"
-              ? "bg-blue-100 ring-4 ring-blue-200"
+              ? "bg-jade/10 ring-4 ring-jade/30"
               : status === "success"
-              ? "bg-green-100 ring-4 ring-green-200"
+              ? "bg-jade/10 ring-4 ring-jade/30"
               : status === "error"
-              ? "bg-red-100 ring-4 ring-red-200"
-              : "bg-slate-100 ring-4 ring-slate-200"
+              ? "bg-rani/10 ring-4 ring-rani/30"
+              : "bg-line ring-4 ring-ink/10"
           }`}
         >
           {status === "recording" && (
-            <div className="w-4 h-4 bg-red-600 rounded-full animate-pulse" />
+            <div className="w-4 h-4 bg-rani rounded-full animate-pulse" />
           )}
           {status === "processing" && (
-            <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-jade" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           )}
           {status === "success" && (
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           )}
           {status === "error" && (
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-rani" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           )}
           {status === "idle" && (
-            <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
           )}
         </div>
       </div>
 
-      <p className={`text-center text-lg font-medium ${statusColors[status]}`}>
+      <p className={`text-center text-lg font-medium font-body ${statusColors[status]}`}>
         {statusLabels[status]}
-        {status === "recording" && <span className="ml-2 text-sm font-mono text-red-500">{formatTime(duration)}</span>}
-        {status === "success" && <span className="ml-2 text-sm font-mono text-green-500">{formatTime(duration)}</span>}
+        {status === "recording" && <span className="ml-2 text-sm font-mono text-rani">{formatTime(duration)}</span>}
+        {status === "success" && <span className="ml-2 text-sm font-mono text-jade">{formatTime(duration)}</span>}
       </p>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center" role="alert">
+        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
           {error}
         </div>
       )}
 
       {uploadError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center" role="alert">
+        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
           {uploadError}
         </div>
       )}
@@ -323,7 +323,7 @@ export function AudioRecorder({
           <>
             <Button
               size="lg"
-              variant="outline"
+              variant="ghost"
               onClick={cancelRecording}
               className="w-full sm:w-auto min-w-[160px]"
             >
@@ -348,7 +348,7 @@ export function AudioRecorder({
         {status === "error" && (
           <Button
             size="lg"
-            variant="outline"
+            variant="ghost"
             onClick={startRecording}
             className="w-full sm:w-auto min-w-[160px]"
           >
@@ -362,10 +362,10 @@ export function AudioRecorder({
 
       {showUploadFallback && status !== "recording" && status !== "processing" && (
         <div className="relative">
-          <div className="flex items-center gap-3 text-slate-500 text-sm">
-            <div className="flex-1 h-px bg-slate-200" />
+          <div className="flex items-center gap-3 text-text-muted text-sm">
+            <div className="flex-1 h-px bg-line" />
             <span>or</span>
-            <div className="flex-1 h-px bg-slate-200" />
+            <div className="flex-1 h-px bg-line" />
           </div>
           <label className="mt-4 block">
             <input
@@ -375,7 +375,7 @@ export function AudioRecorder({
               className="sr-only"
               disabled={disabled}
             />
-            <Button variant="outline" size="md" className="w-full" disabled={disabled}>
+            <Button variant="ghost" size="md" className="w-full" disabled={disabled}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>

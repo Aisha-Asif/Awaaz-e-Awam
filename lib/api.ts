@@ -12,7 +12,7 @@ import {
   getMockProcessSpeechResponse
 } from "@/lib/mock-data";
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 async function mockDelay(ms: number = 500) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -109,6 +109,31 @@ export async function getNextQuestion(
   }
 
   return response.json();
+}
+
+// ===== Transcribe audio → text (Gemini STT) =====
+
+export async function transcribeAudioFile(audioFile: Blob): Promise<string> {
+  if (USE_MOCK) {
+    await mockDelay(1200);
+    return "Mera naam Ali Raza hai. Mere walid ka naam Ahmed Raza hai.";
+  }
+
+  const formData = new FormData();
+  formData.append("audio", audioFile);
+
+  const response = await fetch("/api/transcribe", {
+    method: "POST",
+    body: formData
+  });
+
+  if (!response.ok) {
+    const error: ApiError = await response.json();
+    throw new Error(error.error || "Failed to transcribe audio");
+  }
+
+  const data = (await response.json()) as { transcript: string };
+  return data.transcript;
 }
 
 // ===== API #4 — Process Speech =====

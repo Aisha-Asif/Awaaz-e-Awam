@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
-import { scanForm, getNextQuestion, processAnswer } from "@/lib/api";
+import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { FormSchema } from "@/lib/types";
 
 const REQUIRED_FIELD_ORDER = [
@@ -281,39 +281,47 @@ export default function ScanPage() {
               </CardContent>
             </Card>
 
-            <Card variant="elevated" padding="lg">
-              <CardContent className="space-y-4">
-                <AudioRecorder
-                  onRecordingComplete={async () => {}}
-                  showUploadFallback={false}
+          <Card variant="elevated">
+            <CardContent className="pt-0 space-y-4">
+              <AudioRecorder
+                onRecordingComplete={async (blob) => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    const transcript = await transcribeAudioFile(blob);
+                    await handleAnswerSubmit(transcript);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                showUploadFallback={false}
+                disabled={loading}
+              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Or type your answer:</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  placeholder="Answer..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                      handleAnswerSubmit(e.currentTarget.value.trim());
+                      e.currentTarget.value = "";
+                    }
+                  }}
                   disabled={loading}
+                  autoFocus
                 />
-                <div>
-                  <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-card border-2 border-line bg-paper-card text-text placeholder-text-muted focus:border-marigold focus:ring-0 focus:outline-none font-body"
-                    placeholder="Answer..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                        handleAnswerSubmit(e.currentTarget.value.trim());
-                        e.currentTarget.value = "";
-                      }
-                    }}
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <Button variant="ghost" onClick={() => setStep("fields")}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Fields
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep("fields")}>
+                  Back to Fields
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
             {error && (
               <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body" role="alert">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractSpeech } from "@/lib/deepseek";
+import { transcribeAudio } from "@/lib/gemini-stt";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 
 export const runtime = "nodejs";
@@ -16,13 +17,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not read the request." }, { status: 400 });
   }
 
-  // ponytail: DeepSeek has no audio-transcription endpoint, so for now the
-  // frontend sends the browser STT transcript as text. The raw `audio` file is
-  // accepted but unused until we confirm the transcript-based contract with
-  // Agent 2 (API_CONTRACT §6 / §20 change for tomorrow).
-  const transcript = (formData.get("transcript") as string | null)?.trim();
+  // Prefer the raw audio file: transcribed via Gemini STT (DeepSeek has no
+  // audio-STT endpoint). Fall back to a text `transcript` field for testing /
+  // browser-STT paths.
+  let transcript: string | null = null;
+
+  const audio = formData.get("audio");
+  if (audio && typeof audio !== "string" && typeof audio.arrayBuffer === "function") {
+    try {
+      const mimeType = (audio as File).type || "audio/webm";
+      const buffer = Buffer.from(await audio.arrayBuffer());
+      transcript = await transcribeAudio(mimeType, buffer);
+    } catch {
+      return NextResponse.json(
+        { error: "Could not transcribe the audio. Please try again." },
+        { status: 500 }
+      );
+    }
+  }
+
   if (!transcript) {
-    return NextResponse.json({ error: "No transcript was provided." }, { status: 400 });
+    transcript = (formData.get("transcript") as string | null)?.trim() || null;
+  }
+  if (!transcript) {
+    return NextResponse.json({ error: "No audio or transcript was provided." }, { status: 400 });
   }
 
   const formType = (formData.get("formType") as string | null) || "citizen";

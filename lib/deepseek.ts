@@ -52,6 +52,8 @@ async function chat(messages: ChatMessage[], model: string, json: boolean): Prom
   }
 
   if (!response.ok) {
+    const bodyText = await response.text().catch(() => "");
+    console.error(`[deepseek] HTTP ${response.status} for ${model}:`, bodyText);
     throw new Error("Could not process this request. Please try again.");
   }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractFormSchema } from "@/lib/deepseek";
+import { extractFormSchema } from "@/lib/ai";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 
 export const runtime = "nodejs";

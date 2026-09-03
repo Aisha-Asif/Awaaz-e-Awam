@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractAnswer } from "@/lib/deepseek";
+import { extractAnswer } from "@/lib/ai";
 import { ProcessAnswerRequestSchema } from "@/lib/schemas";
 import { getFieldValidator, requiresConfirmation } from "@/lib/validation";
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractSpeech } from "@/lib/deepseek";
+import { extractSpeech } from "@/lib/ai";
 import { transcribeAudio } from "@/lib/gemini-stt";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 

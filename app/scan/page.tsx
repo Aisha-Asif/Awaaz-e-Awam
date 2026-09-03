@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ImageCapture } from "@/components/ImageCapture";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
@@ -22,6 +22,36 @@ const REQUIRED_FIELD_ORDER = [
   "address",
   "district"
 ];
+
+// ponytail: form history lives in localStorage only (schemas are JSON-safe,
+// MVP has no DB). Capped at 10, deduped by formTitle. Upgrading this to a
+// shared/backend store is the point where Supabase earns its place.
+const HISTORY_KEY = "awaaz:formHistory";
+const HISTORY_MAX = 10;
+
+function getFormHistory(): FormSchema[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFormHistory(list: FormSchema[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX)));
+  } catch {
+    // ignore quota/private-mode failures; history is best-effort
+  }
+}
+
+function addToFormHistory(current: FormSchema[], schema: FormSchema): FormSchema[] {
+  const deduped = current.filter(s => s.formTitle !== schema.formTitle);
+  return [schema, ...deduped].slice(0, HISTORY_MAX);
+}
 
 function PageHeader() {
   return (
@@ -64,6 +94,17 @@ export default function ScanPage() {
     questionUrdu: string;
   } | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [formHistory, setFormHistory] = useState<FormSchema[]>(getFormHistory);
+
+  useEffect(() => {
+    if (step === "capture") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [step]);
 
   const handleImageCapture = useCallback(async (file: File) => {
     setLoading(true);
@@ -73,6 +114,12 @@ export default function ScanPage() {
       setOriginalImage(url);
       const schema = await scanForm(file);
       setFormSchema(schema);
+
+      setFormHistory(prev => {
+        const next = addToFormHistory(prev, schema);
+        saveFormHistory(next);
+        return next;
+      });
 
       const initialAnswers: Record<string, string | null> = {};
       schema.fields.forEach(f => { initialAnswers[f.id] = null; });
@@ -168,6 +215,26 @@ export default function ScanPage() {
   const getFilledCount = () => Object.values(answers).filter(v => v !== null).length;
   const getRequiredCount = () => formSchema?.fields.filter(f => f.required).length || 0;
 
+  const handleSelectHistory = useCallback((schema: FormSchema) => {
+    setFormSchema(schema);
+    const initialAnswers: Record<string, string | null> = {};
+    schema.fields.forEach(f => { initialAnswers[f.id] = null; });
+    setAnswers(initialAnswers);
+    setCurrentFieldId(null);
+    setCurrentQuestion(null);
+    setOriginalImage(null);
+    setStep("fields");
+  }, []);
+
+  const handleClearHistory = useCallback(() => {
+    setFormHistory([]);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   if (step === "capture") {
     return (
       <>
@@ -192,6 +259,33 @@ export default function ScanPage() {
               <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4" role="alert">
                 {error}
               </div>
+            )}
+
+            {formHistory.length > 0 && (
+              <Card variant="elevated" padding="lg" className="mt-4">
+                <CardHeader>
+                  <CardTitle>Previously Scanned</CardTitle>
+                  <CardDescription>Pick a saved form to skip re-scanning</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {formHistory.map(schema => (
+                    <div key={schema.formTitle} className="flex items-center justify-between p-3 bg-paper rounded-card">
+                      <div className="flex-1 pr-2">
+                        <p className="font-medium text-text font-body">{schema.formTitle}</p>
+                        <p className="text-sm text-text-muted font-body">{schema.fields.length} fields</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => handleSelectHistory(schema)}>
+                        Use
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+                <CardFooter>
+                  <Button variant="ghost" size="sm" onClick={handleClearHistory}>
+                    Clear History
+                  </Button>
+                </CardFooter>
+              </Card>
             )}
           </div>
         </section>

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
-import { processSpeech, getNextQuestion, processAnswer } from "@/lib/api";
+import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { FormSchema, ProcessSpeechResponse } from "@/lib/types";
 
 const REQUIRED_FIELD_ORDER = [
@@ -63,6 +63,16 @@ export default function SpeakPage() {
     value: string;
     questionUrdu: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (step === "record") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [step]);
 
   const handleRecordingComplete = useCallback(async (audioBlob: Blob) => {
     setLoading(true);
@@ -348,7 +358,18 @@ export default function SpeakPage() {
             <Card variant="elevated" padding="lg">
               <CardContent>
                 <AudioRecorder
-                  onRecordingComplete={async () => {}}
+                  onRecordingComplete={async (blob) => {
+                    setLoading(true);
+                    setError(null);
+                    try {
+                      const transcript = await transcribeAudioFile(blob);
+                      await handleAnswerSubmit(transcript);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
                   showUploadFallback={false}
                   disabled={loading}
                 />

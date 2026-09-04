@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, ReactNode } from "react";
 import { ImageCapture } from "@/components/ImageCapture";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
-import { scanForm, getNextQuestion, processAnswer } from "@/lib/api";
+import { useSpeechRecognition } from "@/components/useSpeechRecognition";
+import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { FormSchema } from "@/lib/types";
 
 const REQUIRED_FIELD_ORDER = [
@@ -23,6 +24,36 @@ const REQUIRED_FIELD_ORDER = [
   "district"
 ];
 
+// ponytail: form history lives in localStorage only (schemas are JSON-safe,
+// MVP has no DB). Capped at 10, deduped by formTitle. Upgrading this to a
+// shared/backend store is the point where Supabase earns its place.
+const HISTORY_KEY = "awaaz:formHistory";
+const HISTORY_MAX = 10;
+
+function getFormHistory(): FormSchema[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFormHistory(list: FormSchema[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX)));
+  } catch {
+    // ignore quota/private-mode failures; history is best-effort
+  }
+}
+
+function addToFormHistory(current: FormSchema[], schema: FormSchema): FormSchema[] {
+  const deduped = current.filter(s => s.formTitle !== schema.formTitle);
+  return [schema, ...deduped].slice(0, HISTORY_MAX);
+}
+
 function PageHeader() {
   return (
     <header>
@@ -31,9 +62,20 @@ function PageHeader() {
           <span className="lat">Awaaz-e-Awam</span>
           <span className="urd urdu">آواز عوام</span>
         </Link>
-        <nav><Link href="/">Back to home</Link></nav>
       </div>
     </header>
+  );
+}
+
+// ponytail: shared back link slot — placed at the top-left of each section.
+function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-2 mb-6 font-body text-text-muted hover:text-text transition-colors">
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      {children}
+    </Link>
   );
 }
 
@@ -64,6 +106,31 @@ export default function ScanPage() {
     questionUrdu: string;
   } | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [formHistory, setFormHistory] = useState<FormSchema[]>(getFormHistory);
+  const [justSaved, setJustSaved] = useState(false);
+  const {
+    supported: srSupported,
+    listening: srListening,
+    error: srError,
+    start: srStart,
+    stop: srStop
+  } = useSpeechRecognition("ur-PK");
+
+  useEffect(() => {
+    if (!justSaved) return;
+    const t = setTimeout(() => setJustSaved(false), 2000);
+    return () => clearTimeout(t);
+  }, [justSaved]);
+
+  useEffect(() => {
+    if (step === "capture") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [step]);
 
   const handleImageCapture = useCallback(async (file: File) => {
     setLoading(true);
@@ -73,6 +140,12 @@ export default function ScanPage() {
       setOriginalImage(url);
       const schema = await scanForm(file);
       setFormSchema(schema);
+
+      setFormHistory(prev => {
+        const next = addToFormHistory(prev, schema);
+        saveFormHistory(next);
+        return next;
+      });
 
       const initialAnswers: Record<string, string | null> = {};
       schema.fields.forEach(f => { initialAnswers[f.id] = null; });
@@ -124,8 +197,10 @@ export default function ScanPage() {
             questionUrdu: field.questionUrdu
           });
         } else {
-          setAnswers(prev => ({ ...prev, [currentFieldId]: response.value }));
-          const nextQ = await getNextQuestion(formSchema.fields, { ...answers, [currentFieldId]: response.value });
+          const nextAnswers = { ...answers, [currentFieldId]: response.value };
+          setAnswers(nextAnswers);
+          setJustSaved(true);
+          const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
           if (nextQ.nextField) {
             setCurrentFieldId(nextQ.nextField);
             setCurrentQuestion(nextQ.questionUrdu);
@@ -147,10 +222,12 @@ export default function ScanPage() {
     if (!showConfirmation || !formSchema) return;
 
     if (confirmed) {
-      setAnswers(prev => ({ ...prev, [showConfirmation.fieldId]: showConfirmation.value }));
+      const nextAnswers = { ...answers, [showConfirmation.fieldId]: showConfirmation.value };
+      setAnswers(nextAnswers);
+      setJustSaved(true);
       const nextQ = await getNextQuestion(
         formSchema.fields,
-        { ...answers, [showConfirmation.fieldId]: showConfirmation.value }
+        nextAnswers
       );
       if (nextQ.nextField) {
         setCurrentFieldId(nextQ.nextField);
@@ -165,8 +242,50 @@ export default function ScanPage() {
     setShowConfirmation(null);
   }, [showConfirmation, formSchema, answers]);
 
+  // Advance to the next unanswered field without recording the current one.
+  const skipCurrentField = useCallback(async () => {
+    if (!formSchema) return;
+    setError(null);
+    const nextQ = await getNextQuestion(formSchema.fields, answers);
+    if (nextQ.nextField) {
+      setCurrentFieldId(nextQ.nextField);
+      setCurrentQuestion(nextQ.questionUrdu);
+      setStep("interview");
+    } else {
+      setStep("complete");
+    }
+  }, [formSchema, answers]);
+
   const getFilledCount = () => Object.values(answers).filter(v => v !== null).length;
   const getRequiredCount = () => formSchema?.fields.filter(f => f.required).length || 0;
+
+  const handleSelectHistory = useCallback((schema: FormSchema) => {
+    setFormSchema(schema);
+    const initialAnswers: Record<string, string | null> = {};
+    schema.fields.forEach(f => { initialAnswers[f.id] = null; });
+    setAnswers(initialAnswers);
+    setCurrentFieldId(null);
+    setCurrentQuestion(null);
+    setOriginalImage(null);
+    setStep("fields");
+  }, []);
+
+  // Let the user jump straight into the interview for any detected field.
+  const handleFieldSelect = useCallback((fieldId: string) => {
+    setCurrentFieldId(fieldId);
+    const field = formSchema?.fields.find(f => f.id === fieldId);
+    setCurrentQuestion(field?.questionUrdu ?? null);
+    setStep("interview");
+  }, [formSchema]);
+
+  const handleClearHistory = useCallback(() => {
+    setFormHistory([]);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   if (step === "capture") {
     return (
@@ -174,6 +293,7 @@ export default function ScanPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
+            <PageBackLink href="/">Back to home</PageBackLink>
             <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
               <h2>Scan a Form</h2>
               <p>Take a clear photo of your physical form or upload an image. The AI will identify all fields.</p>
@@ -193,6 +313,33 @@ export default function ScanPage() {
                 {error}
               </div>
             )}
+
+            {formHistory.length > 0 && (
+              <Card variant="elevated" padding="lg" className="mt-4">
+                <CardHeader>
+                  <CardTitle>Previously Scanned</CardTitle>
+                  <CardDescription>Pick a saved form to skip re-scanning</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {formHistory.map(schema => (
+                    <div key={schema.formTitle} className="flex items-center justify-between p-3 bg-paper rounded-card">
+                      <div className="flex-1 pr-2">
+                        <p className="font-medium text-text font-body">{schema.formTitle}</p>
+                        <p className="text-sm text-text-muted font-body">{schema.fields.length} fields</p>
+                      </div>
+                      <Button variant="primary" size="sm" onClick={() => handleSelectHistory(schema)}>
+                        Use
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+                <CardFooter>
+                  <Button variant="ghost" size="sm" onClick={handleClearHistory}>
+                    Clear History
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
           </div>
         </section>
         <PageFooter />
@@ -206,6 +353,18 @@ export default function ScanPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setStep("capture")}
+                className="inline-flex items-center gap-2 font-body text-text-muted hover:text-text transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Capture
+              </button>
+            </div>
             <div className="section-head">
               <h2>Detected Fields</h2>
               <p>{formSchema?.formTitle} — {formSchema?.fields.length} fields detected</p>
@@ -216,33 +375,34 @@ export default function ScanPage() {
                 <CardContent className="space-y-3">
                   {formSchema.fields.map(field => (
                     <div key={field.id} className="flex items-center justify-between p-3 bg-paper rounded-card">
-                      <div className="flex items-center gap-3">
-                        <span className={`w-2 h-2 rounded-full ${field.required ? "bg-rani" : "bg-line"}`} />
-                        <div>
-                          <p className="font-medium text-text font-body">{field.label}</p>
-                          <p className="text-sm text-text-muted font-body">{field.type} {field.required ? "• Required" : "• Optional"}</p>
-                        </div>
-                      </div>
-                      <TTSButton text={field.questionUrdu} className="shrink-0" />
+                      <button
+                        type="button"
+                        onClick={() => handleFieldSelect(field.id)}
+                        className="flex-1 min-w-0 text-left flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${field.required ? "bg-rani" : "bg-line"}`} />
+                        <span className="min-w-0">
+                          <span className="block font-medium text-text font-body">{field.label}</span>
+                          <span className="block text-sm text-text-muted font-body">{field.type} {field.required ? "• Required" : "• Optional"}</span>
+                        </span>
+                        {answers[field.id] && (
+                          <span className="ml-auto text-jade font-medium text-sm truncate max-w-[10rem]">{answers[field.id]}</span>
+                        )}
+                        <svg className="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                      <TTSButton text={field.questionUrdu} className="ml-2 shrink-0" />
                     </div>
                   ))}
                 </CardContent>
                 <CardFooter>
                   <Button size="lg" className="w-full" onClick={startInterview} disabled={loading}>
-                    {loading ? "Starting..." : "Start Voice Interview"}
+                    {loading ? "Starting..." : "Start Voice Interview (in order)"}
                   </Button>
                 </CardFooter>
               </Card>
             )}
-
-            <div className="mt-4">
-              <Button variant="ghost" onClick={() => setStep("capture")}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Capture
-              </Button>
-            </div>
           </div>
         </section>
         <PageFooter />
@@ -260,6 +420,7 @@ export default function ScanPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:640}}>
+            <PageBackLink href="/">Back to home</PageBackLink>
             <div className="mb-6">
               <Progress value={progress} max={total} showLabel label="Interview Progress" size="lg" />
             </div>
@@ -281,39 +442,86 @@ export default function ScanPage() {
               </CardContent>
             </Card>
 
-            <Card variant="elevated" padding="lg">
-              <CardContent className="space-y-4">
-                <AudioRecorder
-                  onRecordingComplete={async () => {}}
-                  showUploadFallback={false}
+          <Card variant="elevated">
+            <CardContent className="pt-0 space-y-4">
+              <AudioRecorder
+                onRecordingComplete={async (blob) => {
+                  setLoading(true);
+                  setError(null);
+                  try {
+                    const transcript = await transcribeAudioFile(blob);
+                    await handleAnswerSubmit(transcript);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                showUploadFallback={false}
+                disabled={loading}
+              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Or type your answer:</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  placeholder="Answer..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                      handleAnswerSubmit(e.currentTarget.value.trim());
+                      e.currentTarget.value = "";
+                    }
+                  }}
                   disabled={loading}
+                  autoFocus
                 />
+              </div>
+              {justSaved && (
+                <p className="flex items-center gap-2 text-sm font-medium text-jade" role="status">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Answer saved
+                </p>
+              )}
+              {srSupported && (
                 <div>
-                  <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-card border-2 border-line bg-paper-card text-text placeholder-text-muted focus:border-marigold focus:ring-0 focus:outline-none font-body"
-                    placeholder="Answer..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                        handleAnswerSubmit(e.currentTarget.value.trim());
-                        e.currentTarget.value = "";
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={loading || srListening}
+                    onClick={() => {
+                      if (srListening) {
+                        srStop();
+                      } else {
+                        srStart((text) => handleAnswerSubmit(text));
                       }
                     }}
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <Button variant="ghost" onClick={() => setStep("fields")}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to Fields
+                  >
+                    {srListening ? "Listening..." : "Tap to speak (on-device)"}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+              {srError && (
+                <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
+                  {srError}
+                </div>
+              )}
+              {currentFieldId && answers[currentFieldId] && (
+                <p className="text-sm text-jade font-medium break-words">
+                  Answer: <span className="font-body">{answers[currentFieldId]}</span>
+                </p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" onClick={() => setStep("fields")}>
+                  Back to Fields
+                </Button>
+                <Button variant="ghost" onClick={skipCurrentField} disabled={loading}>
+                  Skip this field for now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
             {error && (
               <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body" role="alert">
@@ -356,6 +564,7 @@ export default function ScanPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:960}}>
+            <PageBackLink href="/">Back to home</PageBackLink>
             <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 flex items-center justify-center">
                 <svg className="w-10 h-10 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">

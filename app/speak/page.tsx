@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, ReactNode } from "react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
-import { processSpeech, getNextQuestion, processAnswer } from "@/lib/api";
+import { useSpeechRecognition } from "@/components/useSpeechRecognition";
+import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { FormSchema, ProcessSpeechResponse } from "@/lib/types";
 
 const REQUIRED_FIELD_ORDER = [
@@ -30,9 +31,19 @@ function PageHeader() {
           <span className="lat">Awaaz-e-Awam</span>
           <span className="urd urdu">آواز عوام</span>
         </Link>
-        <nav><Link href="/">Back to home</Link></nav>
       </div>
     </header>
+  );
+}
+
+function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-2 mb-6 font-body text-text-muted hover:text-text transition-colors">
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      {children}
+    </Link>
   );
 }
 
@@ -63,6 +74,30 @@ export default function SpeakPage() {
     value: string;
     questionUrdu: string;
   } | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
+  const {
+    supported: srSupported,
+    listening: srListening,
+    error: srError,
+    start: srStart,
+    stop: srStop
+  } = useSpeechRecognition("ur-PK");
+
+  useEffect(() => {
+    if (!justSaved) return;
+    const t = setTimeout(() => setJustSaved(false), 2000);
+    return () => clearTimeout(t);
+  }, [justSaved]);
+
+  useEffect(() => {
+    if (step === "record") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [step]);
 
   const handleRecordingComplete = useCallback(async (audioBlob: Blob) => {
     setLoading(true);
@@ -130,8 +165,10 @@ export default function SpeakPage() {
             questionUrdu: field.questionUrdu
           });
         } else {
-          setAnswers(prev => ({ ...prev, [currentFieldId]: response.value }));
-          const nextQ = await getNextQuestion(formSchema.fields, { ...answers, [currentFieldId]: response.value });
+          const nextAnswers = { ...answers, [currentFieldId]: response.value };
+          setAnswers(nextAnswers);
+          setJustSaved(true);
+          const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
           if (nextQ.nextField) {
             setCurrentFieldId(nextQ.nextField);
             setCurrentQuestion(nextQ.questionUrdu);
@@ -153,10 +190,12 @@ export default function SpeakPage() {
     if (!showConfirmation || !formSchema) return;
 
     if (confirmed) {
-      setAnswers(prev => ({ ...prev, [showConfirmation.fieldId]: showConfirmation.value }));
+      const nextAnswers = { ...answers, [showConfirmation.fieldId]: showConfirmation.value };
+      setAnswers(nextAnswers);
+      setJustSaved(true);
       const nextQ = await getNextQuestion(
         formSchema.fields,
-        { ...answers, [showConfirmation.fieldId]: showConfirmation.value }
+        nextAnswers
       );
       if (nextQ.nextField) {
         setCurrentFieldId(nextQ.nextField);
@@ -186,6 +225,7 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
+            <PageBackLink href="/">Back to home</PageBackLink>
             <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
               <h2>Speak Naturally</h2>
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
@@ -225,6 +265,12 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
+            <Button variant="ghost" onClick={() => setStep("record")}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Recording
+            </Button>
             <div className="section-head">
               <h2>Review Information</h2>
               <p>Check what we extracted from your recording.</p>
@@ -298,15 +344,6 @@ export default function SpeakPage() {
                 )}
               </CardFooter>
             </Card>
-
-            <div className="mt-4">
-              <Button variant="ghost" onClick={() => setStep("record")}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Recording
-              </Button>
-            </div>
           </div>
         </section>
         <PageFooter />
@@ -324,6 +361,12 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:640}}>
+<Button variant="ghost" onClick={() => setStep("review")}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Review
+              </Button>
             <div className="mb-6">
               <Progress value={progress} max={totalRequired} showLabel label="Interview Progress" size="lg" />
             </div>
@@ -348,7 +391,18 @@ export default function SpeakPage() {
             <Card variant="elevated" padding="lg">
               <CardContent>
                 <AudioRecorder
-                  onRecordingComplete={async () => {}}
+                  onRecordingComplete={async (blob) => {
+                    setLoading(true);
+                    setError(null);
+                    try {
+                      const transcript = await transcribeAudioFile(blob);
+                      await handleAnswerSubmit(transcript);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
                   showUploadFallback={false}
                   disabled={loading}
                 />
@@ -368,6 +422,42 @@ export default function SpeakPage() {
                     autoFocus
                   />
                 </div>
+                {srSupported && (
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={loading || srListening}
+                      onClick={() => {
+                        if (srListening) {
+                          srStop();
+                        } else {
+                          srStart((text) => handleAnswerSubmit(text));
+                        }
+                      }}
+                    >
+                      {srListening ? "Listening..." : "Tap to speak (on-device)"}
+                    </Button>
+                  </div>
+                )}
+                {srError && (
+                  <div className="mt-3 p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
+                    {srError}
+                  </div>
+                )}
+                {currentFieldId && answers[currentFieldId] && (
+                  <p className="mt-3 text-sm text-jade font-medium break-words">
+                    Answer: <span className="font-body">{answers[currentFieldId]}</span>
+                  </p>
+                )}
+                {justSaved && (
+                  <p className="mt-3 flex items-center gap-2 text-sm font-medium text-jade" role="status">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Answer saved
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -399,15 +489,6 @@ export default function SpeakPage() {
                 </CardContent>
               </Card>
             )}
-
-            <div className="mt-4">
-              <Button variant="ghost" onClick={() => setStep("review")}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Review
-              </Button>
-            </div>
           </div>
         </section>
         <PageFooter />
@@ -421,6 +502,7 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
+            <PageBackLink href="/">Back to home</PageBackLink>
             <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 flex items-center justify-center">
                 <svg className="w-10 h-10 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">

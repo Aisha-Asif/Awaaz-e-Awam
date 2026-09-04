@@ -4,6 +4,7 @@ import { FormSchema } from "@/lib/types";
 import { MOCK_FORM_SCHEMA, getMockProcessAnswerResponse } from "@/lib/mock-data";
 import { sanitizeFormSchema, sanitizeAnswer, sanitizeSpeech } from "@/lib/schemas";
 import { SYSTEM_PROMPT, scanFormPrompt, answerPrompt, speechPrompt } from "@/lib/prompts";
+import { isNetworkError, errorStatus, RETRYABLE } from "@/lib/gemini-shared";
 
 // ponytail: server-side Gemini text/vision client, mirroring lib/deepseek.ts so
 // the app can run on Gemini (AI_PROVIDER=gemini) while DeepSeek is out of
@@ -41,19 +42,6 @@ function logUsage(model: string, usage: { promptTokens?: number; candidatesToken
   console.log(`[gemini] running total: prompt=${tokenTotals.prompt} completion=${tokenTotals.completion} total=${tokenTotals.total}`);
 }
 
-const RETRYABLE = new Set([408, 429, 500, 502, 503, 504]);
-
-// ponytail: the SDK surfaces errors as an ApiError; grab the HTTP status from
-// .status/.code or fall back to the code embedded in the message body.
-function errorStatus(err: unknown): number | null {
-  const e = err as { status?: number; code?: number | string; message?: string };
-  const n = Number(e?.status ?? e?.code);
-  if (Number.isInteger(n) && n > 0) return n;
-  const m = String(e?.message ?? "");
-  const hit = m.match(/"code"\s*:\s*(\d{3})/);
-  return hit ? Number(hit[1]) : null;
-}
-
 async function generateJson(parts: Part[]): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -84,7 +72,7 @@ async function generateJson(parts: Part[]): Promise<string> {
       });
     } catch (err) {
       const status = errorStatus(err);
-      const retryable = status !== null && RETRYABLE.has(status);
+      const retryable = (status !== null && RETRYABLE.has(status)) || isNetworkError(err);
       if (!retryable || i === models.length - 1) {
         console.error(`[gemini] call failed for ${model}:`, err instanceof Error ? err.message : err);
         throw new Error("Could not reach the AI provider. Please try again.");
@@ -197,7 +185,7 @@ export async function extractSpeech(
   }
 
   const text = await generateJson([
-    `${SYSTEM_PROMPT}\n\n${speechPrompt(schemaLabel, fieldIds)}`
+    `${SYSTEM_PROMPT}\n\n${speechPrompt(schemaLabel, fieldIds, transcript)}`
   ]);
 
   return sanitizeSpeech(parseJson(text));

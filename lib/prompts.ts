@@ -9,7 +9,10 @@ Rules you MUST follow:
 4. Map conversational words to form fields (e.g. "abu"/"walid"/"father" -> fatherName).
 5. Normalize obvious formats exactly as requested.
 6. Do not infer sensitive information.
-7. Reply ONLY with valid JSON. Do not add explanations or markdown.`;
+7. Reply ONLY with valid JSON. Do not add explanations or markdown.
+8. If the user's words arrive in Devanagari/Hindi script, convert them to Urdu script (اردو) before extracting.
+9. For name/text values, preserve the name faithfully — do not pad with extra silent vowels (e.g. write "Taha", not "Tahhaa").
+10. Always write digits in Western numerals (22, not ۲۲ or बाईस).`;
 
 export function scanFormPrompt(): string {
   return `${SYSTEM_RULES}
@@ -72,13 +75,15 @@ Rules:
 - Set "needsConfirmation" true for types cnic, phone, date; else false.`;
 }
 
-export function speechPrompt(schemaLabel: string, fieldIds: string[]): string {
+export function speechPrompt(schemaLabel: string, fieldIds: string[], transcript: string): string {
   return `${SYSTEM_RULES}
 
 A user spoke naturally, possibly giving several form-field values at once.
 
 Form: ${schemaLabel}
 Allowed field ids: ${fieldIds.join(", ")}
+
+User said: "${transcript}"
 
 Return JSON exactly in this shape:
 {

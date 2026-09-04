@@ -177,7 +177,7 @@ export async function extractSpeech(
   const text = await chat(
     [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: speechPrompt(schemaLabel, fieldIds) }
+      { role: "user", content: speechPrompt(schemaLabel, fieldIds, transcript) }
     ],
     TEXT_MODEL,
     true

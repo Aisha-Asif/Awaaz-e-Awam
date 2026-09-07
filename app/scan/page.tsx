@@ -2,8 +2,20 @@
 
 import Link from "next/link";
 import { useState, useCallback, useEffect, ReactNode } from "react";
+import { 
+  ArrowLeft, 
+  ChevronRight, 
+  Check, 
+  CheckCircle2, 
+  Copy, 
+  RotateCcw, 
+  MessageSquareQuote, 
+  ShieldAlert, 
+  FileText 
+} from "lucide-react";
 import { ImageCapture } from "@/components/ImageCapture";
 import { AudioRecorder } from "@/components/AudioRecorder";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
@@ -71,9 +83,7 @@ function PageHeader() {
 function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link href={href} className="inline-flex items-center gap-2 mb-6 font-body text-text-muted hover:text-text transition-colors">
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
+      <ArrowLeft className="w-4 h-4" />
       {children}
     </Link>
   );
@@ -108,6 +118,8 @@ export default function ScanPage() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [formHistory, setFormHistory] = useState<FormSchema[]>(getFormHistory);
   const [justSaved, setJustSaved] = useState(false);
+  const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
+  const [copiedJson, setCopiedJson] = useState(false);
   const {
     supported: srSupported,
     listening: srListening,
@@ -359,9 +371,7 @@ export default function ScanPage() {
                 onClick={() => setStep("capture")}
                 className="inline-flex items-center gap-2 font-body text-text-muted hover:text-text transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <ArrowLeft className="w-4 h-4" />
                 Back to Capture
               </button>
             </div>
@@ -388,9 +398,7 @@ export default function ScanPage() {
                         {answers[field.id] && (
                           <span className="ml-auto text-jade font-medium text-sm truncate max-w-[10rem]">{answers[field.id]}</span>
                         )}
-                        <svg className="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
                       </button>
                       <TTSButton text={field.questionUrdu} className="ml-2 shrink-0" />
                     </div>
@@ -427,17 +435,20 @@ export default function ScanPage() {
 
             <Card variant="elevated" padding="lg">
               <CardContent className="text-center py-8">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-jade/10 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-jade/10 text-jade flex items-center justify-center border border-jade/20 shadow-sm">
+                  <MessageSquareQuote className="w-10 h-10" />
                 </div>
-                <h2 className="text-2xl font-bold font-display text-text mb-2">{field?.questionUrdu || currentQuestion}</h2>
+                <h2 
+                  className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed"
+                  dir="rtl"
+                >
+                  {field?.questionUrdu || currentQuestion}
+                </h2>
                 <div className="mt-3 flex justify-center">
                   <TTSButton text={field?.questionUrdu || currentQuestion || ""} />
                 </div>
                 {field?.questionEnglish && (
-                  <p className="mt-2 text-text-muted font-body">{field.questionEnglish}</p>
+                  <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">{field.questionEnglish}</p>
                 )}
               </CardContent>
             </Card>
@@ -461,11 +472,11 @@ export default function ScanPage() {
                 disabled={loading}
               />
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Or type your answer:</label>
+                <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
                 <input
                   type="text"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="Answer..."
+                  className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all font-body text-base"
+                  placeholder="Answer in Urdu (اردو) or English..."
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && e.currentTarget.value.trim()) {
                       handleAnswerSubmit(e.currentTarget.value.trim());
@@ -477,10 +488,8 @@ export default function ScanPage() {
                 />
               </div>
               {justSaved && (
-                <p className="flex items-center gap-2 text-sm font-medium text-jade" role="status">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
+                <p className="flex items-center gap-2 text-sm font-medium text-jade font-body" role="status">
+                  <Check className="w-4 h-4 stroke-[2.5]" />
                   Answer saved
                 </p>
               )}
@@ -508,8 +517,8 @@ export default function ScanPage() {
                 </div>
               )}
               {currentFieldId && answers[currentFieldId] && (
-                <p className="text-sm text-jade font-medium break-words">
-                  Answer: <span className="font-body">{answers[currentFieldId]}</span>
+                <p className="text-sm text-jade font-medium break-words font-body">
+                  Answer: <span className="font-semibold">{answers[currentFieldId]}</span>
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
@@ -529,28 +538,16 @@ export default function ScanPage() {
               </div>
             )}
 
-            {showConfirmation && (
-              <Card variant="outlined" padding="lg" className="border-marigold bg-marigold/10">
-                <CardContent className="text-center py-6">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-marigold/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-marigold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold font-display text-marigold mb-2">Confirm Important Information</h3>
-                  <p className="text-text-muted mb-2 font-body">{showConfirmation.questionUrdu}</p>
-                  <p className="text-2xl font-mono font-bold text-text mb-4">{showConfirmation.value}</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="ghost" onClick={() => handleConfirm(false)}>
-                      Edit
-                    </Button>
-                    <Button onClick={() => handleConfirm(true)}>
-                      Correct
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Accessible Focus-Trapping Confirmation Modal */}
+            <ConfirmationDialog
+              isOpen={!!showConfirmation}
+              fieldId={showConfirmation?.fieldId || ""}
+              value={showConfirmation?.value || ""}
+              questionUrdu={showConfirmation?.questionUrdu || ""}
+              title="Confirm Important Information"
+              onClose={() => handleConfirm(false)}
+              onConfirm={() => handleConfirm(true)}
+            />
           </div>
         </section>
         <PageFooter />
@@ -559,6 +556,19 @@ export default function ScanPage() {
   }
 
   if (step === "complete") {
+    const handleCopyField = (fieldId: string, val: string) => {
+      navigator.clipboard.writeText(val);
+      setCopiedFieldId(fieldId);
+      setTimeout(() => setCopiedFieldId(null), 2000);
+    };
+
+    const handleCopyJson = () => {
+      const json = JSON.stringify(answers, null, 2);
+      navigator.clipboard.writeText(json);
+      setCopiedJson(true);
+      setTimeout(() => setCopiedJson(false), 2000);
+    };
+
     return (
       <>
         <PageHeader />
@@ -566,10 +576,8 @@ export default function ScanPage() {
           <div className="wrap" style={{maxWidth:960}}>
             <PageBackLink href="/">Back to home</PageBackLink>
             <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 flex items-center justify-center">
-                <svg className="w-10 h-10 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 text-jade flex items-center justify-center border border-jade/20 shadow-sm">
+                <CheckCircle2 className="w-10 h-10" />
               </div>
               <h2>Interview Complete!</h2>
               <p>All required fields have been answered.</p>
@@ -586,8 +594,9 @@ export default function ScanPage() {
                     const value = answers[fieldId];
                     const field = formSchema?.fields.find(f => f.id === fieldId);
                     if (!field || !value) return null;
+                    const isCopied = copiedFieldId === fieldId;
                     return (
-                      <div key={fieldId} className="flex items-start justify-between p-4 bg-paper rounded-card">
+                      <div key={fieldId} className="flex items-start justify-between p-4 bg-paper rounded-card border border-line/50">
                         <div className="flex-1 pr-4">
                           <p className="text-sm text-text-muted font-body">{field.label}</p>
                           <p className="font-medium text-text font-body" style={{wordBreak:"break-all"}}>{value}</p>
@@ -595,12 +604,16 @@ export default function ScanPage() {
                         <div className="flex items-center gap-1">
                           <TTSButton text={value} />
                           <button
-                            onClick={() => navigator.clipboard.writeText(value)}
+                            onClick={() => handleCopyField(fieldId, value)}
                             className="p-2 text-text-muted hover:text-text hover:bg-line rounded-card transition-colors"
+                            title={isCopied ? "Copied!" : "Copy value"}
+                            aria-label={`Copy ${field.label}`}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
-                            </svg>
+                            {isCopied ? (
+                              <Check className="w-4 h-4 text-jade stroke-[2.5]" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </div>
@@ -608,15 +621,18 @@ export default function ScanPage() {
                   })}
                 </CardContent>
                 <CardFooter>
-                  <Button size="lg" className="w-full" onClick={() => {
-                    const json = JSON.stringify(answers, null, 2);
-                    navigator.clipboard.writeText(json);
-                    alert("JSON copied to clipboard!");
-                  }}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
-                    </svg>
-                    Copy All as JSON
+                  <Button size="lg" className="w-full" onClick={handleCopyJson}>
+                    {copiedJson ? (
+                      <>
+                        <Check className="w-5 h-5 text-paper stroke-[2.5]" />
+                        JSON Copied to Clipboard!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-5 h-5" />
+                        Copy All as JSON
+                      </>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>
@@ -655,6 +671,7 @@ export default function ScanPage() {
                 if (originalImage) URL.revokeObjectURL(originalImage);
                 setOriginalImage(null);
               }}>
+                <RotateCcw className="w-4 h-4" />
                 Scan Another Form
               </Button>
             </div>

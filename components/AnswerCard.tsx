@@ -17,14 +17,20 @@ export const AnswerCard = ({
   if (!fieldValue) return null;
 
   return (
-    <CardContent className="p-4 bg-slate-50 rounded-xl">
-      <div className="flex justify-between items-start">
-        <p className="text-sm text-slate-500">{fieldLabel}</p>
-        <p className="font-medium text-slate-900 break-all">{fieldValue}</p>
+    <CardContent className="p-4 bg-paper-subtle rounded-card border border-line/60">
+      <div className="flex justify-between items-start gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-wider font-semibold text-text-muted font-body mb-1">
+            {fieldLabel}
+          </p>
+          <p className="font-semibold text-text font-body text-base break-all">
+            {fieldValue}
+          </p>
+        </div>
+        {showTTS && (
+          <TTSButton text={fieldValue} className="shrink-0" />
+        )}
       </div>
-      {showTTS && (
-        <TTSButton text={fieldValue} className="mt-2" />
-      )}
     </CardContent>
   );
 };

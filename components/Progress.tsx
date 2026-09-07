@@ -1,6 +1,7 @@
 "use client";
 
 import { HTMLAttributes, forwardRef } from "react";
+import { Check } from "lucide-react";
 
 interface ProgressProps extends HTMLAttributes<HTMLDivElement> {
   value: number;
@@ -23,14 +24,14 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
     return (
       <div ref={ref} className={className} {...props}>
         {(showLabel || label) && (
-          <div className="flex justify-between text-sm mb-1.5">
-            <span className="font-medium font-body text-text">{label || `Progress: ${Math.round(percentage)}%`}</span>
-            {showLabel && <span className="text-text-muted">{Math.round(percentage)}%</span>}
+          <div className="flex justify-between text-xs sm:text-sm mb-2 font-medium font-body">
+            <span className="text-text">{label || `Progress: ${Math.round(percentage)}%`}</span>
+            {showLabel && <span className="text-text-muted font-mono">{Math.round(percentage)}%</span>}
           </div>
         )}
-        <div className={`w-full bg-line rounded-full overflow-hidden ${sizes[size]}`}>
+        <div className={`w-full bg-paper-subtle border border-line/60 rounded-full overflow-hidden p-0.5 ${sizes[size]}`}>
           <div
-            className="h-full bg-ink rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-jade rounded-full transition-all duration-500 ease-out"
             style={{ width: `${percentage}%` }}
             role="progressbar"
             aria-valuenow={value}
@@ -65,27 +66,26 @@ export function StepProgress({ steps, currentStep, completedSteps = [], classNam
           <div key={step} className="flex flex-col items-center flex-1 relative">
             {!isLast && (
               <div
-                className="absolute top-3 left-1/2 w-full h-1 -translate-x-1/2 z-0"
-                style={{ backgroundColor: isCompleted ? "#12302B" : "#E4D9BC" }}
+                className="absolute top-3.5 left-1/2 w-full h-[2px] -translate-x-1/2 z-0"
+                style={{ backgroundColor: isCompleted ? "#1E6B4F" : "#E3DAC5" }}
               />
             )}
             <div
-              className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium font-display transition-all duration-300
+              className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold font-body transition-all duration-300
                 ${isCompleted
-                  ? "bg-ink text-on-ink"
+                  ? "bg-jade text-white shadow-sm"
                   : isCurrent
-                  ? "bg-ink text-on-ink ring-4 ring-line"
-                  : "bg-line text-text-muted"}`}
+                  ? "bg-ink text-on-ink ring-4 ring-marigold/30"
+                  : "bg-paper-card border border-line text-text-muted"}`}
             >
-              {isCompleted && (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+              {isCompleted ? (
+                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+              ) : (
+                index + 1
               )}
-              {!isCompleted && index + 1}
             </div>
-            <p className={`mt-2 text-xs text-center transition-colors duration-300 font-body ${
-              isCompleted || isCurrent ? "text-ink font-medium" : "text-text-muted"
+            <p className={`mt-2 text-[11px] sm:text-xs text-center transition-colors duration-300 font-body ${
+              isCompleted || isCurrent ? "text-ink font-semibold" : "text-text-muted"
             }`}>
               {step}
             </p>

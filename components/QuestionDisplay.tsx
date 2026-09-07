@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
 import { TTSButton } from "./TTS";
 import { CardContent } from "./Card";
 
@@ -16,16 +15,27 @@ export const QuestionDisplay = ({
   showTTS = true
 }: QuestionDisplayProps) => {
   return (
-    <CardContent>
-      <h2 className="text-xl font-semibold text-slate-900 mb-2">
-        {questionUrdu}
-      </h2>
-      {questionEnglish && (
-        <p className="text-slate-500">{questionEnglish}</p>
-      )}
-      {showTTS && (
-        <TTSButton text={questionUrdu} className="mt-3" />
-      )}
+    <CardContent className="space-y-4 text-center sm:text-left">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+        <div className="flex-1 w-full space-y-2">
+          <h2
+            className="text-2xl sm:text-3xl font-urdu text-text leading-relaxed tracking-normal"
+            dir="rtl"
+          >
+            {questionUrdu}
+          </h2>
+          {questionEnglish && (
+            <p className="text-sm sm:text-base text-text-muted font-body font-normal">
+              {questionEnglish}
+            </p>
+          )}
+        </div>
+        {showTTS && (
+          <div className="shrink-0 self-center sm:self-start">
+            <TTSButton text={questionUrdu} />
+          </div>
+        )}
+      </div>
     </CardContent>
   );
 };

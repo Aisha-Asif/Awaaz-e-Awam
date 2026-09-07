@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { Camera, UploadCloud, X, RotateCcw, Check, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/Button";
 
 interface ImageCaptureProps {
@@ -189,11 +190,32 @@ export function ImageCapture({
     };
   }, [preview]);
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      handleFileSelect(droppedFile);
+    }
+  }, [handleFileSelect]);
+
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
       {isCameraOpen && (
-        <div className="rounded-card border-2 border-line overflow-hidden">
-          <div className="relative aspect-[4/3] bg-ink-2">
+        <div className="rounded-card border border-line-strong overflow-hidden shadow-lg bg-ink-2">
+          <div className="relative aspect-[4/3]">
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -201,30 +223,33 @@ export function ImageCapture({
               playsInline
               muted
             />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-3/4 h-3/4 border-2 border-on-ink/50 rounded-card" />
+            {/* Viewfinder guide brackets */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6 sm:p-10">
+              <div className="w-full h-full border-2 border-dashed border-white/60 rounded-card relative">
+                <span className="absolute top-2 left-3 text-[11px] font-mono uppercase tracking-wider text-white/80 bg-black/40 px-2 py-0.5 rounded">
+                  Align Form Within Frame
+                </span>
+              </div>
             </div>
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 pointer-events-auto">
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-3 pointer-events-auto bg-ink/80 backdrop-blur-md px-4 py-2 rounded-pill border border-white/10">
               <Button
                 variant="ghost"
-                size="lg"
+                size="sm"
                 onClick={stopCamera}
                 disabled={isCapturing}
-                className="bg-on-ink/90 text-ink px-6 py-3"
+                className="text-on-ink hover:text-white"
               >
                 Cancel
               </Button>
               <Button
-                size="lg"
+                variant="jade"
+                size="md"
                 onClick={capturePhoto}
                 disabled={isCapturing}
-                className="bg-jade px-6 py-3"
+                className="px-6 shadow-md"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {isCapturing ? "Capturing..." : "Capture"}
+                <Camera className="w-4 h-4" />
+                {isCapturing ? "Capturing..." : "Capture Photo"}
               </Button>
             </div>
           </div>
@@ -233,95 +258,101 @@ export function ImageCapture({
 
       {!isCameraOpen && !preview && (
         <div className="space-y-4">
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={startCamera}
-            disabled={disabled}
-            className="w-full"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Open Camera
-          </Button>
-
-          <div className="relative">
-            <div className="flex items-center gap-3 text-text-muted text-sm">
-              <div className="flex-1 h-px bg-line" />
-              <span>or</span>
-              <div className="flex-1 h-px bg-line" />
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileInputChange}
-              className="sr-only"
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={startCamera}
               disabled={disabled}
-            />
-            <Button
-              variant="ghost"
-              size="lg"
-              className="w-full mt-4"
-              disabled={disabled}
-              onClick={handleUploadClick}
+              className="flex flex-col items-center justify-center p-6 rounded-card border-2 border-dashed border-line hover:border-jade hover:bg-jade-light/30 transition-all duration-200 group text-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Upload Image
-            </Button>
+              <div className="w-14 h-14 rounded-full bg-jade/10 group-hover:bg-jade group-hover:text-white text-jade flex items-center justify-center mb-3 transition-colors duration-200">
+                <Camera className="w-7 h-7" />
+              </div>
+              <span className="font-semibold text-text font-display text-base">Use Camera</span>
+              <span className="text-xs text-text-muted mt-1 font-body">Capture directly with your device</span>
+            </button>
+
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleUploadClick}
+              className={`flex flex-col items-center justify-center p-6 rounded-card border-2 border-dashed transition-all duration-200 text-center cursor-pointer group ${
+                isDragging
+                  ? "border-marigold bg-marigold-light/40"
+                  : "border-line hover:border-marigold hover:bg-marigold-light/20"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileInputChange}
+                className="hidden"
+                disabled={disabled}
+              />
+              <div className="w-14 h-14 rounded-full bg-marigold/10 group-hover:bg-marigold group-hover:text-ink-2 text-marigold flex items-center justify-center mb-3 transition-colors duration-200">
+                <UploadCloud className="w-7 h-7" />
+              </div>
+              <span className="font-semibold text-text font-display text-base">Upload Image</span>
+              <span className="text-xs text-text-muted mt-1 font-body">Drop form image or click to browse</span>
+            </div>
           </div>
 
-          <p className="text-center text-sm text-text-muted font-body">
-            Take a clear photo of the entire form with good lighting.
-          </p>
+          <div className="p-3.5 bg-paper-subtle border border-line rounded-card text-xs text-text-muted font-body flex items-start gap-2.5">
+            <ImageIcon className="w-4 h-4 text-jade shrink-0 mt-0.5" />
+            <span>
+              <strong>Helpful tip:</strong> Lay the physical document on a flat surface in good lighting. Ensure all fields and printed headings are clearly visible.
+            </span>
+          </div>
         </div>
       )}
 
       {preview && !isCameraOpen && (
-        <div className="rounded-card border-2 border-line overflow-hidden">
-          <div className="relative aspect-[4/3] bg-line">
+        <div className="rounded-card border border-line-strong overflow-hidden bg-paper-card shadow-md">
+          <div className="relative aspect-[4/3] bg-paper-subtle flex items-center justify-center">
             <img
               src={preview}
               alt="Form preview"
-              className="w-full h-full object-contain p-4"
+              className="w-full h-full object-contain p-3"
             />
             <div className="absolute top-3 right-3 flex gap-2">
               <button
+                type="button"
                 onClick={removeImage}
-                className="bg-on-ink/90 text-text-muted p-2 rounded-full hover:bg-on-ink transition-colors"
+                className="bg-ink/80 text-white p-2 rounded-full hover:bg-ink transition-colors shadow-sm"
+                title="Remove image"
+                aria-label="Remove image"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-4 h-4" />
               </button>
               <button
+                type="button"
                 onClick={() => setIsCameraOpen(true)}
-                className="bg-on-ink/90 text-text-muted p-2 rounded-full hover:bg-on-ink transition-colors"
+                className="bg-ink/80 text-white p-2 rounded-full hover:bg-ink transition-colors shadow-sm"
+                title="Retake photo"
+                aria-label="Retake photo"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.2A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                </svg>
+                <RotateCcw className="w-4 h-4" />
               </button>
             </div>
           </div>
-          <div className="p-4 flex justify-end">
-            <Button size="lg" onClick={submitImage} disabled={disabled}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Use This Image
+          <div className="p-4 bg-paper-card border-t border-line flex items-center justify-between gap-3">
+            <Button variant="outline" size="sm" onClick={removeImage}>
+              Change Image
+            </Button>
+            <Button variant="jade" size="md" onClick={submitImage} disabled={disabled}>
+              <Check className="w-4 h-4" />
+              Understand This Form
             </Button>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
-          {error}
+        <div className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2" role="alert">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
     </div>

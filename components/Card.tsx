@@ -8,16 +8,16 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ variant = "default", padding = "md", className = "", children, ...props }, ref) => {
     const variants = {
-      default: "bg-paper-card shadow-sm border border-line",
-      elevated: "bg-paper-card shadow-lg border border-line",
-      outlined: "bg-paper-card border-2 border-line"
+      default: "bg-paper-card shadow-[0_2px_8px_rgba(15,36,32,0.04)] border border-line",
+      elevated: "bg-paper-card shadow-[0_8px_24px_rgba(15,36,32,0.06)] border border-line",
+      outlined: "bg-paper-card border border-line-strong"
     };
 
     const paddings = {
       none: "",
-      sm: "p-4",
-      md: "p-6",
-      lg: "p-8"
+      sm: "p-4 sm:p-5",
+      md: "p-5 sm:p-7",
+      lg: "p-6 sm:p-9"
     };
 
     return (

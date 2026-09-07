@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { Mic, Square, RotateCcw, Check, UploadCloud, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 
 export type RecordingStatus = "idle" | "recording" | "processing" | "success" | "error";
 
@@ -164,6 +166,7 @@ interface AudioRecorderProps {
   showUploadFallback?: boolean;
   onUpload?: (file: File) => void;
   disabled?: boolean;
+  onRecordingStateChange?: (isRecording: boolean) => void;
 }
 
 export function AudioRecorder({
@@ -171,7 +174,8 @@ export function AudioRecorder({
   onError,
   showUploadFallback = true,
   onUpload,
-  disabled = false
+  disabled = false,
+  onRecordingStateChange
 }: AudioRecorderProps) {
   const {
     status,
@@ -186,6 +190,10 @@ export function AudioRecorder({
     onDataAvailable: onRecordingComplete,
     onError
   });
+
+  useEffect(() => {
+    onRecordingStateChange?.(status === "recording");
+  }, [status, onRecordingStateChange]);
 
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -229,64 +237,113 @@ export function AudioRecorder({
     error: "text-rani"
   };
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center gap-3 py-2">
         <div
-          className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+          className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 relative ${
             status === "recording"
-              ? "bg-rani/10 animate-pulse ring-4 ring-rani/30"
+              ? "bg-rani/15 ring-8 ring-rani/20 scale-105 shadow-lg shadow-rani/20"
               : status === "processing"
-              ? "bg-jade/10 ring-4 ring-jade/30"
+              ? "bg-jade/15 ring-8 ring-jade/20"
               : status === "success"
-              ? "bg-jade/10 ring-4 ring-jade/30"
+              ? "bg-jade/15 ring-8 ring-jade/20"
               : status === "error"
-              ? "bg-rani/10 ring-4 ring-rani/30"
-              : "bg-line ring-4 ring-ink/10"
+              ? "bg-rani/15 ring-8 ring-rani/20"
+              : "bg-paper-subtle border border-line ring-4 ring-line/40 shadow-sm"
           }`}
         >
           {status === "recording" && (
-            <div className="w-4 h-4 bg-rani rounded-full animate-pulse" />
+            <span className="w-6 h-6 bg-rani rounded-md animate-pulse shadow-sm" />
           )}
           {status === "processing" && (
-            <svg className="animate-spin h-8 w-8 text-jade" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+            <Loader2 className="h-9 w-9 text-jade animate-spin" />
           )}
           {status === "success" && (
-            <svg className="w-8 h-8 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="w-9 h-9 text-jade stroke-[2.5]" />
           )}
           {status === "error" && (
-            <svg className="w-8 h-8 text-rani" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <AlertCircle className="w-9 h-9 text-rani" />
           )}
           {status === "idle" && (
-            <svg className="w-8 h-8 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
+            <Mic className="w-9 h-9 text-ink transition-transform duration-200 group-hover:scale-110" />
           )}
         </div>
+
+        {status === "recording" && (
+          <div className="w-full max-w-sm mt-3 space-y-3 animate-in fade-in duration-200">
+            {/* Live animated waveform visualizer */}
+            <WaveformVisualizer active={true} color="rani" />
+
+            {/* Audio Recording Progress Bar */}
+            <div className="bg-paper-subtle p-3.5 rounded-xl border border-line shadow-inner">
+              <div className="flex items-center justify-between text-xs font-semibold mb-2">
+                <span className="flex items-center gap-2 text-rani font-medium">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rani opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rani"></span>
+                  </span>
+                  <span>Recording Voice / آواز سن رہے ہیں...</span>
+                </span>
+                <span className="font-mono text-xs font-bold text-rani bg-rani/10 px-2 py-0.5 rounded">
+                  {formatTime(duration)}
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div 
+                className="w-full h-2 bg-paper border border-line/80 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={Math.min(100, Math.round((duration / 60) * 100))}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Recording progress"
+              >
+                <div
+                  className="h-full bg-gradient-to-r from-marigold via-rani to-rani rounded-full transition-all duration-300 relative"
+                  style={{ width: `${Math.min(100, Math.max(6, (duration / 60) * 100))}%` }}
+                >
+                  <div className="absolute inset-0 bg-white/25 animate-pulse" />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-[11px] text-text-muted mt-2 font-body">
+                <span>Speak naturally in Urdu / Roman Urdu</span>
+                <span className="font-mono text-[10px] bg-paper px-1.5 py-0.5 rounded border border-line/60">
+                  {duration}s / ~60s
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <p className={`text-center text-lg font-medium font-body ${statusColors[status]}`}>
-        {statusLabels[status]}
-        {status === "recording" && <span className="ml-2 text-sm font-mono text-rani">{formatTime(duration)}</span>}
-        {status === "success" && <span className="ml-2 text-sm font-mono text-jade">{formatTime(duration)}</span>}
-      </p>
+      <div className="text-center">
+        {status !== "recording" && (
+          <p className={`text-base font-semibold font-body ${statusColors[status]}`}>
+            {statusLabels[status]}
+            {status === "success" && (
+              <span className="ml-2.5 px-2.5 py-0.5 rounded-full bg-jade/10 text-xs font-mono font-bold text-jade">
+                {formatTime(duration)}
+              </span>
+            )}
+          </p>
+        )}
+      </div>
 
       {error && (
-        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
-          {error}
+        <div className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2" role="alert">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {uploadError && (
-        <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
-          {uploadError}
+        <div className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2" role="alert">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{uploadError}</span>
         </div>
       )}
 
@@ -294,13 +351,12 @@ export function AudioRecorder({
         {status === "idle" && (
           <Button
             size="lg"
+            variant="marigold"
             onClick={startRecording}
             disabled={disabled}
-            className="w-full sm:w-auto min-w-[160px]"
+            className="w-full sm:w-auto min-w-[180px]"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
+            <Mic className="w-5 h-5" />
             Start Recording
           </Button>
         )}
@@ -310,11 +366,9 @@ export function AudioRecorder({
             size="lg"
             variant="danger"
             onClick={stopRecording}
-            className="w-full sm:w-auto min-w-[160px]"
+            className="w-full sm:w-auto min-w-[180px]"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 6h12v12H6z" />
-            </svg>
+            <Square className="w-4 h-4 fill-current" />
             Stop Recording
           </Button>
         )}
@@ -322,24 +376,21 @@ export function AudioRecorder({
         {status === "success" && (
           <>
             <Button
-              size="lg"
-              variant="ghost"
+              size="md"
+              variant="outline"
               onClick={cancelRecording}
-              className="w-full sm:w-auto min-w-[160px]"
+              className="w-full sm:w-auto"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <RotateCcw className="w-4 h-4" />
               Re-record
             </Button>
             <Button
-              size="lg"
+              size="md"
+              variant="jade"
               onClick={() => audioBlob && onRecordingComplete?.(audioBlob)}
-              className="w-full sm:w-auto min-w-[160px]"
+              className="w-full sm:w-auto"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
+              <Check className="w-4 h-4" />
               Use Recording
             </Button>
           </>
@@ -348,45 +399,51 @@ export function AudioRecorder({
         {status === "error" && (
           <Button
             size="lg"
-            variant="ghost"
+            variant="secondary"
             onClick={startRecording}
-            className="w-full sm:w-auto min-w-[160px]"
+            className="w-full sm:w-auto min-w-[180px]"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            <RotateCcw className="w-4 h-4" />
             Try Again
           </Button>
         )}
       </div>
 
       {showUploadFallback && status !== "recording" && status !== "processing" && (
-        <div className="relative">
-          <div className="flex items-center gap-3 text-text-muted text-sm">
+        <div className="pt-2">
+          <div className="flex items-center gap-3 text-text-muted text-xs">
             <div className="flex-1 h-px bg-line" />
-            <span>or</span>
+            <span className="uppercase tracking-wider">or upload voice note</span>
             <div className="flex-1 h-px bg-line" />
           </div>
-          <label className="mt-4 block">
+          <div className="mt-3">
             <input
+              ref={fileInputRef}
               type="file"
               accept="audio/*"
               onChange={handleFileUpload}
-              className="sr-only"
+              className="hidden"
               disabled={disabled}
             />
-            <Button variant="ghost" size="md" className="w-full" disabled={disabled}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Upload Audio File
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="w-full py-2"
+              disabled={disabled}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <UploadCloud className="w-4 h-4 text-text-muted" />
+              Upload Audio File (.mp3, .wav, .m4a, .webm)
             </Button>
-          </label>
+          </div>
         </div>
       )}
 
       {audioUrl && status === "success" && (
-        <audio controls className="w-full" src={audioUrl} />
+        <div className="pt-2">
+          <audio controls className="w-full rounded-card" src={audioUrl} />
+        </div>
       )}
     </div>
   );

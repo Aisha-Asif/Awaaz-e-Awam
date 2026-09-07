@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Send, CornerDownLeft } from "lucide-react";
 import { AudioRecorder } from "./AudioRecorder";
 import { Button } from "./Button";
 
@@ -16,7 +17,7 @@ export const AnswerInput = ({
   onAnswerSubmit,
   onEdit,
   disabled = false,
-  placeholder = "Answer in Urdu or English...",
+  placeholder = "Type in Urdu (اردو) or English...",
   showVoiceRecorder = true
 }: AnswerInputProps) => {
   const [typing, setTyping] = useState("");
@@ -29,40 +30,52 @@ export const AnswerInput = ({
   };
 
   return (
-    <div>
-      <textarea
-        placeholder={placeholder}
-        value={typing}
-        onChange={(e) => setTyping(e.target.value)}
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === "Enter" && (e.target as HTMLTextAreaElement).value.trim()) {
-            handleTypingSubmit((e.target as HTMLTextAreaElement).value);
-          }
-        }}
-        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        disabled={disabled}
-        rows={4}
-        autoFocus
-      />
-      <div className="mt-3">
-        <AudioRecorder
-          onRecordingComplete={audioBlob => {
-            setTyping("Processing audio...");
+    <div className="space-y-4">
+      {showVoiceRecorder && (
+        <div className="p-4 bg-paper-card rounded-card border border-line shadow-sm">
+          <AudioRecorder
+            onRecordingComplete={audioBlob => {
+              setTyping("Processing voice note...");
+            }}
+            showUploadFallback={true}
+            disabled={disabled}
+          />
+        </div>
+      )}
+
+      <div className="relative">
+        <textarea
+          placeholder={placeholder}
+          value={typing}
+          onChange={(e) => setTyping(e.target.value)}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === "Enter" && !e.shiftKey && (e.target as HTMLTextAreaElement).value.trim()) {
+              e.preventDefault();
+              handleTypingSubmit((e.target as HTMLTextAreaElement).value);
+            }
           }}
-          showUploadFallback={true}
+          className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all duration-200 font-body text-base"
           disabled={disabled}
+          rows={3}
         />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleTypingSubmit(typing)}
-          disabled={disabled}
-        >
-          Submit
-        </Button>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-text-muted font-body">
+            Press Enter ↵ to submit
+          </span>
+          <Button
+            variant="jade"
+            size="sm"
+            onClick={() => handleTypingSubmit(typing)}
+            disabled={disabled || !typing.trim()}
+          >
+            <Send className="w-4 h-4" />
+            Submit Answer
+          </Button>
+        </div>
       </div>
+
       {onEdit && (
-        <Button variant="ghost" size="sm" className="mt-2 w-full">
+        <Button variant="ghost" size="sm" className="w-full text-text-muted" onClick={onEdit}>
           Edit previous answer
         </Button>
       )}

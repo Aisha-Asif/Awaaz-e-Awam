@@ -1,7 +1,8 @@
 "use client";
 
+import { Check, Edit3, ShieldAlert } from "lucide-react";
 import { Button } from "./Button";
-import { Card, CardContent, CardFooter } from "./Card";
+import { Card, CardContent } from "./Card";
 
 interface AnswerConfirmationProps {
   isOpen: boolean;
@@ -17,40 +18,39 @@ export const AnswerConfirmation = ({
   isOpen,
   onClose,
   onConfirm,
-  fieldId,
   value,
   questionUrdu,
-  fieldType = "cnic"
 }: AnswerConfirmationProps) => {
   if (!isOpen) return null;
 
-  const fieldLabels: Record<string, string> = {
-    cnic: "CNIC",
-    phone: "Phone",
-    date: "Date of Birth"
-  };
-
   return (
-    <Card variant="outlined" className="border-amber-300 bg-amber-50">
-      <CardContent className="pt-0 text-center py-6">
-        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
-          <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+    <Card variant="outlined" className="border-marigold/50 bg-marigold-light/30 shadow-md">
+      <CardContent className="text-center py-6">
+        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-marigold/15 text-marigold flex items-center justify-center">
+          <ShieldAlert className="w-6 h-6" />
         </div>
-        <h3 className="text-lg font-semibold text-amber-900 mb-2">Confirm Important Information</h3>
-        <p className="text-amber-800 mb-2">{questionUrdu}</p>
-        <p className="text-2xl font-mono font-bold text-amber-900 mb-4">{value}</p>
-        <CardFooter className="pt-4">
-          <p className="text-sm text-amber-600 mb-2">I heard:</p>
-          <p className="text-amber-900 font-medium mb-4">{value}</p>
-          <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => onClose()}>
-              Edit
-            </Button>
-            <Button onClick={() => onConfirm()}>✓ Correct</Button>
-          </div>
-        </CardFooter>
+        <h3 className="text-lg font-semibold font-display text-text mb-1">
+          Confirm Critical Information
+        </h3>
+        <p className="text-xs uppercase tracking-wider text-text-muted font-medium mb-3">
+          Baraye Mehrbani Tasdeeq Karein
+        </p>
+        <p className="text-text mb-2 font-urdu text-xl leading-relaxed" dir="rtl">
+          {questionUrdu}
+        </p>
+        <div className="inline-block px-4 py-2 my-2 rounded-xl bg-paper-card border border-marigold/30 shadow-inner">
+          <p className="text-2xl font-mono font-bold text-text tracking-wide">{value}</p>
+        </div>
+        <div className="flex gap-3 justify-center mt-5">
+          <Button variant="outline" size="sm" onClick={onClose} className="px-5">
+            <Edit3 className="w-4 h-4" />
+            Edit
+          </Button>
+          <Button variant="marigold" size="sm" onClick={onConfirm} className="px-5">
+            <Check className="w-4 h-4" />
+            Sahi Hai / Correct
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

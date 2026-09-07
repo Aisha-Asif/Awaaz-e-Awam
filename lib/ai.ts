@@ -3,7 +3,8 @@ import * as gemini from "@/lib/gemini";
 
 // ponytail: provider toggle so the app runs on Gemini (AI_PROVIDER=gemini)
 // while DeepSeek is out of balance, and flips back with one env var.
-const provider = (process.env.AI_PROVIDER || "deepseek").toLowerCase();
+const defaultProvider = process.env.DEEPSEEK_API_KEY && !process.env.GEMINI_API_KEY ? "deepseek" : "gemini";
+const provider = (process.env.AI_PROVIDER || defaultProvider).toLowerCase();
 if (provider !== "deepseek" && provider !== "gemini") {
   throw new Error(`Invalid AI_PROVIDER "${provider}". Use "deepseek" or "gemini".`);
 }

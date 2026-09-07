@@ -797,9 +797,13 @@ Minimal technical jargon.
 
 ---
 
-# 26. Two-Person Team Architecture
+# 26. Team Role Architecture (Role-Based Split)
 
-## Person 1 — AI/Backend
+This section defines role ownership boundaries for parallel work.
+
+These roles can be fulfilled by two or more contributors.
+
+## Role A — AI/Backend
 
 Owns:
 
@@ -822,7 +826,7 @@ Must NOT build the main frontend.
 
 ---
 
-## Person 2 — Frontend
+## Role B — Frontend
 
 Owns:
 
@@ -908,13 +912,13 @@ Both:
 
 ## Hour 1–3
 
-Person 1:
+Role A:
 
 - Gemini connection
 - scan-form API
 - form schema
 
-Person 2:
+Role B:
 
 - home
 - Speak screen
@@ -925,13 +929,13 @@ Person 2:
 
 ## Hour 3–5
 
-Person 1:
+Role A:
 
 - answer extraction
 - validation
 - missing-field logic
 
-Person 2:
+Role B:
 
 - recorder
 - upload
@@ -942,12 +946,12 @@ Person 2:
 
 ## Hour 5–7
 
-Person 1:
+Role A:
 
 - complete API contract
 - integration testing
 
-Person 2:
+Role B:
 
 - connect real APIs
 - camera

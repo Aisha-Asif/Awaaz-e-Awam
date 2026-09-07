@@ -478,7 +478,7 @@ Use:
 multipart/form-data
 ```
 
-Field:
+Primary field:
 
 ```text
 audio
@@ -489,6 +489,14 @@ Optional:
 ```text
 formType
 ```
+
+Fallback input (for browser-STT/testing paths):
+
+```text
+transcript
+```
+
+At least one of `audio` or `transcript` must be provided.
 
 Example:
 
@@ -530,7 +538,57 @@ formType = citizen
 
 ---
 
-# 7. API #5 — Generate/Return Question
+# 7. API #5 — Transcribe Audio
+
+## Endpoint
+
+```text
+POST /api/transcribe
+```
+
+## Purpose
+
+Transcribe uploaded audio and return a transcript string.
+
+---
+
+## Request
+
+Use:
+
+```text
+multipart/form-data
+```
+
+Field:
+
+```text
+audio
+```
+
+---
+
+## Successful Response
+
+```json
+{
+  "transcript": "..."
+}
+```
+
+---
+
+## Error Response
+
+```json
+{
+  "error": "Could not transcribe the audio. Please try again."
+}
+```
+
+---
+
+# 8. API #6 — Generate/Return Question
 
 This endpoint is OPTIONAL.
 
@@ -564,7 +622,7 @@ Do not use this endpoint if the same question already exists in `FormSchema`.
 
 ---
 
-# 8. Frontend State Contract
+# 9. Frontend State Contract
 
 The frontend should maintain something similar to:
 
@@ -597,7 +655,7 @@ Example:
 
 ---
 
-# 9. API Call Sequence — Scan Mode
+# 10. API Call Sequence — Scan Mode
 
 The frontend should perform:
 
@@ -633,7 +691,7 @@ The frontend should perform:
 
 ---
 
-# 10. API Call Sequence — Speak Mode
+# 11. API Call Sequence — Speak Mode
 
 ```text
 1. User records audio
@@ -663,7 +721,7 @@ The frontend should perform:
 
 ---
 
-# 11. Frontend Mock Mode
+# 12. Frontend Mock Mode
 
 Before backend integration, Agent B must be able to run the UI with mock data.
 
@@ -697,7 +755,7 @@ Do not create a second incompatible frontend data model.
 
 ---
 
-# 12. Backend Mock Testing
+# 13. Backend Mock Testing
 
 Agent A must test APIs independently.
 
@@ -715,7 +773,7 @@ Use test files or curl/Postman.
 
 ---
 
-# 13. Field ID Rules
+# 14. Field ID Rules
 
 Field IDs must be:
 
@@ -754,7 +812,7 @@ fatherName
 
 ---
 
-# 14. Field Type Rules
+# 15. Field Type Rules
 
 Use only:
 
@@ -780,17 +838,23 @@ Do not invent a type.
 
 ---
 
-# 15. Completion Rules
+# 16. Completion Rules
 
-A form is complete when every field where:
+A form is complete when all fields have been handled by the interview flow.
+
+Current `/api/next-question` behavior:
+
+- asks missing required fields first
+- then asks missing optional fields
+- returns `complete = true` only when no remaining unanswered fields are left
+
+The endpoint treats a field as answered when:
 
 ```text
-required === true
+answers[field.id] is a truthy value
 ```
 
-has a non-null valid answer.
-
-Optional fields may remain null.
+Frontend may still choose to skip optional fields by storing a non-empty sentinel.
 
 Example:
 
@@ -808,13 +872,13 @@ gender null
 address null
 district null
 
-Result:
+Result (when optionals are also answered):
 complete = true
 ```
 
 ---
 
-# 16. Confirmation Rules
+# 17. Confirmation Rules
 
 Frontend MUST show confirmation when:
 
@@ -844,7 +908,7 @@ The backend must never silently alter a confirmed user value.
 
 ---
 
-# 17. Error Contract
+# 18. Error Contract
 
 Every endpoint should return predictable JSON.
 
@@ -874,7 +938,7 @@ internal secrets
 
 ---
 
-# 18. HTTP Status Guidelines
+# 19. HTTP Status Guidelines
 
 Use:
 
@@ -912,7 +976,7 @@ The frontend must display a friendly message regardless of the raw server status
 
 ---
 
-# 19. Ownership
+# 20. Ownership
 
 ## Agent A owns
 
@@ -945,7 +1009,7 @@ Both agents must avoid unnecessary edits to each other's files.
 
 ---
 
-# 20. Contract Change Rule
+# 21. Contract Change Rule
 
 If Agent A needs to change an API:
 
@@ -967,7 +1031,7 @@ response structures
 
 ---
 
-# 21. Final Integration Test
+# 22. Final Integration Test
 
 Before the hackathon demo, verify:
 
@@ -1014,7 +1078,7 @@ If all five work, the two agents are successfully integrated.
 
 ---
 
-# 22. Golden Rule
+# 23. Golden Rule
 
 The frontend should never need to know how Gemini works.
 

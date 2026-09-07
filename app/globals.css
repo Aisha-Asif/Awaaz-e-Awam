@@ -136,7 +136,7 @@ header{
 
 /* ---------- how it works ---------- */
 .section{ padding:76px 0; }
-.section-head{ max-width:52ch; margin-bottom:44px; }
+.section-head{ max-width:52ch; margin:0 auto 44px; }
 .section-head h2{ font-size:30px; font-weight:600; }
 .section-head p{ margin-top:12px; color:var(--text-muted); font-size:16px; }
 

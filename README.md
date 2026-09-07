@@ -344,15 +344,15 @@ Built during the **Bano Qabil Hackathon** build phase by:
 <table align="center">
   <tr>
     <td align="center">
-      <b>Afaf Shahid</b><br/>
+      <b>Taha Nauman</b><br/>
       <sub>AI/Backend · Gemini Integration · API Design · Validation</sub>
     </td>
     <td align="center">
-      <b>Aisha Asif</b><br/>
+      <b>Afaf Shahid</b><br/>
       <sub>Frontend · UI/UX · Component Architecture · Voice I/O</sub>
     </td>
     <td align="center">
-      <b>Taha Nauman</b><br/>
+      <b>Aisha Asif</b><br/>
       <sub>Full-Stack · Interview Logic · Integration · Testing</sub>
     </td>
   </tr>

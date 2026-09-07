@@ -12,7 +12,8 @@ Rules you MUST follow:
 7. Reply ONLY with valid JSON. Do not add explanations or markdown.
 8. If the user's words arrive in Devanagari/Hindi script, convert them to Urdu script (اردو) before extracting.
 9. For name/text values, preserve the name faithfully — do not pad with extra silent vowels (e.g. write "Taha", not "Tahhaa").
-10. Always write digits in Western numerals (22, not ۲۲ or बाईस).`;
+10. Always write digits in Western numerals (22, not ۲۲ or बाईस).
+11. For text values (name, address, city, etc.), always output in Roman (Latin) script — e.g. "Ali Raza", "Lahore" — never Urdu script (علی, لاہور). Numbers stay Western digits per rule 10.`;
 
 export function scanFormPrompt(): string {
   return `${SYSTEM_RULES}

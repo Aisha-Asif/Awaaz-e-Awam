@@ -410,7 +410,7 @@ export default function ScanPage() {
                         )}
                         <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
                       </button>
-                      <TTSButton text={field.questionUrdu} className="ml-2 shrink-0" />
+                      <TTSButton text={field.questionUrdu || field.label} className="ml-2 shrink-0" />
                     </div>
                   ))}
                 </CardContent>
@@ -455,7 +455,7 @@ export default function ScanPage() {
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
-                  <TTSButton text={field?.questionUrdu || currentQuestion || ""} />
+                  <TTSButton text={field?.questionUrdu || currentQuestion || field?.label || ""} />
                 </div>
                 {field?.questionEnglish && (
                   <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">{field.questionEnglish}</p>
@@ -466,6 +466,7 @@ export default function ScanPage() {
           <Card variant="elevated" className="mt-4">
             <CardContent className="pt-0 space-y-4">
               <AudioRecorder
+                key={currentFieldId}
                 onRecordingComplete={async (blob) => {
                   setLoading(true);
                   setError(null);

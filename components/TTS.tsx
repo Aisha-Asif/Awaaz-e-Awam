@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Volume2, Square } from "lucide-react";
 
 interface UseTTSOptions {
   lang?: string;
@@ -113,23 +114,19 @@ export function TTSButton({ text, lang = "ur-PK", className = "", disabled = fal
       type="button"
       onClick={handleClick}
       disabled={disabled || !text.trim()}
-      className={`inline-flex items-center gap-2 px-3 py-2 rounded-card text-sm font-medium font-body transition-colors
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-card text-xs font-semibold font-body transition-all duration-200 border
         ${speaking
-          ? "bg-rani/10 text-rani hover:bg-rani/20"
-          : "bg-line text-text-muted hover:bg-on-ink"}
+          ? "bg-rani-light text-rani border-rani/30 hover:bg-rani/20 animate-pulse"
+          : "bg-paper-card text-text-muted border-line hover:border-line-strong hover:text-text hover:bg-paper-subtle"}
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       aria-label={speaking ? "Stop reading" : "Read aloud"}
       aria-pressed={speaking}
       title={voiceUnavailable ? "No Urdu voice available on this device; using best available" : undefined}
     >
       {speaking ? (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <Square className="w-3.5 h-3.5 fill-current" />
       ) : (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-        </svg>
+        <Volume2 className="w-3.5 h-3.5 text-jade" />
       )}
       <span>{speaking ? "Stop" : "Listen"}</span>
     </button>

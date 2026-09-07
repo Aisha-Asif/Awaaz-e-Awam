@@ -175,6 +175,17 @@ header{
   padding:30px;
   position:relative;
   overflow:hidden;
+  transition: transform .18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .18s ease, border-color .18s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(12, 36, 32, 0.08);
+  border-color: var(--line-strong);
+}
+.mode-card:active{
+  transform: scale(0.98);
 }
 .mode-card::before{
   content:"";
@@ -300,4 +311,20 @@ footer{ padding:36px 0 48px; }
   }
   .CardTitle{ font-family:'Lora', serif; font-weight:600; }
   .CardDescription{ font-size:87.5%; color:#6b7280; }
+}
+
+/* Modal Dialog Backdrop */
+dialog::backdrop {
+  background: rgba(12, 36, 32, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+/* Audio Waveform Animation */
+@keyframes waveBar {
+  0% {
+    transform: scaleY(0.25);
+  }
+  100% {
+    transform: scaleY(1);
+  }
 }

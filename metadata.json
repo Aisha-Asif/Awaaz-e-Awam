@@ -1,0 +1,11 @@
+{
+  "name": "Awaaz-e-Awam",
+  "description": "Multi-dialect Urdu voice-to-form assistant for citizen documentation.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

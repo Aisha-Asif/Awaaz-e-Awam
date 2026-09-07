@@ -9,10 +9,9 @@ import { isNetworkError, errorStatus, RETRYABLE } from "@/lib/gemini-shared";
 // ponytail: server-side Gemini text/vision client, mirroring lib/deepseek.ts so
 // the app can run on Gemini (AI_PROVIDER=gemini) while DeepSeek is out of
 // balance. Audio STT lives in lib/gemini-stt.ts.
-export const AI_MODEL = "gemini-3.6-flash";
-// ponytail: 3.6-flash is a high-demand preview model and intermittently hits
-// 503 UNAVAILABLE; fail over to a stable workhorse model before giving up.
-const FALLBACK_MODELS = ["gemini-3.5-flash"];
+export const AI_MODEL = "gemini-3.8-flash";
+// ponytail: fallback models in case primary model encounters capacity issues
+const FALLBACK_MODELS = ["gemini-flash-latest", "gemini-3.5-flash"];
 
 const USE_MOCK = process.env.AI_MODE === "mock";
 

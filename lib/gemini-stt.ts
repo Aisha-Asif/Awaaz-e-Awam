@@ -3,9 +3,9 @@ import { isNetworkError, errorStatus, RETRYABLE } from "@/lib/gemini-shared";
 
 // ponytail: server-side Gemini STT — the only capability DeepSeek lacks. One
 // function, mirrors lib/deepseek.ts env/mock/logging conventions.
-export const STT_MODEL = "gemini-3.6-flash";
-// ponytail: same failover as lib/gemini.ts — 3.6-flash intermittently 503s.
-const FALLBACK_MODELS = ["gemini-3.5-flash"];
+export const STT_MODEL = "gemini-3.8-flash";
+// ponytail: same failover as lib/gemini.ts
+const FALLBACK_MODELS = ["gemini-flash-latest", "gemini-3.5-flash"];
 
 const USE_MOCK = process.env.AI_MODE === "mock";
 

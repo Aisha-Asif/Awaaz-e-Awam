@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import { useState, useCallback, useEffect, ReactNode } from "react";
+import { 
+  ArrowLeft, 
+  ChevronRight, 
+  Check, 
+  CheckCircle2, 
+  Copy, 
+  RotateCcw, 
+  MessageSquareQuote, 
+  ShieldAlert,
+  Loader2 
+} from "lucide-react";
 import { AudioRecorder } from "@/components/AudioRecorder";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
@@ -39,9 +51,7 @@ function PageHeader() {
 function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link href={href} className="inline-flex items-center gap-2 mb-6 font-body text-text-muted hover:text-text transition-colors">
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
+      <ArrowLeft className="w-4 h-4" />
       {children}
     </Link>
   );
@@ -68,6 +78,7 @@ export default function SpeakPage() {
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState<{
     fieldId: string;
@@ -75,6 +86,8 @@ export default function SpeakPage() {
     questionUrdu: string;
   } | null>(null);
   const [justSaved, setJustSaved] = useState(false);
+  const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
+  const [copiedJson, setCopiedJson] = useState(false);
   const {
     supported: srSupported,
     listening: srListening,
@@ -231,14 +244,45 @@ export default function SpeakPage() {
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
             </div>
 
+            {/* Live recording banner */}
+            {isRecording && (
+              <div className="mb-4 p-3.5 rounded-xl bg-rani/10 border border-rani/30 flex items-center justify-between text-rani text-sm animate-in fade-in duration-200">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rani opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rani"></span>
+                  </span>
+                  <span className="font-semibold font-body">Recording your details...</span>
+                </div>
+                <span className="font-urdu text-sm" dir="rtl">اپنا نام، ولدیت، شناختی کارڈ اور پتہ بولیں</span>
+              </div>
+            )}
+
             <Card variant="elevated" padding="lg">
               <CardContent>
                 <AudioRecorder
                   onRecordingComplete={handleRecordingComplete}
+                  onRecordingStateChange={setIsRecording}
                   disabled={loading}
                 />
               </CardContent>
             </Card>
+
+            {/* Processing Progress Bar */}
+            {loading && (
+              <div className="mt-4 p-5 rounded-card bg-jade/10 border border-jade/30 text-center animate-in fade-in duration-300">
+                <div className="flex items-center justify-center gap-2 text-jade font-semibold font-body mb-1.5">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Analyzing speech & extracting form fields...</span>
+                </div>
+                <p className="text-sm text-text-muted font-urdu" dir="rtl">
+                  آپ کی آواز سے معلومات حاصل کی جا رہی ہے...
+                </p>
+                <div className="mt-3.5 h-2 w-full max-w-xs mx-auto bg-paper rounded-full overflow-hidden border border-jade/30 p-0.5">
+                  <div className="h-full bg-gradient-to-r from-marigold to-jade rounded-full animate-pulse w-3/4 mx-auto" />
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4" role="alert">
@@ -265,10 +309,8 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
-            <Button variant="ghost" onClick={() => setStep("record")}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
+            <Button variant="ghost" onClick={() => setStep("record")} className="mb-4">
+              <ArrowLeft className="w-4 h-4" />
               Back to Recording
             </Button>
             <div className="section-head">
@@ -361,29 +403,30 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:640}}>
-<Button variant="ghost" onClick={() => setStep("review")}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Review
-              </Button>
+            <Button variant="ghost" onClick={() => setStep("review")} className="mb-4">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Review
+            </Button>
             <div className="mb-6">
               <Progress value={progress} max={totalRequired} showLabel label="Interview Progress" size="lg" />
             </div>
 
             <Card variant="elevated" padding="lg">
               <CardContent className="text-center py-8">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-rani" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 text-rani flex items-center justify-center border border-rani/20 shadow-sm">
+                  <MessageSquareQuote className="w-10 h-10" />
                 </div>
-                <h2 className="text-2xl font-bold font-display text-text mb-2">{field?.questionUrdu || currentQuestion}</h2>
+                <h2 
+                  className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed"
+                  dir="rtl"
+                >
+                  {field?.questionUrdu || currentQuestion}
+                </h2>
                 <div className="mt-3 flex justify-center">
                   <TTSButton text={field?.questionUrdu || currentQuestion || ""} />
                 </div>
                 {field?.questionEnglish && (
-                  <p className="mt-2 text-text-muted font-body">{field.questionEnglish}</p>
+                  <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">{field.questionEnglish}</p>
                 )}
               </CardContent>
             </Card>
@@ -410,8 +453,8 @@ export default function SpeakPage() {
                   <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
                   <input
                     type="text"
-                    className="w-full px-4 py-3 rounded-card border-2 border-line bg-paper-card text-text placeholder-text-muted focus:border-marigold focus:ring-0 focus:outline-none font-body"
-                    placeholder="Answer in Urdu or English..."
+                    className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all font-body text-base"
+                    placeholder="Answer in Urdu (اردو) or English..."
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && e.currentTarget.value.trim()) {
                         handleAnswerSubmit(e.currentTarget.value.trim());
@@ -446,15 +489,13 @@ export default function SpeakPage() {
                   </div>
                 )}
                 {currentFieldId && answers[currentFieldId] && (
-                  <p className="mt-3 text-sm text-jade font-medium break-words">
-                    Answer: <span className="font-body">{answers[currentFieldId]}</span>
+                  <p className="mt-3 text-sm text-jade font-medium break-words font-body">
+                    Answer: <span className="font-semibold">{answers[currentFieldId]}</span>
                   </p>
                 )}
                 {justSaved && (
-                  <p className="mt-3 flex items-center gap-2 text-sm font-medium text-jade" role="status">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <p className="mt-3 flex items-center gap-2 text-sm font-medium text-jade font-body" role="status">
+                    <Check className="w-4 h-4 stroke-[2.5]" />
                     Answer saved
                   </p>
                 )}
@@ -467,28 +508,16 @@ export default function SpeakPage() {
               </div>
             )}
 
-            {showConfirmation && (
-              <Card variant="outlined" padding="lg" className="border-marigold bg-marigold/10">
-                <CardContent className="text-center py-6">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-marigold/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-marigold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold font-display text-marigold mb-2">Confirm Important Information</h3>
-                  <p className="text-text-muted mb-2 font-body">{showConfirmation.questionUrdu}</p>
-                  <p className="text-2xl font-mono font-bold text-text mb-4">{showConfirmation.value}</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="ghost" onClick={() => handleConfirm(false)}>
-                      Edit
-                    </Button>
-                    <Button onClick={() => handleConfirm(true)}>
-                      Correct
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Accessible Focus-Trapping Confirmation Modal */}
+            <ConfirmationDialog
+              isOpen={!!showConfirmation}
+              fieldId={showConfirmation?.fieldId || ""}
+              value={showConfirmation?.value || ""}
+              questionUrdu={showConfirmation?.questionUrdu || ""}
+              title="Confirm Important Information"
+              onClose={() => handleConfirm(false)}
+              onConfirm={() => handleConfirm(true)}
+            />
           </div>
         </section>
         <PageFooter />
@@ -497,6 +526,19 @@ export default function SpeakPage() {
   }
 
   if (step === "complete") {
+    const handleCopyField = (fieldId: string, val: string) => {
+      navigator.clipboard.writeText(val);
+      setCopiedFieldId(fieldId);
+      setTimeout(() => setCopiedFieldId(null), 2000);
+    };
+
+    const handleCopyJson = () => {
+      const json = JSON.stringify(answers, null, 2);
+      navigator.clipboard.writeText(json);
+      setCopiedJson(true);
+      setTimeout(() => setCopiedJson(false), 2000);
+    };
+
     return (
       <>
         <PageHeader />
@@ -504,10 +546,8 @@ export default function SpeakPage() {
           <div className="wrap" style={{maxWidth:720}}>
             <PageBackLink href="/">Back to home</PageBackLink>
             <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 flex items-center justify-center">
-                <svg className="w-10 h-10 text-jade" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 text-jade flex items-center justify-center border border-jade/20 shadow-sm">
+                <CheckCircle2 className="w-10 h-10" />
               </div>
               <h2>Form Complete!</h2>
               <p>All required fields have been filled.</p>
@@ -523,21 +563,26 @@ export default function SpeakPage() {
                   const value = answers[fieldId];
                   const field = formSchema?.fields.find(f => f.id === fieldId);
                   if (!field || !value) return null;
+                  const isCopied = copiedFieldId === fieldId;
                   return (
-                    <div key={fieldId} className="flex items-center justify-between p-3 bg-paper rounded-card">
+                    <div key={fieldId} className="flex items-center justify-between p-3.5 bg-paper rounded-card border border-line/50">
                       <div>
                         <p className="text-sm text-text-muted font-body">{field.label}</p>
-                        <p className="font-medium text-text font-body">{value}</p>
+                        <p className="font-medium text-text font-body" style={{wordBreak:"break-all"}}>{value}</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <TTSButton text={value} />
                         <button
-                          onClick={() => navigator.clipboard.writeText(value)}
+                          onClick={() => handleCopyField(fieldId, value)}
                           className="p-2 text-text-muted hover:text-text hover:bg-line rounded-card transition-colors"
+                          title={isCopied ? "Copied!" : "Copy value"}
+                          aria-label={`Copy ${field.label}`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
-                          </svg>
+                          {isCopied ? (
+                            <Check className="w-4 h-4 text-jade stroke-[2.5]" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -545,15 +590,18 @@ export default function SpeakPage() {
                 })}
               </CardContent>
               <CardFooter>
-                <Button size="lg" className="w-full" onClick={() => {
-                  const json = JSON.stringify(answers, null, 2);
-                  navigator.clipboard.writeText(json);
-                  alert("JSON copied to clipboard!");
-                }}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 012-2h10a2 2 0 012 2v1M8 5v15" />
-                  </svg>
-                  Copy All as JSON
+                <Button size="lg" className="w-full" onClick={handleCopyJson}>
+                  {copiedJson ? (
+                    <>
+                      <Check className="w-5 h-5 text-paper stroke-[2.5]" />
+                      JSON Copied to Clipboard!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5" />
+                      Copy All as JSON
+                    </>
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -566,6 +614,7 @@ export default function SpeakPage() {
                 setCurrentFieldId(null);
                 setCurrentQuestion(null);
               }}>
+                <RotateCcw className="w-4 h-4" />
                 Start New Form
               </Button>
             </div>

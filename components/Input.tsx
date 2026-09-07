@@ -22,39 +22,39 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-text mb-1.5 font-body">
             {label}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
               {icon}
             </div>
           )}
           <input
             ref={ref}
             id={inputId}
-            className={`w-full rounded-xl border transition-colors duration-200
+            className={`w-full rounded-card border transition-all duration-200 font-body
               ${icon ? "pl-10" : "pl-4"}
-              pr-4 py-3 text-base
+              pr-4 py-2.5 text-base
               ${error
-                ? "border-red-300 bg-red-50 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500"
-                : "border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"}
-              focus:outline-none focus:ring-2 focus:ring-offset-0
-              disabled:opacity-50 disabled:cursor-not-allowed`}
+                ? "border-rani bg-rani-light text-rani placeholder-rani/50 focus:border-rani focus:ring-2 focus:ring-rani/20"
+                : "border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20"}
+              focus:outline-none focus:ring-offset-0
+              disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
             aria-invalid={error ? "true" : "false"}
             aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
             {...props}
           />
         </div>
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+          <p id={`${inputId}-error`} className="mt-1.5 text-xs font-medium text-rani font-body" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-slate-500">
+          <p id={`${inputId}-helper`} className="mt-1.5 text-xs text-text-muted font-body">
             {helperText}
           </p>
         )}
@@ -72,7 +72,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-text mb-1.5 font-body">
             {label}
           </label>
         )}
@@ -80,23 +80,23 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={inputId}
           rows={rows}
-          className={`w-full rounded-xl border transition-colors duration-200 p-4 text-base resize-y
+          className={`w-full rounded-card border transition-all duration-200 p-3.5 text-base resize-y font-body
             ${error
-              ? "border-red-300 bg-red-50 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500"
-              : "border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"}
-            focus:outline-none focus:ring-2 focus:ring-offset-0
-            disabled:opacity-50 disabled:cursor-not-allowed`}
+              ? "border-rani bg-rani-light text-rani placeholder-rani/50 focus:border-rani focus:ring-2 focus:ring-rani/20"
+              : "border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20"}
+            focus:outline-none focus:ring-offset-0
+            disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
           {...props}
         />
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-red-600" role="alert">
+          <p id={`${inputId}-error`} className="mt-1.5 text-xs font-medium text-rani font-body" role="alert">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-slate-500">
+          <p id={`${inputId}-helper`} className="mt-1.5 text-xs text-text-muted font-body">
             {helperText}
           </p>
         )}

@@ -91,7 +91,7 @@ Photograph any paper form using your camera or upload an image. The AI reads the
 | 🔁 **Sensitive Field Confirmation** | CNIC, phone number, and date of birth are always read back to the user before being accepted |
 | 🗺️ **Physical Form Guidance** | Validated answers are displayed beside the original scanned form image so the user knows exactly where to write |
 | 📋 **Copy & JSON Export** | One-tap copy of all answers as plain text, or the raw structured JSON for downstream use |
-| 🔊 **Text-to-Speech** | Questions are read aloud via Gemini TTS, with browser `SpeechSynthesis` as a fallback — the app works even if TTS is unavailable |
+| 🔊 **Text-to-Speech** | Questions and answers are read aloud in-browser via the Web Speech `SpeechSynthesis` API with Urdu voice detection and graceful fallback |
 | 🔒 **Server-side API Security** | Gemini API key lives only in server-side Next.js routes — never exposed to the browser |
 
 ---
@@ -109,7 +109,7 @@ Photograph any paper form using your camera or upload an image. The AI reads the
 │              Next.js API Routes             │
 │  /api/scan-form      /api/process-speech    │
 │  /api/process-answer /api/next-question     │
-│  /api/generate-question                     │
+│  /api/transcribe                             │
 └─────────────────────┬───────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────┐
@@ -122,7 +122,7 @@ Photograph any paper form using your camera or upload an image. The AI reads the
 ┌─────────────────────▼───────────────────────┐
 │              Google Gemini API              │
 │   Vision (form reading) · Language (NLU)   │
-│   Generation (Urdu questions) · TTS        │
+│   Speech-to-Text (audio transcription)      │
 └─────────────────────────────────────────────┘
 ```
 
@@ -147,37 +147,36 @@ awaaz-e-awam/
 │   │   ├── next-question/     # Deterministic interview sequencing
 │   │   ├── process-answer/    # Answer extraction via Gemini
 │   │   ├── process-speech/    # Full utterance → structured fields
-│   │   └── scan-form/         # Form image → FormSchema
+│   │   ├── scan-form/         # Form image → FormSchema
+│   │   └── transcribe/        # Audio blob → transcript
 │   ├── scan/                  # Scan Mode page
 │   ├── speak/                 # Speak Mode page
 │   ├── globals.css            # Design tokens & global styles
 │   └── layout.tsx
 │
 ├── components/
-│   ├── AnswerCard.tsx          # Displays an extracted field value
-│   ├── AnswerConfirmation.tsx  # Confirms extracted answer with user
-│   ├── AnswerInput.tsx         # Text input fallback for voice
-│   ├── AudioRecorder.tsx       # MediaRecorder + upload fallback
-│   ├── Button.tsx
-│   ├── Card.tsx
-│   ├── CompletionScreen.tsx    # Final answers + copy/export
-│   ├── ConfirmationDialog.tsx  # "Kya yeh sahi hai?" modal
-│   ├── ImageCapture.tsx        # Camera + file upload for forms
-│   ├── Input.tsx
-│   ├── InterviewHeader.tsx     # Form title + progress display
-│   ├── Progress.tsx
-│   ├── ProgressIndicator.tsx
-│   ├── QuestionCard.tsx        # Renders the current Urdu question
-│   ├── QuestionDisplay.tsx
-│   ├── TTS.tsx                 # Text-to-speech (Gemini → browser fallback)
-│   └── VoiceAnswerButton.tsx   # Push-to-record per-field button
+│   ├── AudioRecorder.tsx        # MediaRecorder + upload fallback UI
+│   ├── Button.tsx               # Reusable button variants
+│   ├── Card.tsx                 # Reusable card primitives
+│   ├── ConfirmationDialog.tsx   # Sensitive-field confirmation modal
+│   ├── ImageCapture.tsx         # Camera + file upload for form scanning
+│   ├── Progress.tsx             # Interview progress indicator
+│   ├── TTS.tsx                  # Browser SpeechSynthesis utilities/UI
+│   ├── WaveformVisualizer.tsx   # Live recording waveform animation
+│   └── useSpeechRecognition.ts  # On-device Web Speech recognition hook
 │
 └── lib/
-    ├── types.ts                # Shared TypeScript types (FormField, FormSchema…)
-    ├── gemini.ts               # Gemini API client
-    ├── prompts.ts              # All AI prompt templates
-    ├── validation.ts           # CNIC, phone, date validators
-    └── schemas.ts              # Zod schemas
+    ├── ai.ts                  # AI provider router (Gemini/DeepSeek)
+    ├── api.ts                 # Frontend API client helpers
+    ├── deepseek.ts            # DeepSeek text/vision client
+    ├── gemini.ts              # Gemini text/vision client
+    ├── gemini-shared.ts       # Shared Gemini retry/error helpers
+    ├── gemini-stt.ts          # Gemini speech-to-text client
+    ├── mock-data.ts           # Demo schema + mock API responses
+    ├── prompts.ts             # Prompt templates
+    ├── schemas.ts             # Zod request/response sanitizers
+    ├── types.ts               # Shared TypeScript types
+    └── validation.ts          # Deterministic field validators
 ```
 
 ---
@@ -192,7 +191,9 @@ The frontend and backend communicate through a strict, documented API contract. 
 | `/api/process-speech` | `POST` | Audio → transcript + extracted fields + missing field list |
 | `/api/process-answer` | `POST` | Transcript → structured answer for a specific field |
 | `/api/next-question` | `POST` | Current answers → next missing required field |
-| `/api/generate-question` | `POST` | Field metadata → Urdu question string |
+| `/api/transcribe` | `POST` | Audio blob → transcript string |
+
+`/api/generate-question` is documented in `API_CONTRACT.md` as an optional endpoint and is not implemented in this repository.
 
 ---
 

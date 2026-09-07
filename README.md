@@ -190,7 +190,7 @@ The frontend and backend communicate through a strict, documented API contract. 
 | `/api/scan-form` | `POST` | Image → `FormSchema` (field list with Urdu questions) |
 | `/api/process-speech` | `POST` | Audio → transcript + extracted fields + missing field list |
 | `/api/process-answer` | `POST` | Transcript → structured answer for a specific field |
-| `/api/next-question` | `POST` | Current answers → next missing required field |
+| `/api/next-question` | `POST` | Current answers → next unanswered field (required first, then optional) |
 | `/api/transcribe` | `POST` | Audio blob → transcript string |
 
 `/api/generate-question` is documented in `API_CONTRACT.md` as an optional endpoint and is not implemented in this repository.
@@ -215,7 +215,7 @@ type CitizenForm = {
 };
 ```
 
-CNIC normalization supports `35202-1234567-1` and `3520212345671`. Phone normalization supports `03001234567`, `+923001234567`, and `923001234567`.
+CNIC normalization supports `35202-1234567-1` and `3520212345671`. Phone validation accepts `03001234567` and `923001234567`, normalizing to `03XXXXXXXXX`.
 
 ---
 
@@ -294,9 +294,9 @@ All validation is deterministic application code — no LLM is asked to guess wh
 
 **CNIC** — accepts `XXXXX-XXXXXXX-X` and 13-digit raw. Normalized to 13 digits internally. Requires confirmation before acceptance.
 
-**Phone** — accepts `03XXXXXXXXX`, `+92XXXXXXXXXX`, `92XXXXXXXXXX`. Normalized to `03XXXXXXXXX`. Requires confirmation.
+**Phone** — accepts `03XXXXXXXXX` and `92XXXXXXXXXX`. Normalized to `03XXXXXXXXX`. Requires confirmation.
 
-**Date of Birth** — parses common Pakistani date formats. Normalizes to `YYYY-MM-DD`. Requires confirmation.
+**Date of Birth** — accepts day-first numeric input (`DD/MM/YYYY`, `DD-MM-YYYY`, `DD MM YYYY`) and normalizes to `YYYY-MM-DD`. Requires confirmation.
 
 **Unknown answers** are never guessed — the field is set to `null` and the question is re-asked.
 

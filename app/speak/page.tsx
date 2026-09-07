@@ -21,6 +21,7 @@ import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
+import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 import { FormSchema, ProcessSpeechResponse } from "@/lib/types";
 
 const REQUIRED_FIELD_ORDER = [
@@ -50,7 +51,7 @@ function PageHeader() {
 
 function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2 mb-6 font-body text-text-muted hover:text-text transition-colors">
+    <Link href={href} className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-card border border-line bg-paper-card text-text font-semibold font-body hover:border-line-strong hover:bg-paper hover:shadow-sm transition-all">
       <ArrowLeft className="w-4 h-4" />
       {children}
     </Link>
@@ -122,13 +123,7 @@ export default function SpeakPage() {
 
       const schema: FormSchema = {
         formTitle: "Citizen Information Form",
-        fields: REQUIRED_FIELD_ORDER.map(id => ({
-          id,
-          label: id,
-          type: "text" as const,
-          required: ["fullName", "fatherName", "cnic", "dateOfBirth", "phone", "city"].includes(id),
-          questionUrdu: ""
-        }))
+        fields: MOCK_FORM_SCHEMA.fields
       };
       setFormSchema(schema);
 
@@ -309,11 +304,11 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:720}}>
-            <Button variant="ghost" onClick={() => setStep("record")} className="mb-4">
+            <Button variant="secondary" onClick={() => setStep("record")} className="mb-4">
               <ArrowLeft className="w-4 h-4" />
               Back to Recording
             </Button>
-            <div className="section-head">
+            <div className="section-head" style={{textAlign:"center"}}>
               <h2>Review Information</h2>
               <p>Check what we extracted from your recording.</p>
             </div>
@@ -330,7 +325,7 @@ export default function SpeakPage() {
               </Card>
             )}
 
-            <Card variant="elevated" padding="lg">
+            <Card variant="elevated" padding="lg" className="mt-4">
               <CardHeader>
                 <CardTitle>Extracted Information</CardTitle>
                 <CardDescription>{filledFields.length} fields filled, {missingFields.length} required fields missing</CardDescription>
@@ -403,7 +398,7 @@ export default function SpeakPage() {
         <PageHeader />
         <section className="section">
           <div className="wrap" style={{maxWidth:640}}>
-            <Button variant="ghost" onClick={() => setStep("review")} className="mb-4">
+            <Button variant="secondary" onClick={() => setStep("review")} className="mb-4">
               <ArrowLeft className="w-4 h-4" />
               Back to Review
             </Button>
@@ -418,9 +413,9 @@ export default function SpeakPage() {
                 </div>
                 <h2 
                   className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed"
-                  dir="rtl"
+                  dir="auto"
                 >
-                  {field?.questionUrdu || currentQuestion}
+                  {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
                   <TTSButton text={field?.questionUrdu || currentQuestion || ""} />
@@ -431,7 +426,7 @@ export default function SpeakPage() {
               </CardContent>
             </Card>
 
-            <Card variant="elevated" padding="lg">
+            <Card variant="elevated" padding="lg" className="mt-4">
               <CardContent>
                 <AudioRecorder
                   onRecordingComplete={async (blob) => {

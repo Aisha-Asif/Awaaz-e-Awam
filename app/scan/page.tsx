@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback, useEffect, ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { 
   ArrowLeft, 
   ChevronRight, 
@@ -82,7 +82,7 @@ function PageHeader() {
 // ponytail: shared back link slot — placed at the top-left of each section.
 function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2 mb-6 font-body text-text-muted hover:text-text transition-colors">
+    <Link href={href} className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-card border border-line bg-paper-card text-text font-semibold font-body hover:border-line-strong hover:bg-paper hover:shadow-sm transition-all">
       <ArrowLeft className="w-4 h-4" />
       {children}
     </Link>
@@ -120,6 +120,7 @@ export default function ScanPage() {
   const [justSaved, setJustSaved] = useState(false);
   const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
   const [copiedJson, setCopiedJson] = useState(false);
+  const skippedFieldsRef = useRef<Set<string>>(new Set());
   const {
     supported: srSupported,
     listening: srListening,
@@ -143,6 +144,10 @@ export default function ScanPage() {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [step]);
+
+  useEffect(() => {
+    skippedFieldsRef.current = new Set();
+  }, [formSchema]);
 
   const handleImageCapture = useCallback(async (file: File) => {
     setLoading(true);
@@ -256,17 +261,22 @@ export default function ScanPage() {
 
   // Advance to the next unanswered field without recording the current one.
   const skipCurrentField = useCallback(async () => {
-    if (!formSchema) return;
+    if (!formSchema || !currentFieldId) return;
     setError(null);
-    const nextQ = await getNextQuestion(formSchema.fields, answers);
+    // ponytail: sentinels are local-only, never stored; every skipped field is
+    // remembered so getNextQuestion keeps moving past them instead of looping.
+    skippedFieldsRef.current.add(currentFieldId);
+    const nextAnswers = { ...answers };
+    skippedFieldsRef.current.forEach(id => { nextAnswers[id] = "__skip__"; });
+    const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
     if (nextQ.nextField) {
       setCurrentFieldId(nextQ.nextField);
       setCurrentQuestion(nextQ.questionUrdu);
       setStep("interview");
     } else {
-      setStep("complete");
+      setStep("fields");
     }
-  }, [formSchema, answers]);
+  }, [formSchema, answers, currentFieldId]);
 
   const getFilledCount = () => Object.values(answers).filter(v => v !== null).length;
   const getRequiredCount = () => formSchema?.fields.filter(f => f.required).length || 0;
@@ -369,13 +379,13 @@ export default function ScanPage() {
               <button
                 type="button"
                 onClick={() => setStep("capture")}
-                className="inline-flex items-center gap-2 font-body text-text-muted hover:text-text transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-card border border-line bg-paper-card text-text font-semibold font-body hover:border-line-strong hover:bg-paper hover:shadow-sm transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Capture
               </button>
             </div>
-            <div className="section-head">
+            <div className="section-head" style={{textAlign:"center"}}>
               <h2>Detected Fields</h2>
               <p>{formSchema?.formTitle} — {formSchema?.fields.length} fields detected</p>
             </div>
@@ -440,9 +450,9 @@ export default function ScanPage() {
                 </div>
                 <h2 
                   className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed"
-                  dir="rtl"
+                  dir="auto"
                 >
-                  {field?.questionUrdu || currentQuestion}
+                  {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
                   <TTSButton text={field?.questionUrdu || currentQuestion || ""} />
@@ -453,7 +463,7 @@ export default function ScanPage() {
               </CardContent>
             </Card>
 
-          <Card variant="elevated">
+          <Card variant="elevated" className="mt-4">
             <CardContent className="pt-0 space-y-4">
               <AudioRecorder
                 onRecordingComplete={async (blob) => {
@@ -522,7 +532,7 @@ export default function ScanPage() {
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
-                <Button variant="outline" onClick={() => setStep("fields")}>
+                <Button variant="secondary" onClick={() => setStep("fields")}>
                   Back to Fields
                 </Button>
                 <Button variant="ghost" onClick={skipCurrentField} disabled={loading}>

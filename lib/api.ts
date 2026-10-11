@@ -138,7 +138,7 @@ export async function transcribeAudioFile(audioFile: Blob): Promise<string> {
 
 // ===== API #4 — Process Speech =====
 
-export async function processSpeech(audioFile: File): Promise<ProcessSpeechResponse> {
+export async function processSpeech(audioFile: File, templateId?: string): Promise<ProcessSpeechResponse> {
   if (USE_MOCK) {
     await mockDelay(1500);
     return getMockProcessSpeechResponse(
@@ -149,6 +149,7 @@ export async function processSpeech(audioFile: File): Promise<ProcessSpeechRespo
   const formData = new FormData();
   formData.append("audio", audioFile);
   formData.append("formType", "citizen");
+  if (templateId) formData.append("templateId", templateId);
 
   const response = await fetch("/api/process-speech", {
     method: "POST",

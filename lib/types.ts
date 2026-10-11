@@ -23,12 +23,27 @@ export type FormField = {
   required: boolean;
   questionUrdu: string;
   questionEnglish?: string;
+  // Normalized 0-1 on the form image. For a template this is the write area:
+  // the empty part of the printed box, clear of the printed label.
   boundingBox?: BoundingBox;
+  // Groups fields when one form covers several people or blocks (applicant, attester).
+  section?: string;
 };
 
 export type FormSchema = {
   formTitle: string;
   fields: FormField[];
+};
+
+// A form we have already mapped and checked by hand: schema plus the page image
+// the answers get drawn onto.
+export type FormTemplate = {
+  id: string;
+  title: string;
+  imageUrl: string;
+  imageWidth: number;
+  imageHeight: number;
+  schema: FormSchema;
 };
 
 export type Answer = {

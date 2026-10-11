@@ -22,7 +22,9 @@ import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
-import { FormSchema } from "@/lib/types";
+import { FilledForm } from "@/components/FilledForm";
+import { TEMPLATES } from "@/lib/templates";
+import { FormSchema, FormTemplate } from "@/lib/types";
 
 const REQUIRED_FIELD_ORDER = [
   "fullName",
@@ -116,6 +118,9 @@ export default function ScanPage() {
     questionUrdu: string;
   } | null>(null);
   const [originalImage, setOriginalImage] = useState<string | null>(null);
+  // Set when the form came from a ready-made template: the finished interview
+  // then draws the answers onto that form instead of just listing them.
+  const [template, setTemplate] = useState<FormTemplate | null>(null);
   const [formHistory, setFormHistory] = useState<FormSchema[]>(getFormHistory);
   const [justSaved, setJustSaved] = useState(false);
   const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
@@ -156,6 +161,7 @@ export default function ScanPage() {
       const url = URL.createObjectURL(file);
       setOriginalImage(url);
       const schema = await scanForm(file);
+      setTemplate(null);
       setFormSchema(schema);
 
       setFormHistory(prev => {
@@ -282,6 +288,7 @@ export default function ScanPage() {
   const getRequiredCount = () => formSchema?.fields.filter(f => f.required).length || 0;
 
   const handleSelectHistory = useCallback((schema: FormSchema) => {
+    setTemplate(null);
     setFormSchema(schema);
     const initialAnswers: Record<string, string | null> = {};
     schema.fields.forEach(f => { initialAnswers[f.id] = null; });
@@ -291,6 +298,11 @@ export default function ScanPage() {
     setOriginalImage(null);
     setStep("fields");
   }, []);
+
+  const handleSelectTemplate = useCallback((t: FormTemplate) => {
+    handleSelectHistory(t.schema);
+    setTemplate(t);
+  }, [handleSelectHistory]);
 
   // Let the user jump straight into the interview for any detected field.
   const handleFieldSelect = useCallback((fieldId: string) => {
@@ -334,6 +346,28 @@ export default function ScanPage() {
               <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4" role="alert">
                 {error}
               </div>
+            )}
+
+            {TEMPLATES.length > 0 && (
+              <Card variant="elevated" padding="lg" className="mt-4">
+                <CardHeader>
+                  <CardTitle>Ready-made forms</CardTitle>
+                  <CardDescription>No scanning needed. Answer by voice and get the form back filled in.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {TEMPLATES.map(t => (
+                    <div key={t.id} className="flex items-center justify-between p-3 bg-paper rounded-card">
+                      <div className="flex-1 pr-2">
+                        <p className="font-medium text-text font-body">{t.title}</p>
+                        <p className="text-sm text-text-muted font-body">{t.schema.fields.length} fields</p>
+                      </div>
+                      <Button variant="primary" size="sm" onClick={() => handleSelectTemplate(t)}>
+                        Use
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             )}
 
             {formHistory.length > 0 && (
@@ -650,11 +684,14 @@ export default function ScanPage() {
 
               <Card variant="elevated" padding="lg">
                 <CardHeader>
-                  <CardTitle>Original Form</CardTitle>
-                  <CardDescription>Reference for where to write each answer</CardDescription>
+                  <CardTitle>{template ? "Your Filled Form" : "Original Form"}</CardTitle>
+                  <CardDescription>
+                    {template ? "Your answers, written into the form" : "Reference for where to write each answer"}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {originalImage && (
+                  {template && <FilledForm template={template} answers={answers} />}
+                  {!template && originalImage && (
                     <div className="relative bg-line rounded-card overflow-hidden" style={{aspectRatio:"4/3"}}>
                       <img
                         src={originalImage}
@@ -663,7 +700,7 @@ export default function ScanPage() {
                       />
                     </div>
                   )}
-                  {!originalImage && (
+                  {!template && !originalImage && (
                     <div className="bg-line rounded-card flex items-center justify-center" style={{aspectRatio:"4/3"}}>
                       <p className="text-text-muted font-body">Form image not available</p>
                     </div>
@@ -675,6 +712,7 @@ export default function ScanPage() {
             <div className="mt-6 flex justify-center">
               <Button variant="ghost" onClick={() => {
                 setStep("capture");
+                setTemplate(null);
                 setFormSchema(null);
                 setAnswers({});
                 setCurrentFieldId(null);

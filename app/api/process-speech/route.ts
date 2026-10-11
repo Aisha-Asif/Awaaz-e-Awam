@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractSpeech } from "@/lib/ai";
 import { transcribeAudio } from "@/lib/gemini-stt";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
+import { getTemplate } from "@/lib/templates";
 
 export const runtime = "nodejs";
 
@@ -44,10 +45,27 @@ export async function POST(req: NextRequest) {
   }
 
   const formType = (formData.get("formType") as string | null) || "citizen";
-  const schema = MOCK_FORM_SCHEMA;
+  const templateId = (formData.get("templateId") as string | null) || null;
+  const template = templateId ? getTemplate(templateId) : undefined;
+  if (templateId && !template) {
+    return NextResponse.json({ error: "Unknown form." }, { status: 400 });
+  }
+  const schema = template ? template.schema : MOCK_FORM_SCHEMA;
+
+  // The person speaking is the applicant, so the one-shot extraction only covers
+  // their fields; anyone else's (the attester) is asked about in the interview.
+  const speakable = template
+    ? schema.fields.filter((f) => !f.section || f.section.startsWith("Applicant"))
+    : schema.fields;
+
+  // The prompt only receives ids, so for a template spell out what each id means.
+  // "presentCity" vs "permanentCity" is otherwise a guess.
+  const formLabel = template
+    ? `${template.title}. Field meanings: ${speakable.map((f) => `${f.id} = ${f.label}`).join("; ")}`
+    : FORM_TITLES[formType] ?? formType;
 
   try {
-    const result = await extractSpeech(transcript, FORM_TITLES[formType] ?? formType, schema.fields.map((f) => f.id));
+    const result = await extractSpeech(transcript, formLabel, speakable.map((f) => f.id));
 
     const extracted: Record<string, string | null> = {};
     for (const field of schema.fields) {

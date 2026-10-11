@@ -22,19 +22,9 @@ import { TTSButton } from "@/components/TTS";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
+import { FilledForm } from "@/components/FilledForm";
+import { TEMPLATES, getTemplate } from "@/lib/templates";
 import { FormSchema, ProcessSpeechResponse } from "@/lib/types";
-
-const REQUIRED_FIELD_ORDER = [
-  "fullName",
-  "fatherName",
-  "cnic",
-  "dateOfBirth",
-  "phone",
-  "city",
-  "gender",
-  "address",
-  "district"
-];
 
 function PageHeader() {
   return (
@@ -78,6 +68,9 @@ export default function SpeakPage() {
   const [currentFieldId, setCurrentFieldId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [formSchema, setFormSchema] = useState<FormSchema | null>(null);
+  // "" = the built-in citizen form; otherwise a ready-made template id.
+  const [templateId, setTemplateId] = useState("");
+  const template = getTemplate(templateId);
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,13 +111,12 @@ export default function SpeakPage() {
     setError(null);
     try {
       const audioFile = new File([audioBlob], "recording.webm", { type: "audio/webm" });
-      const response = await processSpeech(audioFile);
+      const response = await processSpeech(audioFile, template?.id);
       setSpeechResponse(response);
 
-      const schema: FormSchema = {
-        formTitle: "Citizen Information Form",
-        fields: MOCK_FORM_SCHEMA.fields
-      };
+      const schema: FormSchema = template
+        ? template.schema
+        : { formTitle: "Citizen Information Form", fields: MOCK_FORM_SCHEMA.fields };
       setFormSchema(schema);
 
       const extractedAnswers: Record<string, string | null> = {};
@@ -145,7 +137,7 @@ export default function SpeakPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [template]);
 
   const handleEditField = useCallback((fieldId: string) => {
     setCurrentFieldId(fieldId);
@@ -219,8 +211,8 @@ export default function SpeakPage() {
   }, [showConfirmation, formSchema, answers]);
 
   const getMissingRequiredFields = () => {
-    if (!speechResponse) return [];
-    return REQUIRED_FIELD_ORDER.filter(id => !answers[id] && ["fullName", "fatherName", "cnic", "dateOfBirth", "phone", "city"].includes(id));
+    if (!speechResponse || !formSchema) return [];
+    return formSchema.fields.filter(f => f.required && !answers[f.id]).map(f => f.id);
   };
 
   const getFilledFields = () => {
@@ -238,6 +230,23 @@ export default function SpeakPage() {
               <h2>Speak Naturally</h2>
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
             </div>
+
+            {TEMPLATES.length > 0 && (
+              <label className="block mb-4 text-center font-body">
+                <span className="text-sm text-text-muted mr-2">Form</span>
+                <select
+                  value={templateId}
+                  onChange={e => setTemplateId(e.target.value)}
+                  disabled={loading || isRecording}
+                  className="rounded-card border border-line bg-white px-3 py-2 text-text focus:outline-none focus:ring-2 focus:ring-jade"
+                >
+                  <option value="">Citizen information (basic)</option>
+                  {TEMPLATES.map(t => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             {/* Live recording banner */}
             {isRecording && (
@@ -391,7 +400,7 @@ export default function SpeakPage() {
   if (step === "interview") {
     const field = formSchema?.fields.find(f => f.id === currentFieldId);
     const progress = Object.keys(answers).filter(k => answers[k]).length;
-    const totalRequired = REQUIRED_FIELD_ORDER.filter(id => formSchema?.fields.find(f => f.id === id)?.required).length;
+    const totalRequired = formSchema?.fields.filter(f => f.required).length ?? 0;
 
     return (
       <>
@@ -555,10 +564,10 @@ export default function SpeakPage() {
                 <CardDescription>Ready to copy or use on your physical form</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {REQUIRED_FIELD_ORDER.map(fieldId => {
+                {(formSchema?.fields ?? []).map(field => {
+                  const fieldId = field.id;
                   const value = answers[fieldId];
-                  const field = formSchema?.fields.find(f => f.id === fieldId);
-                  if (!field || !value) return null;
+                  if (!value) return null;
                   const isCopied = copiedFieldId === fieldId;
                   return (
                     <div key={fieldId} className="flex items-center justify-between p-3.5 bg-paper rounded-card border border-line/50">
@@ -601,6 +610,18 @@ export default function SpeakPage() {
                 </Button>
               </CardFooter>
             </Card>
+
+            {template && (
+              <Card variant="elevated" padding="lg" className="mt-4">
+                <CardHeader>
+                  <CardTitle>Your Filled Form</CardTitle>
+                  <CardDescription>Your answers, written into the form. Download it to print.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FilledForm template={template} answers={answers} />
+                </CardContent>
+              </Card>
+            )}
 
             <div className="mt-4 flex justify-center">
               <Button variant="ghost" onClick={() => {

@@ -1,13 +1,5 @@
 export type FormFieldType =
-  | "text"
-  | "number"
-  | "date"
-  | "cnic"
-  | "phone"
-  | "address"
-  | "select"
-  | "checkbox"
-  | "unknown";
+  "text" | "number" | "date" | "cnic" | "phone" | "address" | "select" | "checkbox" | "unknown";
 
 export type BoundingBox = {
   x: number;
@@ -82,14 +74,3 @@ export type ProcessSpeechResponse = {
   validation: ValidationResult;
   followUpQuestion: string | null;
 };
-
-export type InterviewState = {
-  form: FormSchema;
-  answers: Record<string, string | null>;
-  currentFieldId: string | null;
-  completed: boolean;
-};
-
-export type AppMode = "home" | "speak" | "scan" | "interview" | "results";
-
-export type RecordingState = "idle" | "recording" | "processing" | "success" | "error";

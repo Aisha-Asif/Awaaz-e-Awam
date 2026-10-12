@@ -17,6 +17,9 @@
 *.log
 npm-debug.log*
 
+# vitest
+/coverage/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

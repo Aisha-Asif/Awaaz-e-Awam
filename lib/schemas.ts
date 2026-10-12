@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FormField, FormSchema, ProcessAnswerResponse } from "@/lib/types";
 
 const FormFieldTypeSchema = z.enum([
   "text",
@@ -90,19 +91,11 @@ const RawFormSchema = z.object({
   fields: z.array(RawFormFieldSchema).optional().default([]),
 });
 
-export function sanitizeFormSchema(data: unknown) {
+export function sanitizeFormSchema(data: unknown): FormSchema {
   const parsed = RawFormSchema.parse(data);
   const seen = new Set<string>();
 
-  const fields: {
-    id: string;
-    label: string;
-    type: SanitizedFieldType;
-    required: boolean;
-    questionUrdu: string;
-    questionEnglish?: string;
-    boundingBox?: z.infer<typeof BoundingBoxSchema>;
-  }[] = parsed.fields
+  const fields: FormField[] = parsed.fields
     .map((f) => ({
       id: slugId(f.id),
       label: f.label ?? f.id,
@@ -128,7 +121,7 @@ const RawAnswerSchema = z.object({
   error: z.string().nullable().optional(),
 });
 
-export function sanitizeAnswer(data: unknown, fieldId: string) {
+export function sanitizeAnswer(data: unknown, fieldId: string): ProcessAnswerResponse {
   const parsed = RawAnswerSchema.parse(data);
   return {
     fieldId: parsed.fieldId ?? fieldId,

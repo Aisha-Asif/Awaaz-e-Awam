@@ -31,11 +31,13 @@ export async function processAnswer(
   fieldId: string,
   fieldType: string,
   transcript: string,
+  label?: string,
+  questionUrdu?: string,
 ): Promise<ProcessAnswerResponse> {
   const response = await fetch("/api/process-answer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fieldId, fieldType, transcript }),
+    body: JSON.stringify({ fieldId, fieldType, transcript, label, questionUrdu }),
   });
 
   if (!response.ok) {

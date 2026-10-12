@@ -9,24 +9,29 @@ const FormFieldTypeSchema = z.enum([
   "address",
   "select",
   "checkbox",
-  "unknown"
+  "unknown",
 ]);
 
 const BoundingBoxSchema = z.object({
   x: z.number(),
   y: z.number(),
   width: z.number(),
-  height: z.number()
+  height: z.number(),
 });
 
 // ---------------------------------------------------------------------------
 // Request body schemas
 // ---------------------------------------------------------------------------
 
+// ponytail: skipped-field sentinel is client-local only, never persisted or exported.
+export const SKIP_SENTINEL = "__skip__";
+
 export const ProcessAnswerRequestSchema = z.object({
   fieldId: z.string().min(1),
   fieldType: FormFieldTypeSchema,
-  transcript: z.string().min(1)
+  transcript: z.string().min(1),
+  label: z.string().optional(),
+  questionUrdu: z.string().optional(),
 });
 
 export type ProcessAnswerRequest = z.infer<typeof ProcessAnswerRequestSchema>;
@@ -38,12 +43,12 @@ const FormFieldInputSchema = z.object({
   required: z.boolean().optional().default(false),
   questionUrdu: z.string().optional().default(""),
   questionEnglish: z.string().optional(),
-  boundingBox: BoundingBoxSchema.optional()
+  boundingBox: BoundingBoxSchema.optional(),
 });
 
 export const NextQuestionRequestSchema = z.object({
   fields: z.array(FormFieldInputSchema).min(1),
-  answers: z.record(z.string().nullable())
+  answers: z.record(z.string().nullable()),
 });
 
 export type NextQuestionRequest = z.infer<typeof NextQuestionRequestSchema>;
@@ -77,12 +82,12 @@ const RawFormFieldSchema = z.object({
   required: z.boolean().optional(),
   questionUrdu: z.string().optional(),
   questionEnglish: z.string().optional(),
-  boundingBox: BoundingBoxSchema.optional()
+  boundingBox: BoundingBoxSchema.optional(),
 });
 
 const RawFormSchema = z.object({
   formTitle: z.string().optional(),
-  fields: z.array(RawFormFieldSchema).optional().default([])
+  fields: z.array(RawFormFieldSchema).optional().default([]),
 });
 
 export function sanitizeFormSchema(data: unknown) {
@@ -105,13 +110,13 @@ export function sanitizeFormSchema(data: unknown) {
       required: f.required ?? false,
       questionUrdu: f.questionUrdu ?? "",
       questionEnglish: f.questionEnglish,
-      boundingBox: f.boundingBox
+      boundingBox: f.boundingBox,
     }))
     .filter((f) => f.id !== "" && !seen.has(f.id) && seen.add(f.id));
 
   return {
     formTitle: parsed.formTitle ?? "Detected Form",
-    fields
+    fields,
   };
 }
 
@@ -120,7 +125,7 @@ const RawAnswerSchema = z.object({
   value: z.string().nullable().optional(),
   valid: z.boolean().optional(),
   needsConfirmation: z.boolean().optional(),
-  error: z.string().nullable().optional()
+  error: z.string().nullable().optional(),
 });
 
 export function sanitizeAnswer(data: unknown, fieldId: string) {
@@ -130,13 +135,13 @@ export function sanitizeAnswer(data: unknown, fieldId: string) {
     value: parsed.value ?? null,
     valid: parsed.valid ?? false,
     needsConfirmation: parsed.needsConfirmation ?? false,
-    error: parsed.error ?? null
+    error: parsed.error ?? null,
   };
 }
 
 const RawSpeechSchema = z.object({
   transcript: z.string().optional().default(""),
-  extracted: z.record(z.string().nullable()).optional().default({})
+  extracted: z.record(z.string().nullable()).optional().default({}),
 });
 
 export function sanitizeSpeech(data: unknown) {

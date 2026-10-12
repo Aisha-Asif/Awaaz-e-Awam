@@ -18,10 +18,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields in request." }, { status: 400 });
   }
 
-  const { fieldId, fieldType, transcript } = parsed.data;
+  const { fieldId, fieldType, transcript, label, questionUrdu } = parsed.data;
 
   try {
-    const extraction = await extractAnswer(fieldId, fieldType, fieldId, "", transcript);
+    const extraction = await extractAnswer(fieldId, fieldType, label ?? fieldId, questionUrdu ?? "", transcript);
 
     const value = extraction.value ?? "";
     if (value.trim() === "") {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         value: null,
         valid: false,
         needsConfirmation: false,
-        error: "The answer was unclear. Please provide it again."
+        error: "The answer was unclear. Please provide it again.",
       });
     }
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       value: result.valid ? result.normalized : value,
       valid: result.valid,
       needsConfirmation: result.valid && requiresConfirmation(fieldType),
-      error: result.valid ? null : (result.error ?? "Invalid value.")
+      error: result.valid ? null : (result.error ?? "Invalid value."),
     });
   } catch {
     return NextResponse.json({ error: "Could not process this response. Please try again." }, { status: 500 });

@@ -12,6 +12,7 @@ import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
+import { SKIP_SENTINEL } from "@/lib/schemas";
 import { FilledForm } from "@/components/FilledForm";
 import { TEMPLATES } from "@/lib/templates";
 import { FormSchema, FormTemplate } from "@/lib/types";
@@ -206,7 +207,7 @@ export default function ScanPage() {
         const field = formSchema.fields.find((f) => f.id === currentFieldId);
         if (!field) return;
 
-        const response = await processAnswer(currentFieldId, field.type, transcript);
+        const response = await processAnswer(currentFieldId, field.type, transcript, field.label, field.questionUrdu);
 
         if (response.valid && response.value) {
           if (response.needsConfirmation) {
@@ -272,7 +273,7 @@ export default function ScanPage() {
     skippedFieldsRef.current.add(currentFieldId);
     const nextAnswers = { ...answers };
     skippedFieldsRef.current.forEach((id) => {
-      nextAnswers[id] = "__skip__";
+      nextAnswers[id] = SKIP_SENTINEL;
     });
     const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
     if (nextQ.nextField) {

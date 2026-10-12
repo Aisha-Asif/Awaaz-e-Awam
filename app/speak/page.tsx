@@ -155,7 +155,7 @@ export default function SpeakPage() {
         const field = formSchema.fields.find((f) => f.id === currentFieldId);
         if (!field) return;
 
-        const response = await processAnswer(currentFieldId, field.type, transcript);
+        const response = await processAnswer(currentFieldId, field.type, transcript, field.label, field.questionUrdu);
 
         if (response.valid && response.value) {
           if (response.needsConfirmation) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { NextQuestionRequestSchema } from "@/lib/schemas";
+import { NextQuestionRequestSchema, SKIP_SENTINEL } from "@/lib/schemas";
 
 export const runtime = "nodejs";
 
@@ -18,22 +18,35 @@ export async function POST(req: NextRequest) {
 
   const { fields, answers } = parsed.data;
 
+  // Skip sentinels are client-local ("user chose not to answer this one") and
+  // must never count as a real answer nor block the flow — they move the
+  // interview forward and are never persisted or exported.
+  const skipped = new Set<string>();
+  const realAnswers: Record<string, string | null> = {};
+  for (const [id, value] of Object.entries(answers)) {
+    if (value === SKIP_SENTINEL) {
+      skipped.add(id);
+    } else {
+      realAnswers[id] = value;
+    }
+  }
+
   for (const field of fields) {
-    if (field.required && !answers[field.id]) {
+    if (field.required && realAnswers[field.id] === undefined && !skipped.has(field.id)) {
       return NextResponse.json({
         nextField: field.id,
         questionUrdu: field.questionUrdu || null,
-        complete: false
+        complete: false,
       });
     }
   }
 
   for (const field of fields) {
-    if (!field.required && !answers[field.id]) {
+    if (!field.required && realAnswers[field.id] === undefined && !skipped.has(field.id)) {
       return NextResponse.json({
         nextField: field.id,
         questionUrdu: field.questionUrdu || null,
-        complete: false
+        complete: false,
       });
     }
   }
@@ -41,6 +54,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     nextField: null,
     questionUrdu: null,
-    complete: true
+    complete: true,
   });
 }

@@ -1,3 +1,4 @@
+// Client-side fetch wrappers for every API route, plus the shared error shape.
 import { FormSchema, ProcessAnswerResponse, NextQuestionResponse, ProcessSpeechResponse } from "@/lib/types";
 
 // ===== API Error Types =====

@@ -1,5 +1,6 @@
 "use client";
 
+// Marketing homepage: hero, three-step explainer, Speak/Scan mode cards, demo-is-not-real footer.
 import Link from "next/link";
 import { Mic, ScanLine, MessageSquare, Check, ShieldAlert, CheckCircle2, ArrowRight } from "lucide-react";
 
@@ -13,8 +14,8 @@ export default function HomePage() {
             <span className="urd urdu">آواز عوام</span>
           </div>
           <div className="flex items-center">
-            <a 
-              href="#privacy" 
+            <a
+              href="#privacy"
               className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-medium bg-[#184039] border border-[#2b5850] text-on-ink hover:border-marigold/60 hover:text-on-ink transition-all shadow-sm group"
               title="Privacy Notice & Demo Disclaimer"
             >
@@ -29,11 +30,14 @@ export default function HomePage() {
         <div className="wrap hero-grid">
           <div>
             <div className="hero-eyebrow urdu">اپنی زبان میں بات کریں</div>
-            <h1>Talk to the form.<br />Let it fill itself.</h1>
+            <h1>
+              Talk to the form.
+              <br />
+              Let it fill itself.
+            </h1>
             <p className="hero-sub">
-              Say your information out loud in Urdu, Roman Urdu, or a mix of both —
-              or photograph a paper form and answer one plain question at a time.
-              No forms vocabulary required.
+              Say your information out loud in Urdu, Roman Urdu, or a mix of both — or photograph a paper form and
+              answer one plain question at a time. No forms vocabulary required.
             </p>
             <div className="hero-ctas">
               <Link href="/speak" className="btn btn-marigold">
@@ -45,12 +49,14 @@ export default function HomePage() {
                 Scan a form
               </Link>
             </div>
-            <div className="hero-note"><span className="dot"></span>Works with typing too, if speaking isn&apos;t possible right now.</div>
+            <div className="hero-note">
+              <span className="dot"></span>Works with typing too, if speaking isn&apos;t possible right now.
+            </div>
           </div>
 
           <div className="illus-card">
             <span className="tag">how it feels</span>
-            
+
             <div className="flex flex-col gap-3 pt-5 pb-1">
               {/* Bubble 1: Citizen speech in Urdu / Roman Urdu */}
               <div className="rounded-2xl p-4 bg-[#184039] border border-[#2c5b52] shadow-sm">
@@ -86,7 +92,9 @@ export default function HomePage() {
               {/* Bubble 2: Extracted Form Fields */}
               <div className="rounded-2xl p-4 bg-paper-card text-text border border-line shadow-md">
                 <div className="flex items-center justify-between border-b border-line pb-2 mb-2 text-xs">
-                  <span className="font-semibold text-text uppercase tracking-wider font-body">Citizen Record Form</span>
+                  <span className="font-semibold text-text uppercase tracking-wider font-body">
+                    Citizen Record Form
+                  </span>
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-jade bg-jade/10 px-2 py-0.5 rounded-full">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Auto-Matched
@@ -144,7 +152,10 @@ export default function HomePage() {
                 <MessageSquare className="w-5 h-5" />
               </div>
               <h3>It asks one question at a time</h3>
-              <p>A single plain Urdu question appears — &ldquo;Aap ka poora naam kya hai?&rdquo; — never a wall of ten fields.</p>
+              <p>
+                A single plain Urdu question appears — &ldquo;Aap ka poora naam kya hai?&rdquo; — never a wall of ten
+                fields.
+              </p>
             </div>
             <div className="step">
               <div className="step-num">3</div>
@@ -158,7 +169,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section" style={{paddingTop:0}}>
+      <section className="section" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <div className="section-head">
             <h2>Choose how you begin</h2>
@@ -170,7 +181,10 @@ export default function HomePage() {
                 <Mic className="w-[26px] h-[26px] text-rani" />
               </div>
               <h3>Speak Naturally</h3>
-              <p>Say everything in one go, in Urdu or Roman Urdu — the AI sorts your words into the right fields and asks about whatever&apos;s left.</p>
+              <p>
+                Say everything in one go, in Urdu or Roman Urdu — the AI sorts your words into the right fields and asks
+                about whatever&apos;s left.
+              </p>
               <span className="mode-link inline-flex items-center gap-1.5">
                 Start speaking <ArrowRight className="w-4 h-4" />
               </span>
@@ -180,7 +194,9 @@ export default function HomePage() {
                 <ScanLine className="w-[26px] h-[26px] text-jade" />
               </div>
               <h3>Scan a Form</h3>
-              <p>Photograph a paper form and the AI reads its fields, then interviews you about each one in plain Urdu.</p>
+              <p>
+                Photograph a paper form and the AI reads its fields, then interviews you about each one in plain Urdu.
+              </p>
               <span className="mode-link inline-flex items-center gap-1.5">
                 Scan a form <ArrowRight className="w-4 h-4" />
               </span>
@@ -189,12 +205,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section" style={{paddingTop:0}}>
+      <section className="section" style={{ paddingTop: 0 }}>
         <div className="wrap">
           <div className="demo">
             <div className="demo-copy">
               <h2>What the conversation looks like</h2>
-              <p>Every question is short, spoken aloud, and shown on screen — so nothing depends on reading well or knowing the form&apos;s own wording.</p>
+              <p>
+                Every question is short, spoken aloud, and shown on screen — so nothing depends on reading well or
+                knowing the form&apos;s own wording.
+              </p>
               <ul className="demo-list">
                 <li>CNIC, phone, and birth date are always read back for confirmation</li>
                 <li>Unclear answers are never guessed — you&apos;re asked again</li>
@@ -211,9 +230,13 @@ export default function HomePage() {
               <div className="bubble q urdu">آپ کا سی این آئی سی نمبر کیا ہے؟</div>
               <div className="bubble a">
                 <div className="waveform">
-                  <span style={{height:6}}></span><span style={{height:12}}></span><span style={{height:8}}></span>
-                  <span style={{height:14}}></span><span style={{height:7}}></span><span style={{height:11}}></span>
-                  <span style={{height:5}}></span>
+                  <span style={{ height: 6 }}></span>
+                  <span style={{ height: 12 }}></span>
+                  <span style={{ height: 8 }}></span>
+                  <span style={{ height: 14 }}></span>
+                  <span style={{ height: 7 }}></span>
+                  <span style={{ height: 11 }}></span>
+                  <span style={{ height: 5 }}></span>
                 </div>
                 &ldquo;35202-1234567-1&rdquo;
               </div>

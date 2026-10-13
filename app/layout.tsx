@@ -1,3 +1,4 @@
+// Root layout: site metadata, fonts preconnect, and the base <html>/<body>.
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -6,11 +7,7 @@ export const metadata: Metadata = {
   description: "Your voice. Your forms. Multi-dialect Urdu voice-to-form assistant.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>

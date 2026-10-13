@@ -1,5 +1,7 @@
 "use client";
 
+// AudioRecorder: MediaRecorder-powered voice capture (live waveform, duration, re-record) with an
+// audio-file upload fallback. Exposes both the UI component and the underlying useAudioRecorder hook.
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Mic, Square, RotateCcw, Check, UploadCloud, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/Button";
@@ -24,10 +26,11 @@ interface UseAudioRecorderReturn {
   error: string | null;
 }
 
+// MediaRecorder hook: records a mic Blob, tracks duration, exposes stop/cancel and friendly permission errors.
 export function useAudioRecorder({
   onDataAvailable,
   onError,
-  mimeType = "audio/webm"
+  mimeType = "audio/webm",
 }: UseAudioRecorderOptions = {}): UseAudioRecorderReturn {
   const [status, setStatus] = useState<RecordingStatus>("idle");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -67,7 +70,7 @@ export function useAudioRecorder({
   const cleanup = useCallback(() => {
     stopTimer();
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     if (audioUrl) {
@@ -156,7 +159,7 @@ export function useAudioRecorder({
     audioBlob,
     audioUrl,
     duration,
-    error
+    error,
   };
 }
 
@@ -169,27 +172,20 @@ interface AudioRecorderProps {
   onRecordingStateChange?: (isRecording: boolean) => void;
 }
 
+// Mic button UI around useAudioRecorder, plus upload fallback and a status ring.
 export function AudioRecorder({
   onRecordingComplete,
   onError,
   showUploadFallback = true,
   onUpload,
   disabled = false,
-  onRecordingStateChange
+  onRecordingStateChange,
 }: AudioRecorderProps) {
-  const {
-    status,
-    startRecording,
-    stopRecording,
-    cancelRecording,
-    audioBlob,
-    audioUrl,
-    duration,
-    error
-  } = useAudioRecorder({
-    onDataAvailable: onRecordingComplete,
-    onError
-  });
+  const { status, startRecording, stopRecording, cancelRecording, audioBlob, audioUrl, duration, error } =
+    useAudioRecorder({
+      onDataAvailable: onRecordingComplete,
+      onError,
+    });
 
   useEffect(() => {
     onRecordingStateChange?.(status === "recording");
@@ -197,23 +193,26 @@ export function AudioRecorder({
 
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    if (!file.type.startsWith("audio/")) {
-      setUploadError("Please select an audio file.");
-      return;
-    }
+      if (!file.type.startsWith("audio/")) {
+        setUploadError("Please select an audio file.");
+        return;
+      }
 
-    if (file.size > 25 * 1024 * 1024) {
-      setUploadError("File size must be less than 25MB.");
-      return;
-    }
+      if (file.size > 25 * 1024 * 1024) {
+        setUploadError("File size must be less than 25MB.");
+        return;
+      }
 
-    setUploadError(null);
-    onUpload?.(file);
-  }, [onUpload]);
+      setUploadError(null);
+      onUpload?.(file);
+    },
+    [onUpload],
+  );
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -226,7 +225,7 @@ export function AudioRecorder({
     recording: "Recording...",
     processing: "Processing...",
     success: "Recorded",
-    error: "Error"
+    error: "Error",
   };
 
   const statusColors: Record<RecordingStatus, string> = {
@@ -234,7 +233,7 @@ export function AudioRecorder({
     recording: "text-rani",
     processing: "text-jade",
     success: "text-jade",
-    error: "text-rani"
+    error: "text-rani",
   };
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -247,26 +246,18 @@ export function AudioRecorder({
             status === "recording"
               ? "bg-rani/15 ring-8 ring-rani/20 scale-105 shadow-lg shadow-rani/20"
               : status === "processing"
-              ? "bg-jade/15 ring-8 ring-jade/20"
-              : status === "success"
-              ? "bg-jade/15 ring-8 ring-jade/20"
-              : status === "error"
-              ? "bg-rani/15 ring-8 ring-rani/20"
-              : "bg-paper-subtle border border-line ring-4 ring-line/40 shadow-sm"
+                ? "bg-jade/15 ring-8 ring-jade/20"
+                : status === "success"
+                  ? "bg-jade/15 ring-8 ring-jade/20"
+                  : status === "error"
+                    ? "bg-rani/15 ring-8 ring-rani/20"
+                    : "bg-paper-subtle border border-line ring-4 ring-line/40 shadow-sm"
           }`}
         >
-          {status === "recording" && (
-            <span className="w-6 h-6 bg-rani rounded-md animate-pulse shadow-sm" />
-          )}
-          {status === "processing" && (
-            <Loader2 className="h-9 w-9 text-jade animate-spin" />
-          )}
-          {status === "success" && (
-            <Check className="w-9 h-9 text-jade stroke-[2.5]" />
-          )}
-          {status === "error" && (
-            <AlertCircle className="w-9 h-9 text-rani" />
-          )}
+          {status === "recording" && <span className="w-6 h-6 bg-rani rounded-md animate-pulse shadow-sm" />}
+          {status === "processing" && <Loader2 className="h-9 w-9 text-jade animate-spin" />}
+          {status === "success" && <Check className="w-9 h-9 text-jade stroke-[2.5]" />}
+          {status === "error" && <AlertCircle className="w-9 h-9 text-rani" />}
           {status === "idle" && (
             <Mic className="w-9 h-9 text-ink transition-transform duration-200 group-hover:scale-110" />
           )}
@@ -293,7 +284,7 @@ export function AudioRecorder({
               </div>
 
               {/* Progress bar */}
-              <div 
+              <div
                 className="w-full h-2 bg-paper border border-line/80 rounded-full overflow-hidden"
                 role="progressbar"
                 aria-valuenow={Math.min(100, Math.round((duration / 60) * 100))}
@@ -334,14 +325,20 @@ export function AudioRecorder({
       </div>
 
       {error && (
-        <div className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2" role="alert">
+        <div
+          className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2"
+          role="alert"
+        >
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {uploadError && (
-        <div className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2" role="alert">
+        <div
+          className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2"
+          role="alert"
+        >
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{uploadError}</span>
         </div>
@@ -362,12 +359,7 @@ export function AudioRecorder({
         )}
 
         {status === "recording" && (
-          <Button
-            size="lg"
-            variant="danger"
-            onClick={stopRecording}
-            className="w-full sm:w-auto min-w-[180px]"
-          >
+          <Button size="lg" variant="danger" onClick={stopRecording} className="w-full sm:w-auto min-w-[180px]">
             <Square className="w-4 h-4 fill-current" />
             Stop Recording
           </Button>
@@ -375,12 +367,7 @@ export function AudioRecorder({
 
         {status === "success" && (
           <>
-            <Button
-              size="md"
-              variant="outline"
-              onClick={cancelRecording}
-              className="w-full sm:w-auto"
-            >
+            <Button size="md" variant="outline" onClick={cancelRecording} className="w-full sm:w-auto">
               <RotateCcw className="w-4 h-4" />
               Re-record
             </Button>
@@ -397,12 +384,7 @@ export function AudioRecorder({
         )}
 
         {status === "error" && (
-          <Button
-            size="lg"
-            variant="secondary"
-            onClick={startRecording}
-            className="w-full sm:w-auto min-w-[180px]"
-          >
+          <Button size="lg" variant="secondary" onClick={startRecording} className="w-full sm:w-auto min-w-[180px]">
             <RotateCcw className="w-4 h-4" />
             Try Again
           </Button>

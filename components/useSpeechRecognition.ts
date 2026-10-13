@@ -27,6 +27,7 @@ function getRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
+// On-device speech hook: start() with a result callback; returns supported/listening/stop/error.
 export function useSpeechRecognition(lang = "ur-PK") {
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
@@ -39,41 +40,44 @@ export function useSpeechRecognition(lang = "ur-PK") {
     setSupported(getRecognitionCtor() !== null);
   }, []);
 
-  const start = useCallback((onResult: (text: string) => void) => {
-    const Ctor = getRecognitionCtor();
-    if (!Ctor) return;
-    if (recRef.current) recRef.current.stop();
+  const start = useCallback(
+    (onResult: (text: string) => void) => {
+      const Ctor = getRecognitionCtor();
+      if (!Ctor) return;
+      if (recRef.current) recRef.current.stop();
 
-    onResultRef.current = onResult;
-    const rec = new Ctor();
-    rec.lang = lang;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
+      onResultRef.current = onResult;
+      const rec = new Ctor();
+      rec.lang = lang;
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
 
-    rec.onresult = (event) => {
-      const first = event.results?.[0]?.[0]?.transcript;
-      if (first) finalResultRef.current = first.trim();
-    };
-    rec.onerror = (event) => {
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        setError("Microphone permission is needed for voice answers.");
-      } else if (event.error !== "aborted" && event.error !== "no-speech") {
-        setError("Could not recognize speech on this device. Please type instead.");
-      }
-    };
-    rec.onend = () => {
-      setListening(false);
-      if (finalResultRef.current) {
-        onResultRef.current?.(finalResultRef.current);
-        finalResultRef.current = "";
-      }
-    };
+      rec.onresult = (event) => {
+        const first = event.results?.[0]?.[0]?.transcript;
+        if (first) finalResultRef.current = first.trim();
+      };
+      rec.onerror = (event) => {
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          setError("Microphone permission is needed for voice answers.");
+        } else if (event.error !== "aborted" && event.error !== "no-speech") {
+          setError("Could not recognize speech on this device. Please type instead.");
+        }
+      };
+      rec.onend = () => {
+        setListening(false);
+        if (finalResultRef.current) {
+          onResultRef.current?.(finalResultRef.current);
+          finalResultRef.current = "";
+        }
+      };
 
-    recRef.current = rec;
-    setError(null);
-    setListening(true);
-    rec.start();
-  }, [lang]);
+      recRef.current = rec;
+      setError(null);
+      setListening(true);
+      rec.start();
+    },
+    [lang],
+  );
 
   const stop = useCallback(() => {
     recRef.current?.stop();

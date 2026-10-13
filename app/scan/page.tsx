@@ -1,5 +1,7 @@
 "use client";
 
+// Scan flow: photograph/upload a form -> AI reads fields -> review -> per-field interview ->
+// completed form (drawn onto a template when one matches); scanned-form history in localStorage.
 import Link from "next/link";
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { ArrowLeft, ChevronRight, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote } from "lucide-react";
@@ -35,6 +37,7 @@ const REQUIRED_FIELD_ORDER = [
 const HISTORY_KEY = "awaaz:formHistory";
 const HISTORY_MAX = 10;
 
+// Reads saved scanned-form schemas from localStorage (empty list on any failure).
 function getFormHistory(): FormSchema[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
@@ -46,6 +49,7 @@ function getFormHistory(): FormSchema[] {
   }
 }
 
+// Persists the history, capped at HISTORY_MAX; best-effort (ignores quota/private-mode errors).
 function saveFormHistory(list: FormSchema[]) {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX)));
@@ -54,6 +58,7 @@ function saveFormHistory(list: FormSchema[]) {
   }
 }
 
+// Prepends a schema, de-duped by formTitle, capped at HISTORY_MAX.
 function addToFormHistory(current: FormSchema[], schema: FormSchema): FormSchema[] {
   const deduped = current.filter((s) => s.formTitle !== schema.formTitle);
   return [schema, ...deduped].slice(0, HISTORY_MAX);
@@ -148,6 +153,7 @@ export default function ScanPage() {
     skippedFieldsRef.current = new Set();
   }, [formSchema]);
 
+  // Scans the photo into a schema, saves it to history, opens the review screen at the first question.
   const handleImageCapture = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
@@ -184,6 +190,7 @@ export default function ScanPage() {
     }
   }, []);
 
+  // Enters the interview at the first field not yet answered.
   const startInterview = useCallback(async () => {
     if (!formSchema) return;
 
@@ -197,6 +204,7 @@ export default function ScanPage() {
     }
   }, [formSchema, answers]);
 
+  // Extracts one field's answer from a transcript; confirms-or-advances, then asks what's next.
   const handleAnswerSubmit = useCallback(
     async (transcript: string) => {
       if (!currentFieldId || !formSchema) return;
@@ -240,6 +248,7 @@ export default function ScanPage() {
     [currentFieldId, formSchema, answers],
   );
 
+  // Commits a confirmed value and advances to the next question.
   const handleConfirm = useCallback(
     async (confirmed: boolean) => {
       if (!showConfirmation || !formSchema) return;

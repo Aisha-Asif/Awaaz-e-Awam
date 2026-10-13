@@ -1,5 +1,8 @@
+// Deterministic offline data + mock providers for AI_MODE=mock: a fixed citizen form,
+// scripted question/answer/speech responses (all deterministic by input).
 import { FormSchema, FormField, ProcessAnswerResponse, NextQuestionResponse, ProcessSpeechResponse } from "@/lib/types";
 
+// The demo's fixed schema: 8 fields spanning every supported type.
 export const MOCK_FORM_SCHEMA: FormSchema = {
   formTitle: "Citizen Information Form",
   fields: [
@@ -9,7 +12,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "text",
       required: true,
       questionUrdu: "Aap ka poora naam kya hai?",
-      questionEnglish: "What is your full name?"
+      questionEnglish: "What is your full name?",
     },
     {
       id: "fatherName",
@@ -17,7 +20,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "text",
       required: true,
       questionUrdu: "Aap ke walid ka naam kya hai?",
-      questionEnglish: "What is your father's name?"
+      questionEnglish: "What is your father's name?",
     },
     {
       id: "cnic",
@@ -25,7 +28,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "cnic",
       required: true,
       questionUrdu: "Aap ka CNIC number kya hai?",
-      questionEnglish: "What is your CNIC number?"
+      questionEnglish: "What is your CNIC number?",
     },
     {
       id: "dateOfBirth",
@@ -33,7 +36,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "date",
       required: true,
       questionUrdu: "Aap ki tareekh paidaish kya hai?",
-      questionEnglish: "What is your date of birth?"
+      questionEnglish: "What is your date of birth?",
     },
     {
       id: "gender",
@@ -41,7 +44,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "select",
       required: false,
       questionUrdu: "Aap ka jins kya hai?",
-      questionEnglish: "What is your gender?"
+      questionEnglish: "What is your gender?",
     },
     {
       id: "phone",
@@ -49,7 +52,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "phone",
       required: true,
       questionUrdu: "Aap ka mobile number kya hai?",
-      questionEnglish: "What is your mobile number?"
+      questionEnglish: "What is your mobile number?",
     },
     {
       id: "address",
@@ -57,7 +60,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "address",
       required: false,
       questionUrdu: "Aap ka pata kya hai?",
-      questionEnglish: "What is your address?"
+      questionEnglish: "What is your address?",
     },
     {
       id: "city",
@@ -65,7 +68,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "text",
       required: true,
       questionUrdu: "Aap ka sheher kya hai?",
-      questionEnglish: "What is your city?"
+      questionEnglish: "What is your city?",
     },
     {
       id: "district",
@@ -73,9 +76,9 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       type: "text",
       required: false,
       questionUrdu: "Aap ka zila kya hai?",
-      questionEnglish: "What is your district?"
-    }
-  ]
+      questionEnglish: "What is your district?",
+    },
+  ],
 };
 
 export const REQUIRED_FIELD_ORDER = [
@@ -87,21 +90,19 @@ export const REQUIRED_FIELD_ORDER = [
   "city",
   "gender",
   "address",
-  "district"
+  "district",
 ];
 
-export function getMockProcessAnswerResponse(
-  fieldId: string,
-  transcript: string
-): ProcessAnswerResponse {
-  const field = MOCK_FORM_SCHEMA.fields.find(f => f.id === fieldId);
+// Scripted per-field answer: digits for numeric types, otherwise the transcript verbatim.
+export function getMockProcessAnswerResponse(fieldId: string, transcript: string): ProcessAnswerResponse {
+  const field = MOCK_FORM_SCHEMA.fields.find((f) => f.id === fieldId);
   if (!field) {
     return {
       fieldId,
       value: null,
       valid: false,
       needsConfirmation: false,
-      error: "Field not found"
+      error: "Field not found",
     };
   }
 
@@ -116,7 +117,7 @@ export function getMockProcessAnswerResponse(
         value: normalized,
         valid: normalized.length === 13,
         needsConfirmation: true,
-        error: normalized.length === 13 ? null : "CNIC must contain 13 digits."
+        error: normalized.length === 13 ? null : "CNIC must contain 13 digits.",
       };
     }
   }
@@ -132,7 +133,7 @@ export function getMockProcessAnswerResponse(
         value: normalized,
         valid: normalized.length >= 11,
         needsConfirmation: true,
-        error: normalized.length >= 11 ? null : "Invalid phone number format."
+        error: normalized.length >= 11 ? null : "Invalid phone number format.",
       };
     }
   }
@@ -147,12 +148,18 @@ export function getMockProcessAnswerResponse(
         value: normalized,
         valid: true,
         needsConfirmation: true,
-        error: null
+        error: null,
       };
     }
   }
 
-  if (fieldId === "fullName" || fieldId === "fatherName" || fieldId === "city" || fieldId === "district" || fieldId === "address") {
+  if (
+    fieldId === "fullName" ||
+    fieldId === "fatherName" ||
+    fieldId === "city" ||
+    fieldId === "district" ||
+    fieldId === "address"
+  ) {
     const words = transcript.trim().split(/\s+/);
     if (words.length > 0) {
       const value = transcript.trim();
@@ -161,19 +168,19 @@ export function getMockProcessAnswerResponse(
         value,
         valid: value.length > 0,
         needsConfirmation: false,
-        error: null
+        error: null,
       };
     }
   }
 
   if (fieldId === "gender") {
     const genderMap: Record<string, string> = {
-      "male": "Male",
-      "mard": "Male",
-      "female": "Female",
-      "aurat": "Female",
-      "larki": "Female",
-      "ladka": "Male"
+      male: "Male",
+      mard: "Male",
+      female: "Female",
+      aurat: "Female",
+      larki: "Female",
+      ladka: "Male",
     };
     for (const [key, value] of Object.entries(genderMap)) {
       if (lowerTranscript.includes(key)) {
@@ -182,7 +189,7 @@ export function getMockProcessAnswerResponse(
           value,
           valid: true,
           needsConfirmation: false,
-          error: null
+          error: null,
         };
       }
     }
@@ -193,21 +200,19 @@ export function getMockProcessAnswerResponse(
     value: transcript.trim() || null,
     valid: transcript.trim().length > 0,
     needsConfirmation: false,
-    error: transcript.trim().length > 0 ? null : "Please provide an answer."
+    error: transcript.trim().length > 0 ? null : "Please provide an answer.",
   };
 }
 
-export function getMockNextQuestion(
-  fields: FormField[],
-  answers: Record<string, string | null>
-): NextQuestionResponse {
+// Scripted next-question walk through REQUIRED_FIELD_ORDER, then complete.
+export function getMockNextQuestion(fields: FormField[], answers: Record<string, string | null>): NextQuestionResponse {
   for (const fieldId of REQUIRED_FIELD_ORDER) {
-    const field = fields.find(f => f.id === fieldId);
+    const field = fields.find((f) => f.id === fieldId);
     if (field && field.required && !answers[fieldId]) {
       return {
         nextField: fieldId,
         questionUrdu: field.questionUrdu,
-        complete: false
+        complete: false,
       };
     }
   }
@@ -217,7 +222,7 @@ export function getMockNextQuestion(
       return {
         nextField: field.id,
         questionUrdu: field.questionUrdu,
-        complete: false
+        complete: false,
       };
     }
   }
@@ -225,10 +230,11 @@ export function getMockNextQuestion(
   return {
     nextField: null,
     questionUrdu: null,
-    complete: true
+    complete: true,
   };
 }
 
+// Scripted one-shot speech response: fills the whole schema from the transcript's digits.
 export function getMockProcessSpeechResponse(transcript: string): ProcessSpeechResponse {
   const extracted: Record<string, string | null> = {};
 
@@ -237,14 +243,15 @@ export function getMockProcessSpeechResponse(transcript: string): ProcessSpeechR
     extracted[field.id] = response.value;
   }
 
-  const missingFields = REQUIRED_FIELD_ORDER.filter(id => !extracted[id]);
+  const missingFields = REQUIRED_FIELD_ORDER.filter((id) => !extracted[id]);
   const invalidFields = MOCK_FORM_SCHEMA.fields
-    .filter(f => extracted[f.id] && !getMockProcessAnswerResponse(f.id, transcript).valid)
-    .map(f => ({ fieldId: f.id, message: getMockProcessAnswerResponse(f.id, transcript).error || "Invalid value" }));
+    .filter((f) => extracted[f.id] && !getMockProcessAnswerResponse(f.id, transcript).valid)
+    .map((f) => ({ fieldId: f.id, message: getMockProcessAnswerResponse(f.id, transcript).error || "Invalid value" }));
 
-  const followUpQuestion = missingFields.length > 0
-    ? MOCK_FORM_SCHEMA.fields.find(f => f.id === missingFields[0])?.questionUrdu || null
-    : null;
+  const followUpQuestion =
+    missingFields.length > 0
+      ? MOCK_FORM_SCHEMA.fields.find((f) => f.id === missingFields[0])?.questionUrdu || null
+      : null;
 
   return {
     transcript,
@@ -252,8 +259,8 @@ export function getMockProcessSpeechResponse(transcript: string): ProcessSpeechR
     validation: {
       valid: missingFields.length === 0 && invalidFields.length === 0,
       missingFields,
-      invalidFields
+      invalidFields,
     },
-    followUpQuestion
+    followUpQuestion,
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+// Progress: the interview progress bar with optional label, clamped to 0-100.
 import { HTMLAttributes, forwardRef } from "react";
 
 interface ProgressProps extends HTMLAttributes<HTMLDivElement> {

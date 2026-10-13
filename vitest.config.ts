@@ -5,6 +5,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
+    // "@" resolves to the project root mirroring tsconfig/Next.js path shorthands.
     alias: { "@": path.dirname(fileURLToPath(import.meta.url)) },
   },
 });

@@ -1,5 +1,7 @@
 "use client";
 
+// ImageCapture: photograph or upload a form — rear camera via getUserMedia, still capture to a File,
+// preview with replace/retake.
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Camera, UploadCloud, X, RotateCcw, Check, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/Button";
@@ -22,6 +24,7 @@ export function ImageCapture({ onImageCapture, onError, disabled = false, maxSiz
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Stops all camera tracks and closes the live view.
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -30,6 +33,7 @@ export function ImageCapture({ onImageCapture, onError, disabled = false, maxSiz
     setIsCameraOpen(false);
   }, []);
 
+  // Requests the rear camera and opens the live view.
   const startCamera = useCallback(async () => {
     setError(null);
     try {
@@ -56,6 +60,7 @@ export function ImageCapture({ onImageCapture, onError, disabled = false, maxSiz
     }
   }, [isCameraOpen]);
 
+  // Validates an uploaded image, then sets the preview + file.
   const handleFileSelect = useCallback(
     (selectedFile: File) => {
       setError(null);
@@ -77,6 +82,7 @@ export function ImageCapture({ onImageCapture, onError, disabled = false, maxSiz
     [maxSizeMB],
   );
 
+  // Grabs one video frame, emits it as a JPEG File, and closes the camera.
   const capturePhoto = useCallback(() => {
     const video = videoRef.current;
     if (!video) {

@@ -1,3 +1,4 @@
+// Zod schemas for API request bodies, plus sanitizers that coerce raw AI JSON into typed, valid records.
 import { z } from "zod";
 import { FormField, FormSchema, ProcessAnswerResponse } from "@/lib/types";
 

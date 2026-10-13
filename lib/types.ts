@@ -1,3 +1,4 @@
+// Shared domain types: form schema, templates, answer/validation records, and API response shapes.
 export type FormFieldType =
   "text" | "number" | "date" | "cnic" | "phone" | "address" | "select" | "checkbox" | "unknown";
 

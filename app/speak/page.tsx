@@ -1,5 +1,7 @@
 "use client";
 
+// Speak flow: record one utterance -> one-shot extraction (template or citizen schema) -> review
+// -> per-field interview -> filled form with copy/export.
 import Link from "next/link";
 import { useState, useCallback, useEffect, ReactNode } from "react";
 import { ArrowLeft, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
@@ -99,6 +101,7 @@ export default function SpeakPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [step]);
 
+  // Sends the clip to /process-speech, seeds answers from the extraction, starts the interview at the first missing field.
   const handleRecordingComplete = useCallback(
     async (audioBlob: Blob) => {
       setLoading(true);
@@ -135,6 +138,7 @@ export default function SpeakPage() {
     [template],
   );
 
+  // Jumps back to interview mode for one specific field.
   const handleEditField = useCallback(
     (fieldId: string) => {
       setCurrentFieldId(fieldId);
@@ -145,6 +149,7 @@ export default function SpeakPage() {
     [formSchema?.fields],
   );
 
+  // Extracts one field's answer from a transcript; confirms-or-advances, then asks what's next.
   const handleAnswerSubmit = useCallback(
     async (transcript: string) => {
       if (!currentFieldId || !formSchema) return;
@@ -188,6 +193,7 @@ export default function SpeakPage() {
     [currentFieldId, formSchema, answers],
   );
 
+  // Commits a confirmed value and advances to the next question.
   const handleConfirm = useCallback(
     async (confirmed: boolean) => {
       if (!showConfirmation || !formSchema) return;

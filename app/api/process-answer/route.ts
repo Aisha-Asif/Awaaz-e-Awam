@@ -1,3 +1,5 @@
+// POST /api/process-answer: extracts one field's value from a transcript, validates + normalizes it,
+// and flags sensitive field types (cnic/phone/date) for the read-back confirmation.
 import { NextRequest, NextResponse } from "next/server";
 import { extractAnswer } from "@/lib/ai";
 import { ProcessAnswerRequestSchema } from "@/lib/schemas";

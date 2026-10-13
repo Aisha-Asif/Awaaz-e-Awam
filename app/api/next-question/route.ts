@@ -1,3 +1,5 @@
+// POST /api/next-question: returns the next unanswered field (required before optional), or
+// complete:true when everything is done. Skip sentinels are never re-asked.
 import { NextRequest, NextResponse } from "next/server";
 import { NextQuestionRequestSchema, SKIP_SENTINEL } from "@/lib/schemas";
 

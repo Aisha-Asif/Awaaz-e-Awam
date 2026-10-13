@@ -1,5 +1,6 @@
 "use client";
 
+// WaveformVisualizer: pure-CSS animated bar waveform shown while recording.
 interface WaveformVisualizerProps {
   active?: boolean;
   color?: "rani" | "jade" | "marigold";
@@ -28,7 +29,7 @@ export function WaveformVisualizer({
         // Stagger heights and animation delays
         const baseHeight = [25, 45, 75, 90, 60, 30, 70, 100, 85, 40, 65, 95, 55, 35, 80, 50, 65, 30][i % 18];
         const delay = (i * 0.08) % 1.2;
-        const duration = 0.8 + ((i % 5) * 0.15);
+        const duration = 0.8 + (i % 5) * 0.15;
 
         return (
           <span

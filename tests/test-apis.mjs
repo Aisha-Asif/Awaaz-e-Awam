@@ -2,7 +2,7 @@
 // Requires the Next.js dev server running on localhost:3000.
 // Run backend in mock mode first (AI_MODE=mock in .env.local), then live.
 //
-//   node scripts/test-apis.mjs
+//   node tests/test-apis.mjs
 //
 // Exit code 0 = all pass.
 

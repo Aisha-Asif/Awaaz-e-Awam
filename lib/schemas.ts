@@ -73,7 +73,7 @@ function slugId(raw: string): string {
     .replace(/\s+([a-z0-9])/g, (_, c) => c.toUpperCase())
     .replace(/\s+/g, "");
 
-  if (/^[a-z][a-z0-9]*$/.test(cleaned)) return cleaned;
+  if (/^[a-z][a-zA-Z0-9]*$/.test(cleaned)) return cleaned;
   return "";
 }
 

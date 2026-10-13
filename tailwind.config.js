@@ -3,7 +3,7 @@ module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./lib/**/*.{js,ts,jsx,tsx,mdx}"
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -38,15 +38,15 @@ module.exports = {
         pill: "9999px",
       },
       animation: {
-        'pulse-subtle': 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'wave-bar': 'waveBar 1.2s ease-in-out infinite alternate',
+        "pulse-subtle": "pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "wave-bar": "waveBar 1.2s ease-in-out infinite alternate",
       },
       keyframes: {
         waveBar: {
-          '0%': { transform: 'scaleY(0.3)' },
-          '100%': { transform: 'scaleY(1.0)' },
-        }
-      }
+          "0%": { transform: "scaleY(0.3)" },
+          "100%": { transform: "scaleY(1.0)" },
+        },
+      },
     },
   },
   plugins: [],

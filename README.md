@@ -11,7 +11,7 @@
 
 **Multi-Dialect Urdu Voice-to-Form Assistant**
 
-*Your voice. Your forms.*
+_Your voice. Your forms._
 
 <br/>
 
@@ -20,6 +20,7 @@
 [![Gemini AI](https://img.shields.io/badge/Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)](https://zod.dev/)
+[![CI](https://img.shields.io/github/actions/workflow/status/Aisha-Asif/Awaaz-e-Awam/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=CI)](https://github.com/Aisha-Asif/Awaaz-e-Awam/actions/workflows/ci.yml)
 
 <br/>
 
@@ -47,13 +48,14 @@ Awaaz-e-Awam is that system.
 
 ## The Solution
 
-> *"Show me the form. Just talk to it."*
+> _"Show me the form. Just talk to it."_
 
 Awaaz-e-Awam turns any government form into a plain Urdu conversation. You do not need to understand the structure of the form, the vocabulary it uses, or even how to read it. You speak — and the form fills itself.
 
 The application offers **two complete user flows:**
 
 ### 🎙 Mode A — Speak Naturally
+
 Say everything at once, in a single natural utterance. The AI listens, understands your Urdu (or Roman Urdu, or a mix of both), maps your words to the correct form fields, and asks a single plain question for anything it did not catch.
 
 ```
@@ -66,6 +68,7 @@ Say everything at once, in a single natural utterance. The AI listens, understan
 ```
 
 ### 📷 Mode B — Scan a Form
+
 Photograph any paper form using your camera or upload an image. The AI reads the form, identifies every field, and then **interviews you** — one plain Urdu question at a time — until every required field is filled. It then shows you exactly where to write each answer on the physical paper.
 
 ```
@@ -81,18 +84,18 @@ Photograph any paper form using your camera or upload an image. The AI reads the
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| 🎙 **Browser Audio Recording** | Live recording via `MediaRecorder` API with automatic audio-upload fallback if microphone permission is denied |
-| 📷 **Form Image Scanning** | Camera capture or file upload; Gemini Vision reads any printed form and returns a typed field schema |
-| 🗣️ **Multi-Dialect Urdu NLU** | Understands standard Urdu, Roman Urdu, and Urdu-English code-switching — the way Pakistanis actually speak |
-| 🤖 **AI-Powered Urdu Interview** | Asks one plain Urdu question per missing field — never a wall of ten blanks at once |
-| ✅ **Smart Deterministic Validation** | CNIC (13-digit normalization), Pakistani phone formats, and date parsing are handled by application code — not guessed by an LLM |
-| 🔁 **Sensitive Field Confirmation** | CNIC, phone number, and date of birth are always read back to the user before being accepted |
-| 🗺️ **Physical Form Guidance** | Validated answers are displayed beside the original scanned form image so the user knows exactly where to write |
-| 📋 **Copy & JSON Export** | One-tap copy of all answers as plain text, or the raw structured JSON for downstream use |
-| 🔊 **Text-to-Speech** | Questions and answers are read aloud in-browser via the Web Speech `SpeechSynthesis` API with Urdu voice detection and graceful fallback |
-| 🔒 **Server-side API Security** | Gemini API key lives only in server-side Next.js routes — never exposed to the browser |
+| Feature                               | Description                                                                                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎙 **Browser Audio Recording**         | Live recording via `MediaRecorder` API with automatic audio-upload fallback if microphone permission is denied                           |
+| 📷 **Form Image Scanning**            | Camera capture or file upload; Gemini Vision reads any printed form and returns a typed field schema                                     |
+| 🗣️ **Multi-Dialect Urdu NLU**         | Understands standard Urdu, Roman Urdu, and Urdu-English code-switching — the way Pakistanis actually speak                               |
+| 🤖 **AI-Powered Urdu Interview**      | Asks one plain Urdu question per missing field — never a wall of ten blanks at once                                                      |
+| ✅ **Smart Deterministic Validation** | CNIC (13-digit normalization), Pakistani phone formats, and date parsing are handled by application code — not guessed by an LLM         |
+| 🔁 **Sensitive Field Confirmation**   | CNIC, phone number, and date of birth are always read back to the user before being accepted                                             |
+| 🗺️ **Physical Form Guidance**         | Validated answers are displayed beside the original scanned form image so the user knows exactly where to write                          |
+| 📋 **Copy & JSON Export**             | One-tap copy of all answers as plain text, or the raw structured JSON for downstream use                                                 |
+| 🔊 **Text-to-Speech**                 | Questions and answers are read aloud in-browser via the Web Speech `SpeechSynthesis` API with Urdu voice detection and graceful fallback |
+| 🔒 **Server-side API Security**       | Gemini API key lives only in server-side Next.js routes — never exposed to the browser                                                   |
 
 ---
 
@@ -185,13 +188,13 @@ awaaz-e-awam/
 
 The frontend and backend communicate through a strict, documented API contract. Every endpoint accepts and returns typed JSON — the frontend never calls Gemini directly.
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/scan-form` | `POST` | Image → `FormSchema` (field list with Urdu questions) |
-| `/api/process-speech` | `POST` | Audio → transcript + extracted fields + missing field list |
-| `/api/process-answer` | `POST` | Transcript → structured answer for a specific field |
-| `/api/next-question` | `POST` | Current answers → next unanswered field (required first, then optional) |
-| `/api/transcribe` | `POST` | Audio blob → transcript string |
+| Endpoint              | Method | Purpose                                                                 |
+| --------------------- | ------ | ----------------------------------------------------------------------- |
+| `/api/scan-form`      | `POST` | Image → `FormSchema` (field list with Urdu questions)                   |
+| `/api/process-speech` | `POST` | Audio → transcript + extracted fields + missing field list              |
+| `/api/process-answer` | `POST` | Transcript → structured answer for a specific field                     |
+| `/api/next-question`  | `POST` | Current answers → next unanswered field (required first, then optional) |
+| `/api/transcribe`     | `POST` | Audio blob → transcript string                                          |
 
 `/api/generate-question` is documented in `API_CONTRACT.md` as an optional endpoint and is not implemented in this repository.
 
@@ -203,15 +206,15 @@ The core citizen form schema supported out of the box:
 
 ```typescript
 type CitizenForm = {
-  fullName:    string | null;   // required
-  fatherName:  string | null;   // required
-  cnic:        string | null;   // required — validated to 13 digits
-  dateOfBirth: string | null;   // required — normalized to YYYY-MM-DD
-  phone:       string | null;   // required — normalized Pakistani format
-  city:        string | null;   // required
-  gender:      string | null;   // optional
-  address:     string | null;   // optional
-  district:    string | null;   // optional
+  fullName: string | null; // required
+  fatherName: string | null; // required
+  cnic: string | null; // required — validated to 13 digits
+  dateOfBirth: string | null; // required — normalized to YYYY-MM-DD
+  phone: string | null; // required — normalized Pakistani format
+  city: string | null; // required
+  gender: string | null; // optional
+  address: string | null; // optional
+  district: string | null; // optional
 };
 ```
 
@@ -230,7 +233,7 @@ CNIC normalization supports `35202-1234567-1` and `3520212345671`. Phone validat
 
 ```bash
 # Clone the repository
-git clone https://github.com/afafshahid/Awaaz-e-Awam.git
+git clone https://github.com/Aisha-Asif/Awaaz-e-Awam.git
 cd Awaaz-e-Awam
 
 # Install dependencies
@@ -249,6 +252,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 > **Security note:** Never use `NEXT_PUBLIC_GEMINI_API_KEY`. The API key must only exist server-side. The `.env*` pattern is in `.gitignore` — do not commit it.
 
+### Testing
+
+```bash
+npm test                  # vitest unit suites (tests/)
+node tests/test-apis.mjs  # server-backed e2e (needs `npm run dev` with AI_MODE=mock)
+```
+
+CI runs `typecheck` → `lint` → `format:check` → `test` on every push and pull request.
+
 ---
 
 ## Demo
@@ -258,14 +270,14 @@ Open [http://localhost:3000](http://localhost:3000).
 1. Open the app and select **Scan a Form**
 2. Upload or photograph a form (use the included demo citizen form)
 3. Watch Gemini identify all 9 fields automatically
-4. Answer each question by speaking in Urdu — *"Mera naam Ali Raza hai"*
+4. Answer each question by speaking in Urdu — _"Mera naam Ali Raza hai"_
 5. Confirm your CNIC when read back
 6. See all answers laid out beside the original form, ready to copy
 
 ### Demo B — Speak Mode
 
 1. Select **Speak Naturally**
-2. Record a single utterance: *"Mera naam Ali Raza hai, mere walid ka naam Ahmed Raza hai, main Lahore mein rehta hoon"*
+2. Record a single utterance: _"Mera naam Ali Raza hai, mere walid ka naam Ahmed Raza hai, main Lahore mein rehta hoon"_
 3. Watch the AI extract three fields simultaneously
 4. Answer the remaining fields (CNIC, phone, DOB) one question at a time
 5. Copy the completed form or export as JSON
@@ -276,13 +288,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 The visual design uses a warm, culturally rooted palette — grounded in ink and paper rather than the sterile blues of generic civic tech.
 
-| Token | Value | Role |
-|-------|-------|------|
-| `--ink` | `#12302B` | Dark teal-green — primary dark background |
-| `--paper` | `#FBF6EA` | Warm cream — primary light background |
-| `--marigold` | `#E29A34` | Gold — primary accent, calls to action |
-| `--rani` | `#B23A32` | Deep red — Speak Mode accent |
-| `--jade` | `#4F8F6D` | Forest green — Scan Mode accent |
+| Token        | Value     | Role                                      |
+| ------------ | --------- | ----------------------------------------- |
+| `--ink`      | `#12302B` | Dark teal-green — primary dark background |
+| `--paper`    | `#FBF6EA` | Warm cream — primary light background     |
+| `--marigold` | `#E29A34` | Gold — primary accent, calls to action    |
+| `--rani`     | `#B23A32` | Deep red — Speak Mode accent              |
+| `--jade`     | `#4F8F6D` | Forest green — Scan Mode accent           |
 
 Typography pairs **Lora** (serif, headings) with **Work Sans** (sans-serif, body) and **Noto Nastaliq Urdu** for Urdu script — ensuring the language of the product matches the language of its users.
 
@@ -307,6 +319,7 @@ All validation is deterministic application code — no LLM is asked to guess wh
 > This application is a demonstration. Please do not enter real CNIC numbers, phone numbers, or other personal identity information.
 
 During the build phase:
+
 - No audio is persisted to disk by default
 - No user accounts or session storage are created
 - No real government APIs are called
@@ -319,16 +332,19 @@ During the build phase:
 The MVP demonstrates the core idea. Here is where it goes next:
 
 **Near-term**
+
 - Pre-loaded schemas for NADRA, FBR, and BISP forms — no scan required
 - Sindhi and Punjabi language support
 - Offline PWA mode for 2G/no-connectivity environments
 
 **Mid-term**
+
 - Reliable bounding-box field highlighting on scanned form images
 - WhatsApp / SMS interface — deliver the interview through channels Pakistanis already use daily
 - Session history so users can return to a partially completed form
 
 **Long-term**
+
 - Direct e-submission to government e-portals on the user's behalf
 - Fine-tuned language model on regional Pakistani dialects
 - Full accessibility layer — screen-reader optimised flow and braille-compatible output
@@ -374,9 +390,9 @@ This project was built for the **Bano Qabil Hackathon**. All rights reserved by 
 
 **Awaaz-e-Awam — آواز عوام**
 
-*A person should be able to complete a difficult form by simply talking to it.*
+_A person should be able to complete a difficult form by simply talking to it._
 
-*The technology exists to serve that experience.*
+_The technology exists to serve that experience._
 
 <br/>
 

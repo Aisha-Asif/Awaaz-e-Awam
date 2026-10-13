@@ -33,8 +33,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // A field is answered only if its value is a non-empty string. null/""/absent
+  // all mean "still needs asking"; skip sentinels just move past it.
+  const isAnswered = (id: string) => Boolean(realAnswers[id]) || skipped.has(id);
+
   for (const field of fields) {
-    if (field.required && realAnswers[field.id] === undefined && !skipped.has(field.id)) {
+    if (field.required && !isAnswered(field.id)) {
       return NextResponse.json({
         nextField: field.id,
         questionUrdu: field.questionUrdu || null,
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
   }
 
   for (const field of fields) {
-    if (!field.required && realAnswers[field.id] === undefined && !skipped.has(field.id)) {
+    if (!field.required && !isAnswered(field.id)) {
       return NextResponse.json({
         nextField: field.id,
         questionUrdu: field.questionUrdu || null,

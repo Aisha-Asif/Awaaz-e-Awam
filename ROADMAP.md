@@ -35,7 +35,7 @@ way, clean up the codebase and add PII-safe, Groq-primary provider routing.
   - `components/ImageCapture.tsx:331` — retake sets camera open without `startCamera()`.
 - **Types:** `ProcessAnswerRequestSchema` (`lib/schemas.ts:26`), `sanitizeFormSchema`
   return type.
-- **Accept:** `npm run typecheck` + `npm run lint` pass; `scripts/test-apis.mjs` green.
+- **Accept:** `npm run typecheck` + `npm run lint` pass; `tests/test-apis.mjs` green.
 
 ## Phase 0.5 — Compliance
 
@@ -95,12 +95,12 @@ Fused into Phase 0; not a separate pass.
   function saying what it does; `// ponytail:` notes on deliberate simplifications.
   No narrating obvious code.
 - **Tests (vitest):** add `vitest` + `@vitest/coverage-v8` (dev deps).
-  - `lib/validation.test.ts` — CNIC/phone/date, the trust boundary; deepest coverage.
-  - `lib/fill-form.test.ts` — `formatForPaper`.
-  - `lib/templates/index.test.ts` — bounding-box math from the template JSON.
-  - `lib/schemas.test.ts` — Zod validators.
+  - `tests/validation.test.ts` — CNIC/phone/date, the trust boundary; deepest coverage.
+  - `tests/fill-form.test.ts` — `formatForPaper`.
+  - `tests/templates-index.test.ts` — bounding-box math from the template JSON.
+  - `tests/schemas.test.ts` — Zod validators.
   - Scripts: `"test": "vitest run"`, `"test:watch": "vitest"`. Keep
-    `scripts/test-apis.mjs` as the server-backed e2e.
+    `tests/test-apis.mjs` as the server-backed e2e.
 - **CI:** `.github/workflows/ci.yml` → `typecheck` → `lint` → `format:check` → `test`
   (check-mode, no auto-fix). Visible green check per push/PR is the credibility signal.
 - **README:** CI status badge + short "Testing" note.

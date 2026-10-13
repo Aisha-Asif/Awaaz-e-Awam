@@ -1,3 +1,5 @@
+// POST /api/scan-form: AI reads a photographed form into a typed schema; falls back to the demo
+// schema when the model finds <2 fields so the demo never hard-fails.
 import { NextRequest, NextResponse } from "next/server";
 import { extractFormSchema } from "@/lib/ai";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
@@ -6,6 +8,7 @@ export const runtime = "nodejs";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MiB
 
+// Renders an uploaded File into a base64 data-URL for the vision model.
 async function toBase64DataUrl(file: File): Promise<string> {
   const buf = Buffer.from(await file.arrayBuffer());
   return `data:${file.type || "image/jpeg"};base64,${buf.toString("base64")}`;

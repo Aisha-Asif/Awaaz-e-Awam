@@ -1,3 +1,5 @@
+// Template registry: buildTemplate compiles a raw cell layout into fillable FormFields
+// (normalized 0-1 coordinates); templates ship as JSON and are resolved by id.
 import nadraAttester from "./nadra-attester-smartid.json";
 import type { FormField, FormSchema, FormTemplate } from "@/lib/types";
 
@@ -8,6 +10,7 @@ type RawTemplate = typeof nadraAttester;
 
 const CELL_PAD = 6;
 
+// Compiles one raw template JSON into a FormTemplate (write areas, normalized boxes).
 function buildTemplate(raw: RawTemplate): FormTemplate {
   const { imageWidth: W, imageHeight: H } = raw;
 
@@ -23,7 +26,7 @@ function buildTemplate(raw: RawTemplate): FormTemplate {
       section: f.section,
       questionUrdu: f.questionUrdu,
       questionEnglish: f.questionEnglish,
-      boundingBox: { x: left / W, y: (y + 3) / H, width: width / W, height: (h - 6) / H }
+      boundingBox: { x: left / W, y: (y + 3) / H, width: width / W, height: (h - 6) / H },
     };
   });
 
@@ -34,12 +37,13 @@ function buildTemplate(raw: RawTemplate): FormTemplate {
     imageUrl: raw.imageUrl,
     imageWidth: W,
     imageHeight: H,
-    schema
+    schema,
   };
 }
 
 export const TEMPLATES: FormTemplate[] = [buildTemplate(nadraAttester)];
 
+// Resolves a template by id, if present.
 export function getTemplate(id: string): FormTemplate | undefined {
   return TEMPLATES.find((t) => t.id === id);
 }

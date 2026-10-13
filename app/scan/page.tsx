@@ -1,18 +1,10 @@
 "use client";
 
+// Scan flow: photograph/upload a form -> AI reads fields -> review -> per-field interview ->
+// completed form (drawn onto a template when one matches); scanned-form history in localStorage.
 import Link from "next/link";
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
-import { 
-  ArrowLeft, 
-  ChevronRight, 
-  Check, 
-  CheckCircle2, 
-  Copy, 
-  RotateCcw, 
-  MessageSquareQuote, 
-  ShieldAlert, 
-  FileText 
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote } from "lucide-react";
 import { ImageCapture } from "@/components/ImageCapture";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
@@ -22,6 +14,7 @@ import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
+import { SKIP_SENTINEL } from "@/lib/schemas";
 import { FilledForm } from "@/components/FilledForm";
 import { TEMPLATES } from "@/lib/templates";
 import { FormSchema, FormTemplate } from "@/lib/types";
@@ -35,7 +28,7 @@ const REQUIRED_FIELD_ORDER = [
   "city",
   "gender",
   "address",
-  "district"
+  "district",
 ];
 
 // ponytail: form history lives in localStorage only (schemas are JSON-safe,
@@ -44,6 +37,7 @@ const REQUIRED_FIELD_ORDER = [
 const HISTORY_KEY = "awaaz:formHistory";
 const HISTORY_MAX = 10;
 
+// Reads saved scanned-form schemas from localStorage (empty list on any failure).
 function getFormHistory(): FormSchema[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
@@ -55,6 +49,7 @@ function getFormHistory(): FormSchema[] {
   }
 }
 
+// Persists the history, capped at HISTORY_MAX; best-effort (ignores quota/private-mode errors).
 function saveFormHistory(list: FormSchema[]) {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX)));
@@ -63,8 +58,9 @@ function saveFormHistory(list: FormSchema[]) {
   }
 }
 
+// Prepends a schema, de-duped by formTitle, capped at HISTORY_MAX.
 function addToFormHistory(current: FormSchema[], schema: FormSchema): FormSchema[] {
-  const deduped = current.filter(s => s.formTitle !== schema.formTitle);
+  const deduped = current.filter((s) => s.formTitle !== schema.formTitle);
   return [schema, ...deduped].slice(0, HISTORY_MAX);
 }
 
@@ -84,7 +80,10 @@ function PageHeader() {
 // ponytail: shared back link slot — placed at the top-left of each section.
 function PageBackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-card border border-line bg-paper-card text-text font-semibold font-body hover:border-line-strong hover:bg-paper hover:shadow-sm transition-all">
+    <Link
+      href={href}
+      className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-card border border-line bg-paper-card text-text font-semibold font-body hover:border-line-strong hover:bg-paper hover:shadow-sm transition-all"
+    >
       <ArrowLeft className="w-4 h-4" />
       {children}
     </Link>
@@ -131,7 +130,7 @@ export default function ScanPage() {
     listening: srListening,
     error: srError,
     start: srStart,
-    stop: srStop
+    stop: srStop,
   } = useSpeechRecognition("ur-PK");
 
   useEffect(() => {
@@ -154,6 +153,7 @@ export default function ScanPage() {
     skippedFieldsRef.current = new Set();
   }, [formSchema]);
 
+  // Scans the photo into a schema, saves it to history, opens the review screen at the first question.
   const handleImageCapture = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
@@ -164,14 +164,16 @@ export default function ScanPage() {
       setTemplate(null);
       setFormSchema(schema);
 
-      setFormHistory(prev => {
+      setFormHistory((prev) => {
         const next = addToFormHistory(prev, schema);
         saveFormHistory(next);
         return next;
       });
 
       const initialAnswers: Record<string, string | null> = {};
-      schema.fields.forEach(f => { initialAnswers[f.id] = null; });
+      schema.fields.forEach((f) => {
+        initialAnswers[f.id] = null;
+      });
       setAnswers(initialAnswers);
 
       const nextQ = await getNextQuestion(schema.fields, initialAnswers);
@@ -188,6 +190,7 @@ export default function ScanPage() {
     }
   }, []);
 
+  // Enters the interview at the first field not yet answered.
   const startInterview = useCallback(async () => {
     if (!formSchema) return;
 
@@ -201,69 +204,74 @@ export default function ScanPage() {
     }
   }, [formSchema, answers]);
 
-  const handleAnswerSubmit = useCallback(async (transcript: string) => {
-    if (!currentFieldId || !formSchema) return;
+  // Extracts one field's answer from a transcript; confirms-or-advances, then asks what's next.
+  const handleAnswerSubmit = useCallback(
+    async (transcript: string) => {
+      if (!currentFieldId || !formSchema) return;
 
-    setLoading(true);
-    setError(null);
-    try {
-      const field = formSchema.fields.find(f => f.id === currentFieldId);
-      if (!field) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const field = formSchema.fields.find((f) => f.id === currentFieldId);
+        if (!field) return;
 
-      const response = await processAnswer(currentFieldId, field.type, transcript);
+        const response = await processAnswer(currentFieldId, field.type, transcript, field.label, field.questionUrdu);
 
-      if (response.valid && response.value) {
-        if (response.needsConfirmation) {
-          setShowConfirmation({
-            fieldId: currentFieldId,
-            value: response.value,
-            questionUrdu: field.questionUrdu
-          });
-        } else {
-          const nextAnswers = { ...answers, [currentFieldId]: response.value };
-          setAnswers(nextAnswers);
-          setJustSaved(true);
-          const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
-          if (nextQ.nextField) {
-            setCurrentFieldId(nextQ.nextField);
-            setCurrentQuestion(nextQ.questionUrdu);
+        if (response.valid && response.value) {
+          if (response.needsConfirmation) {
+            setShowConfirmation({
+              fieldId: currentFieldId,
+              value: response.value,
+              questionUrdu: field.questionUrdu,
+            });
           } else {
-            setStep("complete");
+            const nextAnswers = { ...answers, [currentFieldId]: response.value };
+            setAnswers(nextAnswers);
+            setJustSaved(true);
+            const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
+            if (nextQ.nextField) {
+              setCurrentFieldId(nextQ.nextField);
+              setCurrentQuestion(nextQ.questionUrdu);
+            } else {
+              setStep("complete");
+            }
           }
+        } else {
+          setError(response.error || "Invalid answer. Please try again.");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to process answer. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentFieldId, formSchema, answers],
+  );
+
+  // Commits a confirmed value and advances to the next question.
+  const handleConfirm = useCallback(
+    async (confirmed: boolean) => {
+      if (!showConfirmation || !formSchema) return;
+
+      if (confirmed) {
+        const nextAnswers = { ...answers, [showConfirmation.fieldId]: showConfirmation.value };
+        setAnswers(nextAnswers);
+        setJustSaved(true);
+        const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
+        if (nextQ.nextField) {
+          setCurrentFieldId(nextQ.nextField);
+          setCurrentQuestion(nextQ.questionUrdu);
+          setStep("interview");
+        } else {
+          setStep("complete");
         }
       } else {
-        setError(response.error || "Invalid answer. Please try again.");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to process answer. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentFieldId, formSchema, answers]);
-
-  const handleConfirm = useCallback(async (confirmed: boolean) => {
-    if (!showConfirmation || !formSchema) return;
-
-    if (confirmed) {
-      const nextAnswers = { ...answers, [showConfirmation.fieldId]: showConfirmation.value };
-      setAnswers(nextAnswers);
-      setJustSaved(true);
-      const nextQ = await getNextQuestion(
-        formSchema.fields,
-        nextAnswers
-      );
-      if (nextQ.nextField) {
-        setCurrentFieldId(nextQ.nextField);
-        setCurrentQuestion(nextQ.questionUrdu);
         setStep("interview");
-      } else {
-        setStep("complete");
       }
-    } else {
-      setStep("interview");
-    }
-    setShowConfirmation(null);
-  }, [showConfirmation, formSchema, answers]);
+      setShowConfirmation(null);
+    },
+    [showConfirmation, formSchema, answers],
+  );
 
   // Advance to the next unanswered field without recording the current one.
   const skipCurrentField = useCallback(async () => {
@@ -273,7 +281,9 @@ export default function ScanPage() {
     // remembered so getNextQuestion keeps moving past them instead of looping.
     skippedFieldsRef.current.add(currentFieldId);
     const nextAnswers = { ...answers };
-    skippedFieldsRef.current.forEach(id => { nextAnswers[id] = "__skip__"; });
+    skippedFieldsRef.current.forEach((id) => {
+      nextAnswers[id] = SKIP_SENTINEL;
+    });
     const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
     if (nextQ.nextField) {
       setCurrentFieldId(nextQ.nextField);
@@ -284,14 +294,16 @@ export default function ScanPage() {
     }
   }, [formSchema, answers, currentFieldId]);
 
-  const getFilledCount = () => Object.values(answers).filter(v => v !== null).length;
-  const getRequiredCount = () => formSchema?.fields.filter(f => f.required).length || 0;
+  const getFilledCount = () => Object.values(answers).filter((v) => v !== null).length;
+  const getRequiredCount = () => formSchema?.fields.filter((f) => f.required).length || 0;
 
   const handleSelectHistory = useCallback((schema: FormSchema) => {
     setTemplate(null);
     setFormSchema(schema);
     const initialAnswers: Record<string, string | null> = {};
-    schema.fields.forEach(f => { initialAnswers[f.id] = null; });
+    schema.fields.forEach((f) => {
+      initialAnswers[f.id] = null;
+    });
     setAnswers(initialAnswers);
     setCurrentFieldId(null);
     setCurrentQuestion(null);
@@ -299,18 +311,24 @@ export default function ScanPage() {
     setStep("fields");
   }, []);
 
-  const handleSelectTemplate = useCallback((t: FormTemplate) => {
-    handleSelectHistory(t.schema);
-    setTemplate(t);
-  }, [handleSelectHistory]);
+  const handleSelectTemplate = useCallback(
+    (t: FormTemplate) => {
+      handleSelectHistory(t.schema);
+      setTemplate(t);
+    },
+    [handleSelectHistory],
+  );
 
   // Let the user jump straight into the interview for any detected field.
-  const handleFieldSelect = useCallback((fieldId: string) => {
-    setCurrentFieldId(fieldId);
-    const field = formSchema?.fields.find(f => f.id === fieldId);
-    setCurrentQuestion(field?.questionUrdu ?? null);
-    setStep("interview");
-  }, [formSchema]);
+  const handleFieldSelect = useCallback(
+    (fieldId: string) => {
+      setCurrentFieldId(fieldId);
+      const field = formSchema?.fields.find((f) => f.id === fieldId);
+      setCurrentQuestion(field?.questionUrdu ?? null);
+      setStep("interview");
+    },
+    [formSchema],
+  );
 
   const handleClearHistory = useCallback(() => {
     setFormHistory([]);
@@ -326,24 +344,24 @@ export default function ScanPage() {
       <>
         <PageHeader />
         <section className="section">
-          <div className="wrap" style={{maxWidth:720}}>
+          <div className="wrap" style={{ maxWidth: 720 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
-            <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
+            <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <h2>Scan a Form</h2>
               <p>Take a clear photo of your physical form or upload an image. The AI will identify all fields.</p>
             </div>
 
             <Card variant="elevated" padding="lg">
               <CardContent>
-                <ImageCapture
-                  onImageCapture={handleImageCapture}
-                  disabled={loading}
-                />
+                <ImageCapture onImageCapture={handleImageCapture} disabled={loading} />
               </CardContent>
             </Card>
 
             {error && (
-              <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4" role="alert">
+              <div
+                className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4"
+                role="alert"
+              >
                 {error}
               </div>
             )}
@@ -352,10 +370,12 @@ export default function ScanPage() {
               <Card variant="elevated" padding="lg" className="mt-4">
                 <CardHeader>
                   <CardTitle>Ready-made forms</CardTitle>
-                  <CardDescription>No scanning needed. Answer by voice and get the form back filled in.</CardDescription>
+                  <CardDescription>
+                    No scanning needed. Answer by voice and get the form back filled in.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {TEMPLATES.map(t => (
+                  {TEMPLATES.map((t) => (
                     <div key={t.id} className="flex items-center justify-between p-3 bg-paper rounded-card">
                       <div className="flex-1 pr-2">
                         <p className="font-medium text-text font-body">{t.title}</p>
@@ -377,7 +397,7 @@ export default function ScanPage() {
                   <CardDescription>Pick a saved form to skip re-scanning</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {formHistory.map(schema => (
+                  {formHistory.map((schema) => (
                     <div key={schema.formTitle} className="flex items-center justify-between p-3 bg-paper rounded-card">
                       <div className="flex-1 pr-2">
                         <p className="font-medium text-text font-body">{schema.formTitle}</p>
@@ -408,7 +428,7 @@ export default function ScanPage() {
       <>
         <PageHeader />
         <section className="section">
-          <div className="wrap" style={{maxWidth:720}}>
+          <div className="wrap" style={{ maxWidth: 720 }}>
             <div className="mb-4">
               <button
                 type="button"
@@ -419,15 +439,17 @@ export default function ScanPage() {
                 Back to Capture
               </button>
             </div>
-            <div className="section-head" style={{textAlign:"center"}}>
+            <div className="section-head" style={{ textAlign: "center" }}>
               <h2>Detected Fields</h2>
-              <p>{formSchema?.formTitle} — {formSchema?.fields.length} fields detected</p>
+              <p>
+                {formSchema?.formTitle} — {formSchema?.fields.length} fields detected
+              </p>
             </div>
 
             {formSchema && (
               <Card variant="elevated" padding="lg">
                 <CardContent className="space-y-3">
-                  {formSchema.fields.map(field => (
+                  {formSchema.fields.map((field) => (
                     <div key={field.id} className="flex items-center justify-between p-3 bg-paper rounded-card">
                       <button
                         type="button"
@@ -437,10 +459,14 @@ export default function ScanPage() {
                         <span className={`w-2 h-2 rounded-full shrink-0 ${field.required ? "bg-rani" : "bg-line"}`} />
                         <span className="min-w-0">
                           <span className="block font-medium text-text font-body">{field.label}</span>
-                          <span className="block text-sm text-text-muted font-body">{field.type} {field.required ? "• Required" : "• Optional"}</span>
+                          <span className="block text-sm text-text-muted font-body">
+                            {field.type} {field.required ? "• Required" : "• Optional"}
+                          </span>
                         </span>
                         {answers[field.id] && (
-                          <span className="ml-auto text-jade font-medium text-sm truncate max-w-[10rem]">{answers[field.id]}</span>
+                          <span className="ml-auto text-jade font-medium text-sm truncate max-w-[10rem]">
+                            {answers[field.id]}
+                          </span>
                         )}
                         <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
                       </button>
@@ -463,7 +489,7 @@ export default function ScanPage() {
   }
 
   if (step === "interview") {
-    const field = formSchema?.fields.find(f => f.id === currentFieldId);
+    const field = formSchema?.fields.find((f) => f.id === currentFieldId);
     const progress = getFilledCount();
     const total = getRequiredCount();
 
@@ -471,7 +497,7 @@ export default function ScanPage() {
       <>
         <PageHeader />
         <section className="section">
-          <div className="wrap" style={{maxWidth:640}}>
+          <div className="wrap" style={{ maxWidth: 640 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
             <div className="mb-6">
               <Progress value={progress} max={total} showLabel label="Interview Progress" size="lg" />
@@ -482,103 +508,110 @@ export default function ScanPage() {
                 <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-jade/10 text-jade flex items-center justify-center border border-jade/20 shadow-sm">
                   <MessageSquareQuote className="w-10 h-10" />
                 </div>
-                <h2 
-                  className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed"
-                  dir="auto"
-                >
+                <h2 className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed" dir="auto">
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
                   <TTSButton text={field?.questionUrdu || currentQuestion || field?.label || ""} />
                 </div>
                 {field?.questionEnglish && (
-                  <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">{field.questionEnglish}</p>
+                  <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">
+                    {field.questionEnglish}
+                  </p>
                 )}
               </CardContent>
             </Card>
 
-          <Card variant="elevated" className="mt-4">
-            <CardContent className="pt-0 space-y-4">
-              <AudioRecorder
-                key={currentFieldId}
-                onRecordingComplete={async (blob) => {
-                  setLoading(true);
-                  setError(null);
-                  try {
-                    const transcript = await transcribeAudioFile(blob);
-                    await handleAnswerSubmit(transcript);
-                  } catch (err) {
-                    setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                showUploadFallback={false}
-                disabled={loading}
-              />
-              <div>
-                <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all font-body text-base"
-                  placeholder="Answer in Urdu (اردو) or English..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                      handleAnswerSubmit(e.currentTarget.value.trim());
-                      e.currentTarget.value = "";
+            <Card variant="elevated" className="mt-4">
+              <CardContent className="pt-0 space-y-4">
+                <AudioRecorder
+                  key={currentFieldId}
+                  onRecordingComplete={async (blob) => {
+                    setLoading(true);
+                    setError(null);
+                    try {
+                      const transcript = await transcribeAudioFile(blob);
+                      await handleAnswerSubmit(transcript);
+                    } catch (err) {
+                      setError(
+                        err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.",
+                      );
+                    } finally {
+                      setLoading(false);
                     }
                   }}
+                  showUploadFallback={false}
                   disabled={loading}
-                  autoFocus
                 />
-              </div>
-              {justSaved && (
-                <p className="flex items-center gap-2 text-sm font-medium text-jade font-body" role="status">
-                  <Check className="w-4 h-4 stroke-[2.5]" />
-                  Answer saved
-                </p>
-              )}
-              {srSupported && (
                 <div>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled={loading || srListening}
-                    onClick={() => {
-                      if (srListening) {
-                        srStop();
-                      } else {
-                        srStart((text) => handleAnswerSubmit(text));
+                  <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all font-body text-base"
+                    placeholder="Answer in Urdu (اردو) or English..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                        handleAnswerSubmit(e.currentTarget.value.trim());
+                        e.currentTarget.value = "";
                       }
                     }}
+                    disabled={loading}
+                    autoFocus
+                  />
+                </div>
+                {justSaved && (
+                  <p className="flex items-center gap-2 text-sm font-medium text-jade font-body" role="status">
+                    <Check className="w-4 h-4 stroke-[2.5]" />
+                    Answer saved
+                  </p>
+                )}
+                {srSupported && (
+                  <div>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={loading || srListening}
+                      onClick={() => {
+                        if (srListening) {
+                          srStop();
+                        } else {
+                          srStart((text) => handleAnswerSubmit(text));
+                        }
+                      }}
+                    >
+                      {srListening ? "Listening..." : "Tap to speak (on-device)"}
+                    </Button>
+                  </div>
+                )}
+                {srError && (
+                  <div
+                    className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body"
+                    role="alert"
                   >
-                    {srListening ? "Listening..." : "Tap to speak (on-device)"}
+                    {srError}
+                  </div>
+                )}
+                {currentFieldId && answers[currentFieldId] && (
+                  <p className="text-sm text-jade font-medium break-words font-body">
+                    Answer: <span className="font-semibold">{answers[currentFieldId]}</span>
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="secondary" onClick={() => setStep("fields")}>
+                    Back to Fields
+                  </Button>
+                  <Button variant="ghost" onClick={skipCurrentField} disabled={loading}>
+                    Skip this field for now
                   </Button>
                 </div>
-              )}
-              {srError && (
-                <div className="p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body" role="alert">
-                  {srError}
-                </div>
-              )}
-              {currentFieldId && answers[currentFieldId] && (
-                <p className="text-sm text-jade font-medium break-words font-body">
-                  Answer: <span className="font-semibold">{answers[currentFieldId]}</span>
-                </p>
-              )}
-              <div className="flex flex-wrap gap-3">
-                <Button variant="secondary" onClick={() => setStep("fields")}>
-                  Back to Fields
-                </Button>
-                <Button variant="ghost" onClick={skipCurrentField} disabled={loading}>
-                  Skip this field for now
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
             {error && (
-              <div className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body" role="alert">
+              <div
+                className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body"
+                role="alert"
+              >
                 {error}
               </div>
             )}
@@ -618,9 +651,9 @@ export default function ScanPage() {
       <>
         <PageHeader />
         <section className="section">
-          <div className="wrap" style={{maxWidth:960}}>
+          <div className="wrap" style={{ maxWidth: 960 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
-            <div className="section-head" style={{textAlign:"center",marginBottom:32}}>
+            <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-jade/10 text-jade flex items-center justify-center border border-jade/20 shadow-sm">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
@@ -628,23 +661,28 @@ export default function ScanPage() {
               <p>All required fields have been answered.</p>
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
               <Card variant="elevated" padding="lg">
                 <CardHeader>
                   <CardTitle>Your Answers</CardTitle>
                   <CardDescription>Copy these to your physical form</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4" style={{maxHeight:"60vh",overflowY:"auto"}}>
-                  {REQUIRED_FIELD_ORDER.map(fieldId => {
+                <CardContent className="space-y-4" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                  {REQUIRED_FIELD_ORDER.map((fieldId) => {
                     const value = answers[fieldId];
-                    const field = formSchema?.fields.find(f => f.id === fieldId);
+                    const field = formSchema?.fields.find((f) => f.id === fieldId);
                     if (!field || !value) return null;
                     const isCopied = copiedFieldId === fieldId;
                     return (
-                      <div key={fieldId} className="flex items-start justify-between p-4 bg-paper rounded-card border border-line/50">
+                      <div
+                        key={fieldId}
+                        className="flex items-start justify-between p-4 bg-paper rounded-card border border-line/50"
+                      >
                         <div className="flex-1 pr-4">
                           <p className="text-sm text-text-muted font-body">{field.label}</p>
-                          <p className="font-medium text-text font-body" style={{wordBreak:"break-all"}}>{value}</p>
+                          <p className="font-medium text-text font-body" style={{ wordBreak: "break-all" }}>
+                            {value}
+                          </p>
                         </div>
                         <div className="flex items-center gap-1">
                           <TTSButton text={value} />
@@ -692,16 +730,15 @@ export default function ScanPage() {
                 <CardContent>
                   {template && <FilledForm template={template} answers={answers} />}
                   {!template && originalImage && (
-                    <div className="relative bg-line rounded-card overflow-hidden" style={{aspectRatio:"4/3"}}>
-                      <img
-                        src={originalImage}
-                        alt="Original form"
-                        className="w-full h-full object-contain p-4"
-                      />
+                    <div className="relative bg-line rounded-card overflow-hidden" style={{ aspectRatio: "4/3" }}>
+                      <img src={originalImage} alt="Original form" className="w-full h-full object-contain p-4" />
                     </div>
                   )}
                   {!template && !originalImage && (
-                    <div className="bg-line rounded-card flex items-center justify-center" style={{aspectRatio:"4/3"}}>
+                    <div
+                      className="bg-line rounded-card flex items-center justify-center"
+                      style={{ aspectRatio: "4/3" }}
+                    >
                       <p className="text-text-muted font-body">Form image not available</p>
                     </div>
                   )}
@@ -710,16 +747,19 @@ export default function ScanPage() {
             </div>
 
             <div className="mt-6 flex justify-center">
-              <Button variant="ghost" onClick={() => {
-                setStep("capture");
-                setTemplate(null);
-                setFormSchema(null);
-                setAnswers({});
-                setCurrentFieldId(null);
-                setCurrentQuestion(null);
-                if (originalImage) URL.revokeObjectURL(originalImage);
-                setOriginalImage(null);
-              }}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setStep("capture");
+                  setTemplate(null);
+                  setFormSchema(null);
+                  setAnswers({});
+                  setCurrentFieldId(null);
+                  setCurrentQuestion(null);
+                  if (originalImage) URL.revokeObjectURL(originalImage);
+                  setOriginalImage(null);
+                }}
+              >
                 <RotateCcw className="w-4 h-4" />
                 Scan Another Form
               </Button>

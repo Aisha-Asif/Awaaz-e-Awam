@@ -2,7 +2,7 @@
 // Requires the Next.js dev server running on localhost:3000.
 // Run backend in mock mode first (AI_MODE=mock in .env.local), then live.
 //
-//   node scripts/test-apis.mjs
+//   node tests/test-apis.mjs
 //
 // Exit code 0 = all pass.
 
@@ -23,15 +23,14 @@ async function postJson(path, body) {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
   return { status: res.status, data: await res.json() };
 }
 
 // Test A — scan an image and get fields back.
 // Build a tiny valid PNG payload (1x1) so multipart upload works.
-const PNG =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 const pngBytes = Uint8Array.from(Buffer.from(PNG, "base64"));
 
 async function testScanForm() {
@@ -42,7 +41,10 @@ async function testScanForm() {
   const data = await res.json();
   check("returns 200", res.status === 200);
   check("has fields array", Array.isArray(data.fields) && data.fields.length >= 1);
-  check("fields have ids", data.fields.every((f) => f.id));
+  check(
+    "fields have ids",
+    data.fields.every((f) => f.id),
+  );
   console.log(`  -> ${data.fields.length} fields, title="${data.formTitle}"`);
 }
 
@@ -51,7 +53,7 @@ async function testProcessAnswer() {
   const { status, data } = await postJson("/api/process-answer", {
     fieldId: "fullName",
     fieldType: "text",
-    transcript: "Mera naam Muhammad Ali hai."
+    transcript: "Mera naam Muhammad Ali hai.",
   });
   check("returns 200", status === 200);
   check("has value", typeof data.value === "string");
@@ -63,7 +65,7 @@ async function testCNIC() {
   const { data } = await postJson("/api/process-answer", {
     fieldId: "cnic",
     fieldType: "cnic",
-    transcript: "Mera CNIC 35202-1234567-1 hai."
+    transcript: "Mera CNIC 35202-1234567-1 hai.",
   });
   check("cnic normalized to 13 digits", data.value === "3520212345671");
   check("cnic needs confirmation", data.needsConfirmation === true);
@@ -75,7 +77,7 @@ async function testInvalidCNIC() {
   const { data } = await postJson("/api/process-answer", {
     fieldId: "cnic",
     fieldType: "cnic",
-    transcript: "12345"
+    transcript: "12345",
   });
   check("invalid cnic flagged", data.valid === false);
   check("has error message", typeof data.error === "string" && data.error.length > 0);
@@ -86,11 +88,11 @@ async function testNextQuestion() {
   console.log("Test C: /api/next-question");
   const fields = [
     { id: "fullName", label: "Full Name", type: "text", required: true, questionUrdu: "q1" },
-    { id: "fatherName", label: "Father", type: "text", required: true, questionUrdu: "q2" }
+    { id: "fatherName", label: "Father", type: "text", required: true, questionUrdu: "q2" },
   ];
   const { data } = await postJson("/api/next-question", {
     fields,
-    answers: { fullName: "Ali", fatherName: null }
+    answers: { fullName: "Ali", fatherName: null },
   });
   check("picks next required field", data.nextField === "fatherName");
   check("complete is false", data.complete === false);
@@ -98,7 +100,7 @@ async function testNextQuestion() {
 
   const done = await postJson("/api/next-question", {
     fields,
-    answers: { fullName: "Ali", fatherName: "Ahmed" }
+    answers: { fullName: "Ali", fatherName: "Ahmed" },
   });
   check("completes when all filled", done.data.complete === true);
   console.log(`  -> completed: complete=${done.data.complete}`);
@@ -115,7 +117,13 @@ async function testProcessSpeech() {
   check("has transcript", typeof data.transcript === "string");
   check("has extracted object", data.extracted && typeof data.extracted === "object");
   check("has missingFields", Array.isArray(data.validation?.missingFields));
-  console.log(`  -> extracted keys: ${Object.keys(data.extracted).filter((k) => data.extracted[k]).join(", ") || "none"}`);
+  console.log(
+    `  -> extracted keys: ${
+      Object.keys(data.extracted)
+        .filter((k) => data.extracted[k])
+        .join(", ") || "none"
+    }`,
+  );
 }
 
 async function main() {

@@ -1,7 +1,9 @@
+// Shared error classification (retryable statuses, network vs HTTP extraction) used by both Gemini clients.
 // ponytail: shared error classification for the two Gemini clients (text/vision
 // in gemini.ts, STT in gemini-stt.ts). Both loop over models on retryable
 // failures; keeping the rules here stops them drifting apart.
 
+// Statuses worth failing over to the next model on.
 export const RETRYABLE = new Set([408, 429, 500, 502, 503, 504]);
 
 // ponytail: bare network rejections ("fetch failed" / resets) carry no HTTP

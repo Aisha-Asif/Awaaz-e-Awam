@@ -41,6 +41,7 @@ export function FilledForm({ template, answers, showBoxes = false, filename = "a
     };
   }, [template, answersKey, showBoxes]);
 
+  // Re-renders clean (no alignment boxes) and downloads the chosen format.
   const exportAs = async (kind: "png" | "pdf") => {
     setBusy(kind);
     setError(null);
@@ -70,8 +71,14 @@ export function FilledForm({ template, answers, showBoxes = false, filename = "a
           <FileText className="w-4 h-4" /> PDF
         </Button>
       </div>
-      <p className="text-xs text-text-muted font-body">Print at 100% / actual size so the boxes line up with the paper.</p>
-      {error && <p className="text-sm text-rani font-body" role="alert">{error}</p>}
+      <p className="text-xs text-text-muted font-body">
+        Print at 100% / actual size so the boxes line up with the paper.
+      </p>
+      {error && (
+        <p className="text-sm text-rani font-body" role="alert">
+          {error}
+        </p>
+      )}
       <canvas
         ref={previewRef}
         className="w-full h-auto rounded-card border border-line bg-white"

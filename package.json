@@ -2,6 +2,9 @@
   "name": "awaaz-e-awam",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.22.1"
+  },
   "scripts": {
     "dev": "next dev -p 3000 -H 0.0.0.0",
     "build": "next build",
@@ -16,7 +19,10 @@
     "test:watch": "vitest"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"]
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@google/genai": "^2.20.0",
@@ -29,7 +35,7 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
-    "@types/node": "20.12.12",
+    "@types/node": "^24",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",

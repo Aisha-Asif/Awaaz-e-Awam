@@ -1,3 +1,5 @@
+// POST /api/process-speech: transcribes an audio clip (or takes a transcript), extracts as many
+// fields as possible in one shot, and reports which required fields are still missing.
 import { NextRequest, NextResponse } from "next/server";
 import { extractSpeech } from "@/lib/ai";
 import { transcribeAudio } from "@/lib/gemini-stt";
@@ -7,7 +9,7 @@ import { getTemplate } from "@/lib/templates";
 export const runtime = "nodejs";
 
 const FORM_TITLES: Record<string, string> = {
-  citizen: "Citizen Information Form"
+  citizen: "Citizen Information Form",
 };
 
 export async function POST(req: NextRequest) {
@@ -30,10 +32,7 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(await audio.arrayBuffer());
       transcript = await transcribeAudio(mimeType, buffer);
     } catch {
-      return NextResponse.json(
-        { error: "Could not transcribe the audio. Please try again." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Could not transcribe the audio. Please try again." }, { status: 500 });
     }
   }
 
@@ -62,10 +61,14 @@ export async function POST(req: NextRequest) {
   // "presentCity" vs "permanentCity" is otherwise a guess.
   const formLabel = template
     ? `${template.title}. Field meanings: ${speakable.map((f) => `${f.id} = ${f.label}`).join("; ")}`
-    : FORM_TITLES[formType] ?? formType;
+    : (FORM_TITLES[formType] ?? formType);
 
   try {
-    const result = await extractSpeech(transcript, formLabel, speakable.map((f) => f.id));
+    const result = await extractSpeech(
+      transcript,
+      formLabel,
+      speakable.map((f) => f.id),
+    );
 
     const extracted: Record<string, string | null> = {};
     for (const field of schema.fields) {
@@ -76,9 +79,7 @@ export async function POST(req: NextRequest) {
     const missingFields = schema.fields.filter((f) => f.required && !extracted[f.id]).map((f) => f.id);
 
     const followUpQuestion =
-      missingFields.length > 0
-        ? schema.fields.find((f) => f.id === missingFields[0])?.questionUrdu ?? null
-        : null;
+      missingFields.length > 0 ? (schema.fields.find((f) => f.id === missingFields[0])?.questionUrdu ?? null) : null;
 
     return NextResponse.json({
       transcript: result.transcript || transcript,
@@ -86,9 +87,9 @@ export async function POST(req: NextRequest) {
       validation: {
         valid: missingFields.length === 0,
         missingFields,
-        invalidFields: []
+        invalidFields: [],
       },
-      followUpQuestion
+      followUpQuestion,
     });
   } catch {
     return NextResponse.json({ error: "Could not process this response. Please try again." }, { status: 500 });

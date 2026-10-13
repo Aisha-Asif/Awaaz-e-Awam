@@ -1,5 +1,6 @@
 "use client";
 
+// TTS: Urdu text-to-speech via speechSynthesis — Urdu/Hindi voice selection, Listen/Stop button.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Volume2, Square } from "lucide-react";
 
@@ -10,15 +11,17 @@ interface UseTTSOptions {
   volume?: number;
 }
 
+// Prefers an Urdu voice, then the requested lang, then a Hindi voice.
 function pickUrduVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
-  const urdu = voices.filter(v => v.lang.replace("_", "-").toLowerCase().startsWith("ur"));
+  const urdu = voices.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith("ur"));
   if (urdu.length > 0) return urdu[0];
   // fall back to lining up with the requested lang, then any Hindi voice
-  const exact = voices.find(v => v.lang.replace("_", "-").toLowerCase() === lang.toLowerCase());
+  const exact = voices.find((v) => v.lang.replace("_", "-").toLowerCase() === lang.toLowerCase());
   if (exact) return exact;
-  return voices.find(v => v.lang.toLowerCase().startsWith("hi"));
+  return voices.find((v) => v.lang.toLowerCase().startsWith("hi"));
 }
 
+// speechSynthesis hook: speak/stop/pause/resume with Urdu-weighted voice pick and availability flags.
 export function useTTS(options: UseTTSOptions = {}) {
   const { lang = "ur-PK", rate = 0.9, pitch = 1, volume = 1 } = options;
   const [speaking, setSpeaking] = useState(false);
@@ -44,28 +47,31 @@ export function useTTS(options: UseTTSOptions = {}) {
     return () => window.speechSynthesis.removeEventListener("voiceschanged", refresh);
   }, [lang]);
 
-  const speak = useCallback((text: string) => {
-    if (!supported) return;
+  const speak = useCallback(
+    (text: string) => {
+      if (!supported) return;
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (voiceRef.current) {
-      utterance.voice = voiceRef.current;
-      utterance.lang = voiceRef.current.lang;
-    } else {
-      utterance.lang = lang;
-    }
-    utterance.rate = rate;
-    utterance.pitch = pitch;
-    utterance.volume = volume;
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (voiceRef.current) {
+        utterance.voice = voiceRef.current;
+        utterance.lang = voiceRef.current.lang;
+      } else {
+        utterance.lang = lang;
+      }
+      utterance.rate = rate;
+      utterance.pitch = pitch;
+      utterance.volume = volume;
 
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
+      utterance.onstart = () => setSpeaking(true);
+      utterance.onend = () => setSpeaking(false);
+      utterance.onerror = () => setSpeaking(false);
 
-    utteranceRef.current = utterance;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  }, [supported, lang, rate, pitch, volume]);
+      utteranceRef.current = utterance;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    },
+    [supported, lang, rate, pitch, volume],
+  );
 
   const stop = useCallback(() => {
     if (supported) {
@@ -96,6 +102,7 @@ interface TTSButtonProps {
   disabled?: boolean;
 }
 
+// Listen/Stop toggle; hidden where speechSynthesis is unsupported.
 export function TTSButton({ text, lang = "ur-PK", className = "", disabled = false }: TTSButtonProps) {
   const { speak, stop, speaking, supported, voiceUnavailable } = useTTS({ lang });
 
@@ -115,19 +122,17 @@ export function TTSButton({ text, lang = "ur-PK", className = "", disabled = fal
       onClick={handleClick}
       disabled={disabled || !text.trim()}
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-card text-xs font-semibold font-body transition-all duration-200 border
-        ${speaking
-          ? "bg-rani-light text-rani border-rani/30 hover:bg-rani/20 animate-pulse"
-          : "bg-paper-card text-text-muted border-line hover:border-line-strong hover:text-text hover:bg-paper-subtle"}
+        ${
+          speaking
+            ? "bg-rani-light text-rani border-rani/30 hover:bg-rani/20 animate-pulse"
+            : "bg-paper-card text-text-muted border-line hover:border-line-strong hover:text-text hover:bg-paper-subtle"
+        }
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       aria-label={speaking ? "Stop reading" : "Read aloud"}
       aria-pressed={speaking}
       title={voiceUnavailable ? "No Urdu voice available on this device; using best available" : undefined}
     >
-      {speaking ? (
-        <Square className="w-3.5 h-3.5 fill-current" />
-      ) : (
-        <Volume2 className="w-3.5 h-3.5 text-jade" />
-      )}
+      {speaking ? <Square className="w-3.5 h-3.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5 text-jade" />}
       <span>{speaking ? "Stop" : "Listen"}</span>
     </button>
   );

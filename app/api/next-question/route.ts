@@ -1,5 +1,7 @@
+// POST /api/next-question: returns the next unanswered field (required before optional), or
+// complete:true when everything is done. Skip sentinels are never re-asked.
 import { NextRequest, NextResponse } from "next/server";
-import { NextQuestionRequestSchema } from "@/lib/schemas";
+import { NextQuestionRequestSchema, SKIP_SENTINEL } from "@/lib/schemas";
 
 export const runtime = "nodejs";
 
@@ -18,22 +20,39 @@ export async function POST(req: NextRequest) {
 
   const { fields, answers } = parsed.data;
 
+  // Skip sentinels are client-local ("user chose not to answer this one") and
+  // must never count as a real answer nor block the flow — they move the
+  // interview forward and are never persisted or exported.
+  const skipped = new Set<string>();
+  const realAnswers: Record<string, string | null> = {};
+  for (const [id, value] of Object.entries(answers)) {
+    if (value === SKIP_SENTINEL) {
+      skipped.add(id);
+    } else {
+      realAnswers[id] = value;
+    }
+  }
+
+  // A field is answered only if its value is a non-empty string. null/""/absent
+  // all mean "still needs asking"; skip sentinels just move past it.
+  const isAnswered = (id: string) => Boolean(realAnswers[id]) || skipped.has(id);
+
   for (const field of fields) {
-    if (field.required && !answers[field.id]) {
+    if (field.required && !isAnswered(field.id)) {
       return NextResponse.json({
         nextField: field.id,
         questionUrdu: field.questionUrdu || null,
-        complete: false
+        complete: false,
       });
     }
   }
 
   for (const field of fields) {
-    if (!field.required && !answers[field.id]) {
+    if (!field.required && !isAnswered(field.id)) {
       return NextResponse.json({
         nextField: field.id,
         questionUrdu: field.questionUrdu || null,
-        complete: false
+        complete: false,
       });
     }
   }
@@ -41,6 +60,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     nextField: null,
     questionUrdu: null,
-    complete: true
+    complete: true,
   });
 }

@@ -1,5 +1,7 @@
 "use client";
 
+// ConfirmationDialog: accessible <dialog> that reads sensitive values (CNIC/phone/date) back for
+// confirmation — focus restore, Escape handling, Tab trap.
 import { useEffect, useRef } from "react";
 import { Check, Edit3, ShieldAlert } from "lucide-react";
 import { Button } from "./Button";
@@ -20,7 +22,7 @@ export const ConfirmationDialog = ({
   onConfirm,
   value,
   questionUrdu,
-  title = "Confirm Important Information"
+  title = "Confirm Important Information",
 }: ConfirmationDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
@@ -49,12 +51,14 @@ export const ConfirmationDialog = ({
   }, [isOpen]);
 
   // Handle native cancel event (triggered by Escape key)
+  // Intercepts the native cancel (Escape) so it maps to the app's onClose.
   const handleCancel = (e: React.SyntheticEvent) => {
     e.preventDefault();
     onClose();
   };
 
   // Keyboard trap fallback to ensure tabbing stays inside the dialog
+  // Traps Tab inside the dialog and maps Escape to close.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDialogElement>) => {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -67,7 +71,7 @@ export const ConfirmationDialog = ({
       if (!dialog) return;
 
       const focusableElements = dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       );
 
       if (focusableElements.length === 0) return;
@@ -119,9 +123,7 @@ export const ConfirmationDialog = ({
         </p>
 
         <div className="inline-block px-5 py-3 my-2 rounded-xl bg-paper-card border border-marigold/30 shadow-sm max-w-full">
-          <p className="text-2xl sm:text-3xl font-mono font-bold text-text tracking-wide break-all">
-            {value}
-          </p>
+          <p className="text-2xl sm:text-3xl font-mono font-bold text-text tracking-wide break-all">{value}</p>
         </div>
 
         <p className="text-xs text-text-muted font-body mt-2 mb-6">
@@ -129,13 +131,7 @@ export const ConfirmationDialog = ({
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button
-            type="button"
-            variant="outline"
-            size="md"
-            onClick={onClose}
-            className="w-full sm:w-auto px-5"
-          >
+          <Button type="button" variant="outline" size="md" onClick={onClose} className="w-full sm:w-auto px-5">
             <Edit3 className="w-4 h-4" />
             Edit / Dobara Bolein
           </Button>

@@ -1,5 +1,7 @@
+// All LLM prompts: shared system rules plus builders for form-scanning, single-answer, and one-shot speech extraction.
 export const SYSTEM_PROMPT = `You are Awaaz-e-Awam, an AI form-filling assistant. You always reply with valid JSON only, following the requested schema exactly. Never invent information; missing values are null.`;
 
+// Extraction guidance: strict field mapping, no invented values, required-field flags, and read-back of sensitive types.
 export const SYSTEM_RULES = `You are Awaaz-e-Awam, an assistant that helps people fill out government forms by speaking in Urdu/Roman Urdu.
 
 Rules you MUST follow:
@@ -15,6 +17,7 @@ Rules you MUST follow:
 10. Always write digits in Western numerals (22, not ۲۲ or बाईस).
 11. For text values (name, address, city, etc.), always output in Roman (Latin) script — e.g. "Ali Raza", "Lahore" — never Urdu script (علی, لاہور). Numbers stay Western digits per rule 10.`;
 
+// Builds the image -> field-schema extraction prompt.
 export function scanFormPrompt(): string {
   return `${SYSTEM_RULES}
 
@@ -43,12 +46,13 @@ Rules:
 - If you can reliably locate a field, add "boundingBox": {"x":0.1,"y":0.2,"width":0.5,"height":0.08} with coordinates normalized 0 to 1. Otherwise omit boundingBox. Never invent coordinates.`;
 }
 
+// Builds the one-field voice-answer extraction prompt, including the human label + Urdu question.
 export function answerPrompt(
   fieldId: string,
   fieldType: string,
   label: string,
   questionUrdu: string,
-  transcript: string
+  transcript: string,
 ): string {
   return `${SYSTEM_RULES}
 
@@ -76,6 +80,7 @@ Rules:
 - Set "needsConfirmation" true for types cnic, phone, date; else false.`;
 }
 
+// Builds the one-shot multi-field extraction prompt for a natural spoken monologue.
 export function speechPrompt(schemaLabel: string, fieldIds: string[], transcript: string): string {
   return `${SYSTEM_RULES}
 

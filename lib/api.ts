@@ -1,22 +1,5 @@
-import {
-  FormSchema,
-  ProcessAnswerResponse,
-  NextQuestionResponse,
-  ProcessSpeechResponse,
-  FormField
-} from "@/lib/types";
-import {
-  MOCK_FORM_SCHEMA,
-  getMockProcessAnswerResponse,
-  getMockNextQuestion,
-  getMockProcessSpeechResponse
-} from "@/lib/mock-data";
-
-const USE_MOCK = false;
-
-async function mockDelay(ms: number = 500) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+// Client-side fetch wrappers for every API route, plus the shared error shape.
+import { FormSchema, ProcessAnswerResponse, NextQuestionResponse, ProcessSpeechResponse } from "@/lib/types";
 
 // ===== API Error Types =====
 
@@ -24,32 +7,15 @@ export type ApiError = {
   error: string;
 };
 
-export type ApiSuccessResponse<T> = {
-  success: true;
-  data: T;
-};
-
-export type ApiErrorResponse = {
-  success: false;
-  error: string;
-};
-
-export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
-
 // ===== API #1 — Scan Form =====
 
 export async function scanForm(imageFile: File): Promise<FormSchema> {
-  if (USE_MOCK) {
-    await mockDelay(1000);
-    return MOCK_FORM_SCHEMA;
-  }
-
   const formData = new FormData();
   formData.append("image", imageFile);
 
   const response = await fetch("/api/scan-form", {
     method: "POST",
-    body: formData
+    body: formData,
   });
 
   if (!response.ok) {
@@ -65,17 +31,14 @@ export async function scanForm(imageFile: File): Promise<FormSchema> {
 export async function processAnswer(
   fieldId: string,
   fieldType: string,
-  transcript: string
+  transcript: string,
+  label?: string,
+  questionUrdu?: string,
 ): Promise<ProcessAnswerResponse> {
-  if (USE_MOCK) {
-    await mockDelay(300);
-    return getMockProcessAnswerResponse(fieldId, transcript);
-  }
-
   const response = await fetch("/api/process-answer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fieldId, fieldType, transcript })
+    body: JSON.stringify({ fieldId, fieldType, transcript, label, questionUrdu }),
   });
 
   if (!response.ok) {
@@ -90,17 +53,12 @@ export async function processAnswer(
 
 export async function getNextQuestion(
   fields: FormSchema["fields"],
-  answers: Record<string, string | null>
+  answers: Record<string, string | null>,
 ): Promise<NextQuestionResponse> {
-  if (USE_MOCK) {
-    await mockDelay(200);
-    return getMockNextQuestion(fields, answers);
-  }
-
   const response = await fetch("/api/next-question", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fields, answers })
+    body: JSON.stringify({ fields, answers }),
   });
 
   if (!response.ok) {
@@ -114,17 +72,12 @@ export async function getNextQuestion(
 // ===== Transcribe audio → text (Gemini STT) =====
 
 export async function transcribeAudioFile(audioFile: Blob): Promise<string> {
-  if (USE_MOCK) {
-    await mockDelay(1200);
-    return "Mera naam Ali Raza hai. Mere walid ka naam Ahmed Raza hai.";
-  }
-
   const formData = new FormData();
   formData.append("audio", audioFile);
 
   const response = await fetch("/api/transcribe", {
     method: "POST",
-    body: formData
+    body: formData,
   });
 
   if (!response.ok) {
@@ -139,13 +92,6 @@ export async function transcribeAudioFile(audioFile: Blob): Promise<string> {
 // ===== API #4 — Process Speech =====
 
 export async function processSpeech(audioFile: File, templateId?: string): Promise<ProcessSpeechResponse> {
-  if (USE_MOCK) {
-    await mockDelay(1500);
-    return getMockProcessSpeechResponse(
-      "Mera naam Ali Raza hai. Mere walid ka naam Ahmed Raza hai. Main Lahore mein rehta hoon."
-    );
-  }
-
   const formData = new FormData();
   formData.append("audio", audioFile);
   formData.append("formType", "citizen");
@@ -153,7 +99,7 @@ export async function processSpeech(audioFile: File, templateId?: string): Promi
 
   const response = await fetch("/api/process-speech", {
     method: "POST",
-    body: formData
+    body: formData,
   });
 
   if (!response.ok) {
@@ -162,14 +108,4 @@ export async function processSpeech(audioFile: File, templateId?: string): Promi
   }
 
   return response.json();
-}
-
-// ===== Utility Functions =====
-
-export function isMockMode(): boolean {
-  return USE_MOCK;
-}
-
-export function willUseRealApi(): boolean {
-  return !USE_MOCK;
 }

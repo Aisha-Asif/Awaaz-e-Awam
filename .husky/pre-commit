@@ -1,1 +1,2 @@
+# Lint-staged auto-fixes (format + lint) on the files being committed.
 npx lint-staged

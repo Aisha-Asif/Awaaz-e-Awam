@@ -1,3 +1,4 @@
+// POST /api/transcribe: audio blob -> Urdu transcript via the STT provider.
 import { NextRequest, NextResponse } from "next/server";
 import { transcribeAudio } from "@/lib/gemini-stt";
 
@@ -22,9 +23,6 @@ export async function POST(req: NextRequest) {
     const transcript = await transcribeAudio(mimeType, buffer);
     return NextResponse.json({ transcript });
   } catch {
-    return NextResponse.json(
-      { error: "Could not transcribe the audio. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Could not transcribe the audio. Please try again." }, { status: 500 });
   }
 }

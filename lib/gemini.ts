@@ -1,3 +1,5 @@
+// Gemini text/vision client: schema/answer/speech extraction with model failover, token
+// accounting, and AI_MODE=mock support. Audio STT lives in lib/gemini-stt.ts.
 import { GoogleGenAI } from "@google/genai";
 import sharp from "sharp";
 import { FormSchema } from "@/lib/types";
@@ -18,29 +20,33 @@ const USE_MOCK = process.env.AI_MODE === "mock";
 // ponytail: module-scoped running token total, same pattern as deepseek.ts.
 const tokenTotals = { prompt: 0, completion: 0, total: 0 };
 
+// Snapshot of this process's Gemini token totals.
 export function getTokenTotals() {
   return { ...tokenTotals };
 }
 
-type Part =
-  | string
-  | { inlineData: { mimeType: string; data: string } }
-  | { text: string };
+type Part = string | { inlineData: { mimeType: string; data: string } } | { text: string };
 
-function logUsage(model: string, usage: { promptTokens?: number; candidatesTokenCount?: number; totalTokenCount?: number } | undefined) {
+function logUsage(
+  model: string,
+  usage: { promptTokens?: number; candidatesTokenCount?: number; totalTokenCount?: number } | undefined,
+) {
   if (!usage) return;
   const u = {
     prompt: usage.promptTokens ?? 0,
     completion: usage.candidatesTokenCount ?? 0,
-    total: usage.totalTokenCount ?? (usage.promptTokens ?? 0) + (usage.candidatesTokenCount ?? 0)
+    total: usage.totalTokenCount ?? (usage.promptTokens ?? 0) + (usage.candidatesTokenCount ?? 0),
   };
   tokenTotals.prompt += u.prompt;
   tokenTotals.completion += u.completion;
   tokenTotals.total += u.total;
   console.log(`[gemini] ${model} tokens: prompt=${u.prompt} completion=${u.completion} total=${u.total}`);
-  console.log(`[gemini] running total: prompt=${tokenTotals.prompt} completion=${tokenTotals.completion} total=${tokenTotals.total}`);
+  console.log(
+    `[gemini] running total: prompt=${tokenTotals.prompt} completion=${tokenTotals.completion} total=${tokenTotals.total}`,
+  );
 }
 
+// Gemini JSON call with cross-model failover on retryable errors; returns the response text.
 async function generateJson(parts: Part[]): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -66,8 +72,8 @@ async function generateJson(parts: Part[]): Promise<string> {
           responseMimeType: "application/json",
           // ponytail: large image uploads can blow past Node's default body
           // timeout and abort as `fetch failed`; give big payloads room to finish.
-          httpOptions: { timeout: 120000 }
-        }
+          httpOptions: { timeout: 120000 },
+        },
       });
     } catch (err) {
       const status = errorStatus(err);
@@ -105,6 +111,7 @@ function parseJson(text: string): unknown {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Reads the fields of a photographed form into a typed schema (mock mode returns the demo schema).
 // Image must be a base64 data-URL like "data:image/jpeg;base64,..."
 export async function extractFormSchema(imageDataUrl: string): Promise<FormSchema> {
   if (USE_MOCK) {
@@ -125,18 +132,19 @@ export async function extractFormSchema(imageDataUrl: string): Promise<FormSchem
 
   const text = await generateJson([
     { inlineData: { mimeType: "image/jpeg", data: resized.toString("base64") } },
-    scanFormPrompt()
+    scanFormPrompt(),
   ]);
 
   return sanitizeFormSchema(parseJson(text));
 }
 
+// Extracts one field's value from a transcript (mock mode regex-matches digits).
 export async function extractAnswer(
   fieldId: string,
   fieldType: string,
   label: string,
   questionUrdu: string,
-  transcript: string
+  transcript: string,
 ): Promise<{ value: string | null; needsConfirmation: boolean }> {
   if (USE_MOCK) {
     await sleep(300);
@@ -161,17 +169,18 @@ export async function extractAnswer(
   }
 
   const text = await generateJson([
-    `${SYSTEM_PROMPT}\n\n${answerPrompt(fieldId, fieldType, label, questionUrdu, transcript)}`
+    `${SYSTEM_PROMPT}\n\n${answerPrompt(fieldId, fieldType, label, questionUrdu, transcript)}`,
   ]);
 
   const raw = sanitizeAnswer(parseJson(text), fieldId);
   return { value: raw.value, needsConfirmation: raw.needsConfirmation };
 }
 
+// Extracts as many fields as possible from a natural monologue.
 export async function extractSpeech(
   transcript: string,
   schemaLabel: string,
-  fieldIds: string[]
+  fieldIds: string[],
 ): Promise<{ transcript: string; extracted: Record<string, string | null> }> {
   if (USE_MOCK) {
     await sleep(1200);
@@ -183,9 +192,7 @@ export async function extractSpeech(
     return { transcript, extracted };
   }
 
-  const text = await generateJson([
-    `${SYSTEM_PROMPT}\n\n${speechPrompt(schemaLabel, fieldIds, transcript)}`
-  ]);
+  const text = await generateJson([`${SYSTEM_PROMPT}\n\n${speechPrompt(schemaLabel, fieldIds, transcript)}`]);
 
   return sanitizeSpeech(parseJson(text));
 }

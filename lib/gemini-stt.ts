@@ -11,9 +11,10 @@ const USE_MOCK = process.env.AI_MODE === "mock";
 
 const mockTranscripts: Record<string, string> = {
   "audio/webm": "Mera naam Ali Raza hai. Mere walid ka naam Ahmed Raza hai.",
-  "audio/wav": "Mera naam Ali Raza hai. Mere walid ka naam Ahmed Raza hai."
+  "audio/wav": "Mera naam Ali Raza hai. Mere walid ka naam Ahmed Raza hai.",
 };
 
+// Transcribes an audio buffer to Urdu text with cross-model STT failover.
 export async function transcribeAudio(mimeType: string, data: Buffer): Promise<string> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 1200));
@@ -42,15 +43,15 @@ export async function transcribeAudio(mimeType: string, data: Buffer): Promise<s
           {
             inlineData: {
               mimeType,
-              data: data.toString("base64")
-            }
+              data: data.toString("base64"),
+            },
           },
-          "Transcribe the audio faithfully into Urdu. Reply with the transcript in Urdu script (اردو) only — no Latin transliteration, no Devanagari, no extra words."
+          "Transcribe the audio faithfully into Urdu. Reply with the transcript in Urdu script (اردو) only — no Latin transliteration, no Devanagari, no extra words.",
         ],
         config: {
           // ponytail: larger audio blobs can outlast Node's default body timeout.
-          httpOptions: { timeout: 120000 }
-        }
+          httpOptions: { timeout: 120000 },
+        },
       });
     } catch (err) {
       const status = errorStatus(err);
@@ -75,5 +76,7 @@ export async function transcribeAudio(mimeType: string, data: Buffer): Promise<s
     return text.trim();
   }
 
-  throw new Error(`The speech-to-text provider is temporarily unavailable (HTTP ${lastStatus ?? "?"}). Please try again.`);
+  throw new Error(
+    `The speech-to-text provider is temporarily unavailable (HTTP ${lastStatus ?? "?"}). Please try again.`,
+  );
 }

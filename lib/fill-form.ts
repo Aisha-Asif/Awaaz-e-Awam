@@ -1,3 +1,5 @@
+// Client-side canvas rendering of a filled form: printed-style value formatting, fitted
+// handwriting-ish ink, templates as PNG or PDF, and browser download.
 import type { FormTemplate } from "@/lib/types";
 
 const INK = "#10162b";
@@ -59,10 +61,11 @@ function drawFitted(ctx: CanvasRenderingContext2D, text: string, x: number, y: n
   lines.slice(0, 3).forEach((line, i) => ctx.fillText(line, x, top + i * lineH));
 }
 
+// Draws the filled form onto the template canvas at render scale with fitted ink.
 export async function renderFilledForm(
   template: FormTemplate,
   answers: Record<string, string | null | undefined>,
-  opts: FillOptions = {}
+  opts: FillOptions = {},
 ): Promise<HTMLCanvasElement> {
   try {
     await document.fonts.ready;
@@ -105,14 +108,16 @@ export async function renderFilledForm(
   return canvas;
 }
 
+// Encodes the canvas as a PNG blob.
 export function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not create the PNG."))), "image/png")
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not create the PNG."))), "image/png"),
   );
 }
 
 // The page keeps the original form's proportions (it is not exactly A4), so
 // print it at "actual size" / 100% to keep the boxes aligned with the paper.
+// Embeds the canvas as an image in a blank A4 PDF, returning the PDF bytes.
 export async function canvasToPdfBytes(canvas: HTMLCanvasElement, widthPt = 566.88): Promise<Uint8Array> {
   // Loaded on demand: pdf-lib is large and most users only need the preview.
   const { PDFDocument } = await import("pdf-lib");
@@ -125,6 +130,7 @@ export async function canvasToPdfBytes(canvas: HTMLCanvasElement, widthPt = 566.
   return pdf.save();
 }
 
+// Triggers a browser download for a blob under the given filename.
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

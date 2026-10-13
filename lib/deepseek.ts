@@ -1,3 +1,4 @@
+// DeepSeek text/vision client — alternate provider behind lib/ai.ts, same contract as gemini.ts.
 import { FormSchema } from "@/lib/types";
 import { MOCK_FORM_SCHEMA, getMockProcessAnswerResponse } from "@/lib/mock-data";
 import { sanitizeFormSchema, sanitizeAnswer, sanitizeSpeech } from "@/lib/schemas";
@@ -13,6 +14,7 @@ const USE_MOCK = process.env.AI_MODE === "mock";
 // test run sums its own usage without any DB/telemetry. One log line per call.
 const tokenTotals = { prompt: 0, completion: 0, total: 0 };
 
+// Snapshot of this process's DeepSeek token totals.
 export function getTokenTotals() {
   return { ...tokenTotals };
 }
@@ -22,6 +24,7 @@ interface ChatMessage {
   content: unknown;
 }
 
+// One DeepSeek chat call, optionally JSON mode; throws friendly errors on failure.
 async function chat(messages: ChatMessage[], model: string, json: boolean): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
@@ -31,7 +34,7 @@ async function chat(messages: ChatMessage[], model: string, json: boolean): Prom
   const body: Record<string, unknown> = {
     model,
     messages,
-    stream: false
+    stream: false,
   };
   if (json) {
     body.response_format = { type: "json_object" };
@@ -43,9 +46,9 @@ async function chat(messages: ChatMessage[], model: string, json: boolean): Prom
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
   } catch {
     throw new Error("Could not reach the AI provider. Please try again.");
@@ -64,13 +67,15 @@ async function chat(messages: ChatMessage[], model: string, json: boolean): Prom
     const u = {
       prompt: usage.prompt_tokens ?? 0,
       completion: usage.completion_tokens ?? 0,
-      total: usage.total_tokens ?? 0
+      total: usage.total_tokens ?? 0,
     };
     tokenTotals.prompt += u.prompt;
     tokenTotals.completion += u.completion;
     tokenTotals.total += u.total;
     console.log(`[deepseek] ${model} tokens: prompt=${u.prompt} completion=${u.completion} total=${u.total}`);
-    console.log(`[deepseek] running total: prompt=${tokenTotals.prompt} completion=${tokenTotals.completion} total=${tokenTotals.total}`);
+    console.log(
+      `[deepseek] running total: prompt=${tokenTotals.prompt} completion=${tokenTotals.completion} total=${tokenTotals.total}`,
+    );
   }
 
   const text = data?.choices?.[0]?.message?.content;
@@ -92,6 +97,7 @@ function parseJson(text: string): unknown {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Reads the fields of a photographed form into a typed schema (mock mode returns the demo schema).
 // Image must be a base64 data-URL like "data:image/jpeg;base64,..."
 export async function extractFormSchema(imageDataUrl: string): Promise<FormSchema> {
   if (USE_MOCK) {
@@ -106,23 +112,24 @@ export async function extractFormSchema(imageDataUrl: string): Promise<FormSchem
         role: "user",
         content: [
           { type: "text", text: scanFormPrompt() },
-          { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } }
-        ]
-      }
+          { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } },
+        ],
+      },
     ],
     "deepseek-v4-flash-vision-exp",
-    true
+    true,
   );
 
   return sanitizeFormSchema(parseJson(text));
 }
 
+// Extracts one field's value from a transcript (mock mode regex-matches digits).
 export async function extractAnswer(
   fieldId: string,
   fieldType: string,
   label: string,
   questionUrdu: string,
-  transcript: string
+  transcript: string,
 ): Promise<{ value: string | null; needsConfirmation: boolean }> {
   if (USE_MOCK) {
     await sleep(300);
@@ -149,20 +156,21 @@ export async function extractAnswer(
   const text = await chat(
     [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: answerPrompt(fieldId, fieldType, label, questionUrdu, transcript) }
+      { role: "user", content: answerPrompt(fieldId, fieldType, label, questionUrdu, transcript) },
     ],
     TEXT_MODEL,
-    true
+    true,
   );
 
   const raw = sanitizeAnswer(parseJson(text), fieldId);
   return { value: raw.value, needsConfirmation: raw.needsConfirmation };
 }
 
+// Extracts as many fields as possible from a natural monologue.
 export async function extractSpeech(
   transcript: string,
   schemaLabel: string,
-  fieldIds: string[]
+  fieldIds: string[],
 ): Promise<{ transcript: string; extracted: Record<string, string | null> }> {
   if (USE_MOCK) {
     await sleep(1200);
@@ -177,10 +185,10 @@ export async function extractSpeech(
   const text = await chat(
     [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: speechPrompt(schemaLabel, fieldIds, transcript) }
+      { role: "user", content: speechPrompt(schemaLabel, fieldIds, transcript) },
     ],
     TEXT_MODEL,
-    true
+    true,
   );
 
   return sanitizeSpeech(parseJson(text));

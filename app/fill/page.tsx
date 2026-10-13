@@ -1,5 +1,6 @@
 "use client";
 
+// Fill demo page: hand-typed answers on the template's field list, drawn live onto the form preview. Synthetic data only.
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye } from "lucide-react";
@@ -31,7 +32,7 @@ const DEMO: Record<string, string> = {
   attesterOffice: "Union Council 5",
   attesterDesignation: "Chairman",
   attesterCnic: "3520112345671",
-  attesterMobile: "03001234567"
+  attesterMobile: "03001234567",
 };
 
 export default function FillPage() {
@@ -48,10 +49,11 @@ export default function FillPage() {
     return Array.from(map.entries());
   }, [template]);
 
+  // Inline per-input validation error for cnic/phone/date; null when valid or not a validated type.
   const fieldError = (type: string, value: string): string | null => {
     if (!value.trim() || !["cnic", "phone", "date"].includes(type)) return null;
     const r: { valid: boolean; error?: string } = getFieldValidator(type)(value);
-    return r.valid ? null : r.error ?? "Invalid value.";
+    return r.valid ? null : (r.error ?? "Invalid value.");
   };
 
   // /fill?demo=1 opens pre-filled, handy for screenshots and demos.
@@ -70,7 +72,8 @@ export default function FillPage() {
       <div className="mb-6">
         <h1 className="font-display text-2xl sm:text-3xl text-text">{template.title}</h1>
         <p className="text-text-muted mt-1">
-          Prototype: answers are typed here for now. Voice interview will feed the same fields. Demo only, use synthetic data.
+          Prototype: answers are typed here for now. Voice interview will feed the same fields. Demo only, use synthetic
+          data.
         </p>
       </div>
 

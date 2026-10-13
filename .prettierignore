@@ -1,0 +1,3 @@
+# npm-managed lockfile; lib/templates/*.json are machine-mapped coordinate data.
+package-lock.json
+lib/templates/*.json

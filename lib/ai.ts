@@ -1,3 +1,4 @@
+// Provider router: picks gemini or deepseek from env and re-exports the extraction functions.
 import * as deepseek from "@/lib/deepseek";
 import * as gemini from "@/lib/gemini";
 
@@ -12,21 +13,17 @@ const useGemini = provider === "gemini";
 
 const active = () => (useGemini ? gemini : deepseek);
 
-export const extractFormSchema = (imageDataUrl: string) =>
-  active().extractFormSchema(imageDataUrl);
+export const extractFormSchema = (imageDataUrl: string) => active().extractFormSchema(imageDataUrl);
 
 export const extractAnswer = (
   fieldId: string,
   fieldType: string,
   label: string,
   questionUrdu: string,
-  transcript: string
+  transcript: string,
 ) => active().extractAnswer(fieldId, fieldType, label, questionUrdu, transcript);
 
-export const extractSpeech = (
-  transcript: string,
-  schemaLabel: string,
-  fieldIds: string[]
-) => active().extractSpeech(transcript, schemaLabel, fieldIds);
+export const extractSpeech = (transcript: string, schemaLabel: string, fieldIds: string[]) =>
+  active().extractSpeech(transcript, schemaLabel, fieldIds);
 
 export const getActiveProvider = () => (useGemini ? "gemini" : "deepseek");

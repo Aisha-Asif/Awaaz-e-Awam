@@ -1,5 +1,7 @@
 "use client";
 
+// ImageCapture: photograph or upload a form — rear camera via getUserMedia, still capture to a File,
+// preview with replace/retake.
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Camera, UploadCloud, X, RotateCcw, Check, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/Button";
@@ -11,12 +13,7 @@ interface ImageCaptureProps {
   maxSizeMB?: number;
 }
 
-export function ImageCapture({
-  onImageCapture,
-  onError,
-  disabled = false,
-  maxSizeMB = 10
-}: ImageCaptureProps) {
+export function ImageCapture({ onImageCapture, onError, disabled = false, maxSizeMB = 10 }: ImageCaptureProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,19 +24,21 @@ export function ImageCapture({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Stops all camera tracks and closes the live view.
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     setIsCameraOpen(false);
   }, []);
 
+  // Requests the rear camera and opens the live view.
   const startCamera = useCallback(async () => {
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
       });
       streamRef.current = stream;
       // Set camera open FIRST so the video element renders
@@ -61,24 +60,29 @@ export function ImageCapture({
     }
   }, [isCameraOpen]);
 
-  const handleFileSelect = useCallback((selectedFile: File) => {
-    setError(null);
+  // Validates an uploaded image, then sets the preview + file.
+  const handleFileSelect = useCallback(
+    (selectedFile: File) => {
+      setError(null);
 
-    if (!selectedFile.type.startsWith("image/")) {
-      setError("Please select a valid image.");
-      return;
-    }
+      if (!selectedFile.type.startsWith("image/")) {
+        setError("Please select a valid image.");
+        return;
+      }
 
-    if (selectedFile.size > maxSizeMB * 1024 * 1024) {
-      setError(`File size must be less than ${maxSizeMB}MB.`);
-      return;
-    }
+      if (selectedFile.size > maxSizeMB * 1024 * 1024) {
+        setError(`File size must be less than ${maxSizeMB}MB.`);
+        return;
+      }
 
-    const url = URL.createObjectURL(selectedFile);
-    setPreview(url);
-    setFile(selectedFile);
-  }, [maxSizeMB]);
+      const url = URL.createObjectURL(selectedFile);
+      setPreview(url);
+      setFile(selectedFile);
+    },
+    [maxSizeMB],
+  );
 
+  // Grabs one video frame, emits it as a JPEG File, and closes the camera.
   const capturePhoto = useCallback(() => {
     const video = videoRef.current;
     if (!video) {
@@ -131,34 +135,41 @@ export function ImageCapture({
     }
 
     // Convert canvas to blob
-    canvas.toBlob((blob) => {
-      if (!blob || blob.size === 0) {
-        setError("Unable to create the captured image. Please try again.");
+    canvas.toBlob(
+      (blob) => {
+        if (!blob || blob.size === 0) {
+          setError("Unable to create the captured image. Please try again.");
+          setIsCapturing(false);
+          return;
+        }
+
+        const capturedFile = new File([blob], `form-${Date.now()}.jpg`, { type: "image/jpeg" });
+
+        // Stop camera AFTER capturing the image
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+        setIsCameraOpen(false);
+
+        // Set the captured image
+        handleFileSelect(capturedFile);
         setIsCapturing(false);
-        return;
-      }
-
-      const capturedFile = new File([blob], `form-${Date.now()}.jpg`, { type: "image/jpeg" });
-
-      // Stop camera AFTER capturing the image
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-      setIsCameraOpen(false);
-
-      // Set the captured image
-      handleFileSelect(capturedFile);
-      setIsCapturing(false);
-    }, "image/jpeg", 0.9);
+      },
+      "image/jpeg",
+      0.9,
+    );
   }, [handleFileSelect]);
 
-  const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      handleFileSelect(selectedFile);
-    }
-  }, [handleFileSelect]);
+  const handleFileInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = event.target.files?.[0];
+      if (selectedFile) {
+        handleFileSelect(selectedFile);
+      }
+    },
+    [handleFileSelect],
+  );
 
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -181,7 +192,7 @@ export function ImageCapture({
   useEffect(() => {
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
       if (preview) {
@@ -202,27 +213,24 @@ export function ImageCapture({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFile = e.dataTransfer.files?.[0];
-    if (droppedFile) {
-      handleFileSelect(droppedFile);
-    }
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const droppedFile = e.dataTransfer.files?.[0];
+      if (droppedFile) {
+        handleFileSelect(droppedFile);
+      }
+    },
+    [handleFileSelect],
+  );
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
       {isCameraOpen && (
         <div className="rounded-card border border-line-strong overflow-hidden shadow-lg bg-ink-2">
           <div className="relative aspect-[4/3]">
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              playsInline
-              muted
-            />
+            <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
             {/* Viewfinder guide brackets */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6 sm:p-10">
               <div className="w-full h-full border-2 border-dashed border-white/60 rounded-card relative">
@@ -241,13 +249,7 @@ export function ImageCapture({
               >
                 Cancel
               </Button>
-              <Button
-                variant="jade"
-                size="md"
-                onClick={capturePhoto}
-                disabled={isCapturing}
-                className="px-6 shadow-md"
-              >
+              <Button variant="jade" size="md" onClick={capturePhoto} disabled={isCapturing} className="px-6 shadow-md">
                 <Camera className="w-4 h-4" />
                 {isCapturing ? "Capturing..." : "Capture Photo"}
               </Button>
@@ -302,7 +304,8 @@ export function ImageCapture({
           <div className="p-3.5 bg-paper-subtle border border-line rounded-card text-xs text-text-muted font-body flex items-start gap-2.5">
             <ImageIcon className="w-4 h-4 text-jade shrink-0 mt-0.5" />
             <span>
-              <strong>Helpful tip:</strong> Lay the physical document on a flat surface in good lighting. Ensure all fields and printed headings are clearly visible.
+              <strong>Helpful tip:</strong> Lay the physical document on a flat surface in good lighting. Ensure all
+              fields and printed headings are clearly visible.
             </span>
           </div>
         </div>
@@ -311,11 +314,7 @@ export function ImageCapture({
       {preview && !isCameraOpen && (
         <div className="rounded-card border border-line-strong overflow-hidden bg-paper-card shadow-md">
           <div className="relative aspect-[4/3] bg-paper-subtle flex items-center justify-center">
-            <img
-              src={preview}
-              alt="Form preview"
-              className="w-full h-full object-contain p-3"
-            />
+            <img src={preview} alt="Form preview" className="w-full h-full object-contain p-3" />
             <div className="absolute top-3 right-3 flex gap-2">
               <button
                 type="button"
@@ -328,7 +327,10 @@ export function ImageCapture({
               </button>
               <button
                 type="button"
-                onClick={() => setIsCameraOpen(true)}
+                onClick={() => {
+                  stopCamera();
+                  startCamera();
+                }}
                 className="bg-ink/80 text-white p-2 rounded-full hover:bg-ink transition-colors shadow-sm"
                 title="Retake photo"
                 aria-label="Retake photo"
@@ -350,7 +352,10 @@ export function ImageCapture({
       )}
 
       {error && (
-        <div className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2" role="alert">
+        <div
+          className="p-3.5 bg-rani-light border border-rani/30 rounded-card text-rani text-sm text-center font-body flex items-center justify-center gap-2"
+          role="alert"
+        >
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>

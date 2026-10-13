@@ -1,3 +1,7 @@
+// Trust-boundary field validators (CNIC/phone/date) plus which types require spoken confirmation.
+// Whatever the AI extracts or the user types is normalized + checked here before it is accepted.
+
+// Validates a CNIC and normalizes it to exactly 13 digits.
 export function validateCNIC(cnic: string): { valid: boolean; normalized: string; error?: string } {
   const cleaned = cnic.replace(/[-\s]/g, "");
 
@@ -8,6 +12,7 @@ export function validateCNIC(cnic: string): { valid: boolean; normalized: string
   return { valid: true, normalized: cleaned };
 }
 
+// Validates a Pakistani mobile number (any 03/92 style) and normalizes it to 03XXXXXXXXX.
 export function validatePhone(phone: string): { valid: boolean; normalized: string; error?: string } {
   let cleaned = phone.replace(/[\s-]/g, "");
 
@@ -19,12 +24,17 @@ export function validatePhone(phone: string): { valid: boolean; normalized: stri
   }
 
   if (!/^03\d{9}$/.test(cleaned)) {
-    return { valid: false, normalized: cleaned, error: "Please enter a valid Pakistani mobile number (e.g., 03001234567)." };
+    return {
+      valid: false,
+      normalized: cleaned,
+      error: "Please enter a valid Pakistani mobile number (e.g., 03001234567).",
+    };
   }
 
   return { valid: true, normalized: cleaned };
 }
 
+// Parses DD/MM/YYYY-style input, validates the calendar date, normalizes to YYYY-MM-DD.
 export function validateDate(date: string): { valid: boolean; normalized: string; error?: string } {
   const match = date.match(/(\d{1,2})[\/\-\s](\d{1,2})[\/\-\s](\d{4})/);
   if (!match) {
@@ -44,6 +54,7 @@ export function validateDate(date: string): { valid: boolean; normalized: string
   return { valid: true, normalized };
 }
 
+// Picks the validator for a field type; non-empty pass-through for free-text types.
 export function getFieldValidator(type: string) {
   switch (type) {
     case "cnic":
@@ -57,8 +68,10 @@ export function getFieldValidator(type: string) {
   }
 }
 
+// Field types that are always read back for confirmation.
 export const CONFIRMATION_REQUIRED_TYPES = ["cnic", "phone", "date"] as const;
 
+// True for CNIC/phone/date — always read back aloud before being accepted.
 export function requiresConfirmation(type: string): boolean {
-  return CONFIRMATION_REQUIRED_TYPES.includes(type as typeof CONFIRMATION_REQUIRED_TYPES[number]);
+  return CONFIRMATION_REQUIRED_TYPES.includes(type as (typeof CONFIRMATION_REQUIRED_TYPES)[number]);
 }

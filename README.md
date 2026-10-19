@@ -325,6 +325,10 @@ During the build phase:
 - No real government APIs are called
 - Synthetic demo data is used throughout
 
+See [PRIVACY.md](./PRIVACY.md) for the full data-handling policy. The app enforces the compliance
+boundary via `DATA_PATH` (`demo` vs `sensitive`) — the sensitive path fails closed and never routes
+real data to Gemini/DeepSeek. The in-app page is at `/privacy`.
+
 ---
 
 ## What's Next

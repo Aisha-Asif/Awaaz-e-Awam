@@ -8,6 +8,7 @@ import { ArrowLeft, ChevronRight, Check, CheckCircle2, Copy, RotateCcw, MessageS
 import { ImageCapture } from "@/components/ImageCapture";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { ConsentNotice } from "@/components/ConsentNotice";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
@@ -346,6 +347,7 @@ export default function ScanPage() {
         <section className="section">
           <div className="wrap" style={{ maxWidth: 720 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
+            <ConsentNotice />
             <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <h2>Scan a Form</h2>
               <p>Take a clear photo of your physical form or upload an image. The AI will identify all fields.</p>

@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, ReactNode } from "react";
 import { ArrowLeft, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { ConsentNotice } from "@/components/ConsentNotice";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
@@ -234,6 +235,7 @@ export default function SpeakPage() {
         <section className="section">
           <div className="wrap" style={{ maxWidth: 720 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
+            <ConsentNotice />
             <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <h2>Speak Naturally</h2>
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>

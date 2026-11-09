@@ -2,6 +2,7 @@
 // (normalized 0-1 coordinates); templates ship as JSON and are resolved by id.
 import nadraAttester from "./nadra-attester-smartid.json";
 import type { FormField, FormSchema, FormTemplate } from "@/lib/types";
+import { defaultInputMode, defaultPrintFormat } from "@/lib/field-model";
 
 // Template JSON stores each field's whole printed cell in page pixels, plus which
 // side the printed label sits on and how wide it is. The write area (where ink
@@ -18,10 +19,14 @@ function buildTemplate(raw: RawTemplate): FormTemplate {
     const { x, y, w, h } = f.cell;
     const left = f.labelSide === "left" ? x + f.labelWidth : x + CELL_PAD;
     const width = w - f.labelWidth - CELL_PAD;
+    const type = f.type as FormField["type"];
     return {
       id: f.id,
       label: f.label,
-      type: f.type as FormField["type"],
+      labelUr: f.labelUr,
+      type,
+      inputMode: defaultInputMode(type),
+      printFormat: defaultPrintFormat(type),
       required: f.required,
       section: f.section,
       questionUrdu: f.questionUrdu,

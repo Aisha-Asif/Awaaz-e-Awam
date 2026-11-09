@@ -8,6 +8,7 @@
   {
    "id": "fullName",
    "label": "Full name",
+   "labelUr": "پورا نام",
    "type": "text",
    "required": true,
    "section": "Applicant",
@@ -26,6 +27,7 @@
   {
    "id": "fatherName",
    "label": "Father's name",
+   "labelUr": "والد کا نام",
    "type": "text",
    "required": true,
    "section": "Applicant",
@@ -44,6 +46,7 @@
   {
    "id": "motherName",
    "label": "Mother's name",
+   "labelUr": "والدہ کا نام",
    "type": "text",
    "required": true,
    "section": "Applicant",
@@ -62,6 +65,7 @@
   {
    "id": "spouseName",
    "label": "Spouse's name",
+   "labelUr": "شریک حیات کا نام",
    "type": "text",
    "required": false,
    "section": "Applicant",
@@ -80,6 +84,7 @@
   {
    "id": "gender",
    "label": "Gender",
+   "labelUr": "جنس",
    "type": "select",
    "required": true,
    "section": "Applicant",
@@ -98,6 +103,7 @@
   {
    "id": "maritalStatus",
    "label": "Marital status",
+   "labelUr": "ازدواجی حیثیت",
    "type": "select",
    "required": true,
    "section": "Applicant",
@@ -116,6 +122,7 @@
   {
    "id": "dateOfBirth",
    "label": "Date of birth",
+   "labelUr": "تاریخ پیدائش",
    "type": "date",
    "required": true,
    "section": "Applicant",
@@ -134,6 +141,7 @@
   {
    "id": "districtOfBirth",
    "label": "District of birth",
+   "labelUr": "ضلع پیدائش",
    "type": "text",
    "required": true,
    "section": "Applicant",
@@ -152,6 +160,7 @@
   {
    "id": "twin",
    "label": "Twin (yes/no)",
+   "labelUr": "جڑواں (ہاں/نہیں)",
    "type": "select",
    "required": false,
    "section": "Applicant",
@@ -170,6 +179,7 @@
   {
    "id": "religion",
    "label": "Religion",
+   "labelUr": "مذہب",
    "type": "text",
    "required": true,
    "section": "Applicant",
@@ -188,6 +198,7 @@
   {
    "id": "headCnic",
    "label": "CNIC of head of household",
+   "labelUr": "سربراہِ خانہ کا شناختی کارڈ نمبر",
    "type": "cnic",
    "required": false,
    "section": "Applicant",
@@ -206,6 +217,7 @@
   {
    "id": "relationToHead",
    "label": "Relation to head of household",
+   "labelUr": "سربراہِ خانہ سے رشتہ",
    "type": "text",
    "required": false,
    "section": "Applicant",
@@ -224,6 +236,7 @@
   {
    "id": "presentAddress",
    "label": "Present address — details",
+   "labelUr": "موجودہ پتہ — تفصیل",
    "type": "address",
    "required": true,
    "section": "Applicant · Present address",
@@ -242,6 +255,7 @@
   {
    "id": "presentCity",
    "label": "Present address — city/village",
+   "labelUr": "موجودہ پتہ — شہر/گاؤں",
    "type": "text",
    "required": true,
    "section": "Applicant · Present address",
@@ -260,6 +274,7 @@
   {
    "id": "presentTehsil",
    "label": "Present address — tehsil",
+   "labelUr": "موجودہ پتہ — تحصیل",
    "type": "text",
    "required": true,
    "section": "Applicant · Present address",
@@ -278,6 +293,7 @@
   {
    "id": "presentDistrict",
    "label": "Present address — district",
+   "labelUr": "موجودہ پتہ — ضلع",
    "type": "text",
    "required": true,
    "section": "Applicant · Present address",
@@ -296,6 +312,7 @@
   {
    "id": "permanentAddress",
    "label": "Permanent address — details",
+   "labelUr": "مستقل پتہ — تفصیل",
    "type": "address",
    "required": true,
    "section": "Applicant · Permanent address",
@@ -314,6 +331,7 @@
   {
    "id": "permanentCity",
    "label": "Permanent address — city/village",
+   "labelUr": "مستقل پتہ — شہر/گاؤں",
    "type": "text",
    "required": true,
    "section": "Applicant · Permanent address",
@@ -332,6 +350,7 @@
   {
    "id": "permanentTehsil",
    "label": "Permanent address — tehsil",
+   "labelUr": "مستقل پتہ — تحصیل",
    "type": "text",
    "required": true,
    "section": "Applicant · Permanent address",
@@ -350,6 +369,7 @@
   {
    "id": "permanentDistrict",
    "label": "Permanent address — district",
+   "labelUr": "مستقل پتہ — ضلع",
    "type": "text",
    "required": true,
    "section": "Applicant · Permanent address",
@@ -368,6 +388,7 @@
   {
    "id": "attesterName",
    "label": "Attester — full name",
+   "labelUr": "تصدیق کنندہ — پورا نام",
    "type": "text",
    "required": true,
    "section": "Attester",
@@ -386,6 +407,7 @@
   {
    "id": "attesterOffice",
    "label": "Attester — office/department",
+   "labelUr": "تصدیق کنندہ — ادارہ/محکمہ",
    "type": "text",
    "required": true,
    "section": "Attester",
@@ -404,6 +426,7 @@
   {
    "id": "attesterDesignation",
    "label": "Attester — designation",
+   "labelUr": "تصدیق کنندہ — عہدہ",
    "type": "text",
    "required": true,
    "section": "Attester",
@@ -422,6 +445,7 @@
   {
    "id": "attesterCnic",
    "label": "Attester — CNIC",
+   "labelUr": "تصدیق کنندہ — شناختی کارڈ نمبر",
    "type": "cnic",
    "required": true,
    "section": "Attester",
@@ -440,6 +464,7 @@
   {
    "id": "attesterMobile",
    "label": "Attester — mobile",
+   "labelUr": "تصدیق کنندہ — موبائل نمبر",
    "type": "phone",
    "required": true,
    "section": "Attester",

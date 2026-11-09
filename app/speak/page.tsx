@@ -4,7 +4,7 @@
 // -> per-field interview -> filled form with copy/export.
 import Link from "next/link";
 import { useState, useCallback, useEffect, ReactNode } from "react";
-import { ArrowLeft, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { ConsentNotice } from "@/components/ConsentNotice";
@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
+import { ResultList } from "@/components/ResultList";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
@@ -76,8 +77,6 @@ export default function SpeakPage() {
     questionUrdu: string;
   } | null>(null);
   const [justSaved, setJustSaved] = useState(false);
-  const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
-  const [copiedJson, setCopiedJson] = useState(false);
   const {
     supported: srSupported,
     listening: srListening,
@@ -565,19 +564,6 @@ export default function SpeakPage() {
   }
 
   if (step === "complete") {
-    const handleCopyField = (fieldId: string, val: string) => {
-      navigator.clipboard.writeText(val);
-      setCopiedFieldId(fieldId);
-      setTimeout(() => setCopiedFieldId(null), 2000);
-    };
-
-    const handleCopyJson = () => {
-      const json = JSON.stringify(answers, null, 2);
-      navigator.clipboard.writeText(json);
-      setCopiedJson(true);
-      setTimeout(() => setCopiedJson(false), 2000);
-    };
-
     return (
       <>
         <PageHeader />
@@ -589,7 +575,7 @@ export default function SpeakPage() {
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <h2>Form Complete!</h2>
-              <p>All required fields have been filled.</p>
+              <p>Check your answers below, then copy them or download the filled form.</p>
             </div>
 
             <Card variant="elevated" padding="lg">
@@ -597,57 +583,9 @@ export default function SpeakPage() {
                 <CardTitle>Your Information</CardTitle>
                 <CardDescription>Ready to copy or use on your physical form</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {(formSchema?.fields ?? []).map((field) => {
-                  const fieldId = field.id;
-                  const value = answers[fieldId];
-                  if (!value) return null;
-                  const isCopied = copiedFieldId === fieldId;
-                  return (
-                    <div
-                      key={fieldId}
-                      className="flex items-center justify-between p-3.5 bg-paper rounded-card border border-line/50"
-                    >
-                      <div>
-                        <p className="text-sm text-text-muted font-body">{field.label}</p>
-                        <p className="font-medium text-text font-body" style={{ wordBreak: "break-all" }}>
-                          {value}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TTSButton text={value} />
-                        <button
-                          onClick={() => handleCopyField(fieldId, value)}
-                          className="p-2 text-text-muted hover:text-text hover:bg-line rounded-card transition-colors"
-                          title={isCopied ? "Copied!" : "Copy value"}
-                          aria-label={`Copy ${field.label}`}
-                        >
-                          {isCopied ? (
-                            <Check className="w-4 h-4 text-jade stroke-[2.5]" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <CardContent>
+                <ResultList fields={formSchema?.fields ?? []} answers={answers} />
               </CardContent>
-              <CardFooter>
-                <Button size="lg" className="w-full" onClick={handleCopyJson}>
-                  {copiedJson ? (
-                    <>
-                      <Check className="w-5 h-5 text-paper stroke-[2.5]" />
-                      JSON Copied to Clipboard!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-5 h-5" />
-                      Copy All as JSON
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
             </Card>
 
             {template && (

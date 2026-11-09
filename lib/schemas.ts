@@ -1,6 +1,7 @@
 // Zod schemas for API request bodies, plus sanitizers that coerce raw AI JSON into typed, valid records.
 import { z } from "zod";
 import { FormField, FormSchema, ProcessAnswerResponse } from "@/lib/types";
+import { defaultInputMode, defaultPrintFormat } from "@/lib/field-model";
 
 const FormFieldTypeSchema = z.enum([
   "text",
@@ -13,6 +14,9 @@ const FormFieldTypeSchema = z.enum([
   "checkbox",
   "unknown",
 ]);
+
+const InputModeSchema = z.enum(["type", "voice-or-type", "choice"]);
+const PrintFormatSchema = z.enum(["cnic-dashes", "date-dmy", "plain"]);
 
 const BoundingBoxSchema = z.object({
   x: z.number(),
@@ -45,6 +49,9 @@ const FormFieldInputSchema = z.object({
   required: z.boolean().optional().default(false),
   questionUrdu: z.string().optional().default(""),
   questionEnglish: z.string().optional(),
+  labelUr: z.string().optional(),
+  inputMode: InputModeSchema.optional(),
+  printFormat: PrintFormatSchema.optional(),
   boundingBox: BoundingBoxSchema.optional(),
 });
 
@@ -97,15 +104,21 @@ export function sanitizeFormSchema(data: unknown): FormSchema {
   const seen = new Set<string>();
 
   const fields: FormField[] = parsed.fields
-    .map((f) => ({
-      id: slugId(f.id),
-      label: f.label ?? f.id,
-      type: (FIELD_TYPE_SET.has(f.type ?? "") ? f.type : "unknown") as SanitizedFieldType,
-      required: f.required ?? false,
-      questionUrdu: f.questionUrdu ?? "",
-      questionEnglish: f.questionEnglish,
-      boundingBox: f.boundingBox,
-    }))
+    .map((f) => {
+      const type = (FIELD_TYPE_SET.has(f.type ?? "") ? f.type : "unknown") as SanitizedFieldType;
+      return {
+        id: slugId(f.id),
+        label: f.label ?? f.id,
+        type,
+        // Derived from the type, never taken from the AI: CNIC/phone/date are always typed-only.
+        inputMode: defaultInputMode(type),
+        printFormat: defaultPrintFormat(type),
+        required: f.required ?? false,
+        questionUrdu: f.questionUrdu ?? "",
+        questionEnglish: f.questionEnglish,
+        boundingBox: f.boundingBox,
+      };
+    })
     .filter((f) => f.id !== "" && !seen.has(f.id) && seen.add(f.id));
 
   return {

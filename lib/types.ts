@@ -2,6 +2,13 @@
 export type FormFieldType =
   "text" | "number" | "date" | "cnic" | "phone" | "address" | "select" | "checkbox" | "unknown";
 
+// How the interview collects a field: "type" = typed only (never spoken or sent to an AI; used for CNIC/phone/date),
+// "voice-or-type" = spoken or typed free text, "choice" = pick from a short list (gender, marital status).
+export type FieldInputMode = "type" | "voice-or-type" | "choice";
+
+// How a stored value is written on the paper form.
+export type PrintFormat = "cnic-dashes" | "date-dmy" | "plain";
+
 export type BoundingBox = {
   x: number;
   y: number;
@@ -12,7 +19,12 @@ export type BoundingBox = {
 export type FormField = {
   id: string;
   label: string;
+  // Urdu-script label for bilingual display (optional; falls back to `label`).
+  labelUr?: string;
   type: FormFieldType;
+  // Optional overrides; when omitted, defaultInputMode / defaultPrintFormat (lib/field-model.ts) derive them from `type`.
+  inputMode?: FieldInputMode;
+  printFormat?: PrintFormat;
   required: boolean;
   questionUrdu: string;
   questionEnglish?: string;

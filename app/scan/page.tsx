@@ -4,7 +4,7 @@
 // completed form (drawn onto a template when one matches); scanned-form history in localStorage.
 import Link from "next/link";
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
-import { ArrowLeft, ChevronRight, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote } from "lucide-react";
+import { ArrowLeft, ChevronRight, Check, CheckCircle2, RotateCcw, MessageSquareQuote } from "lucide-react";
 import { ImageCapture } from "@/components/ImageCapture";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
@@ -13,24 +13,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
+import { ResultList } from "@/components/ResultList";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { SKIP_SENTINEL } from "@/lib/schemas";
 import { FilledForm } from "@/components/FilledForm";
 import { TEMPLATES } from "@/lib/templates";
 import { FormSchema, FormTemplate } from "@/lib/types";
-
-const REQUIRED_FIELD_ORDER = [
-  "fullName",
-  "fatherName",
-  "cnic",
-  "dateOfBirth",
-  "phone",
-  "city",
-  "gender",
-  "address",
-  "district",
-];
 
 // ponytail: form history lives in localStorage only (schemas are JSON-safe,
 // MVP has no DB). Capped at 10, deduped by formTitle. Upgrading this to a
@@ -123,8 +112,6 @@ export default function ScanPage() {
   const [template, setTemplate] = useState<FormTemplate | null>(null);
   const [formHistory, setFormHistory] = useState<FormSchema[]>(getFormHistory);
   const [justSaved, setJustSaved] = useState(false);
-  const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
-  const [copiedJson, setCopiedJson] = useState(false);
   const skippedFieldsRef = useRef<Set<string>>(new Set());
   const {
     supported: srSupported,
@@ -636,19 +623,6 @@ export default function ScanPage() {
   }
 
   if (step === "complete") {
-    const handleCopyField = (fieldId: string, val: string) => {
-      navigator.clipboard.writeText(val);
-      setCopiedFieldId(fieldId);
-      setTimeout(() => setCopiedFieldId(null), 2000);
-    };
-
-    const handleCopyJson = () => {
-      const json = JSON.stringify(answers, null, 2);
-      navigator.clipboard.writeText(json);
-      setCopiedJson(true);
-      setTimeout(() => setCopiedJson(false), 2000);
-    };
-
     return (
       <>
         <PageHeader />
@@ -660,7 +634,7 @@ export default function ScanPage() {
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <h2>Interview Complete!</h2>
-              <p>All required fields have been answered.</p>
+              <p>Check your answers below, then copy them or use the form on the right.</p>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
@@ -669,57 +643,9 @@ export default function ScanPage() {
                   <CardTitle>Your Answers</CardTitle>
                   <CardDescription>Copy these to your physical form</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4" style={{ maxHeight: "60vh", overflowY: "auto" }}>
-                  {REQUIRED_FIELD_ORDER.map((fieldId) => {
-                    const value = answers[fieldId];
-                    const field = formSchema?.fields.find((f) => f.id === fieldId);
-                    if (!field || !value) return null;
-                    const isCopied = copiedFieldId === fieldId;
-                    return (
-                      <div
-                        key={fieldId}
-                        className="flex items-start justify-between p-4 bg-paper rounded-card border border-line/50"
-                      >
-                        <div className="flex-1 pr-4">
-                          <p className="text-sm text-text-muted font-body">{field.label}</p>
-                          <p className="font-medium text-text font-body" style={{ wordBreak: "break-all" }}>
-                            {value}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <TTSButton text={value} />
-                          <button
-                            onClick={() => handleCopyField(fieldId, value)}
-                            className="p-2 text-text-muted hover:text-text hover:bg-line rounded-card transition-colors"
-                            title={isCopied ? "Copied!" : "Copy value"}
-                            aria-label={`Copy ${field.label}`}
-                          >
-                            {isCopied ? (
-                              <Check className="w-4 h-4 text-jade stroke-[2.5]" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <CardContent style={{ maxHeight: "70vh", overflowY: "auto" }}>
+                  <ResultList fields={formSchema?.fields ?? []} answers={answers} />
                 </CardContent>
-                <CardFooter>
-                  <Button size="lg" className="w-full" onClick={handleCopyJson}>
-                    {copiedJson ? (
-                      <>
-                        <Check className="w-5 h-5 text-paper stroke-[2.5]" />
-                        JSON Copied to Clipboard!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-5 h-5" />
-                        Copy All as JSON
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
               </Card>
 
               <Card variant="elevated" padding="lg">

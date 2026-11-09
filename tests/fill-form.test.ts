@@ -19,4 +19,10 @@ describe("formatForPaper", () => {
     expect(formatForPaper("date", "2025/12/31")).toBe("2025/12/31");
     expect(formatForPaper("text", "  Full name  ")).toBe("Full name");
   });
+
+  it("honours an explicit printFormat over the field type", () => {
+    expect(formatForPaper("text", "4210123456789", "cnic-dashes")).toBe("42101-2345678-9");
+    expect(formatForPaper("cnic", "4210123456789", "plain")).toBe("4210123456789");
+    expect(formatForPaper("text", "2025-12-31", "date-dmy")).toBe("31/12/2025");
+  });
 });

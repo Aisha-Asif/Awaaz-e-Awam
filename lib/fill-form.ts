@@ -1,6 +1,7 @@
 // Client-side canvas rendering of a filled form: printed-style value formatting, fitted
 // handwriting-ish ink, templates as PNG or PDF, and browser download.
-import type { FormTemplate } from "@/lib/types";
+import type { FormFieldType, FormTemplate, PrintFormat } from "@/lib/types";
+import { defaultPrintFormat } from "@/lib/field-model";
 
 const INK = "#10162b";
 const FONT_FAMILY = `"Work Sans", Arial, sans-serif`;
@@ -9,10 +10,12 @@ const MIN_FONT = 11;
 
 // What goes on paper differs from what we store: CNIC is kept as 13 digits,
 // dates as YYYY-MM-DD, but the form expects the familiar printed style.
-export function formatForPaper(type: string, value: string): string {
+export function formatForPaper(type: string, value: string, printFormat?: PrintFormat): string {
   const v = value.trim();
-  if (type === "cnic" && /^\d{13}$/.test(v)) return `${v.slice(0, 5)}-${v.slice(5, 12)}-${v.slice(12)}`;
-  if (type === "date") {
+  // An explicit format wins; otherwise derive it from the field type (same rules as before).
+  const format = printFormat ?? defaultPrintFormat(type as FormFieldType);
+  if (format === "cnic-dashes" && /^\d{13}$/.test(v)) return `${v.slice(0, 5)}-${v.slice(5, 12)}-${v.slice(12)}`;
+  if (format === "date-dmy") {
     const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   }
@@ -102,7 +105,7 @@ export async function renderFilledForm(
     if (!raw || !raw.trim()) continue;
 
     ctx.fillStyle = INK;
-    drawFitted(ctx, formatForPaper(field.type, raw), x + 2, y, w - 4, h);
+    drawFitted(ctx, formatForPaper(field.type, raw, field.printFormat), x + 2, y, w - 4, h);
   }
 
   return canvas;

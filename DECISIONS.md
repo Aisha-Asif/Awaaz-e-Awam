@@ -19,7 +19,7 @@ why, and what would make us revisit it. See `ROADMAP.md` for the phased plan.
 | #   | Decision                                                                         | Rationale                                                           | Revisit if                                       |
 | --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
 | D7  | **Groq Whisper-large-v3 = primary STT** (Speak + Scan, shared `/api/transcribe`) | Strong Urdu/multi-dialect, fast, free tier                          | Urdu WER unacceptable vs alternatives            |
-| D8  | **Gemini STT = fallback** (demote, do not remove)                                | Coverage when Groq is down or rate-limited                          | Groq proves reliable enough to drop the fallback |
+| D8  | **Gemini STT = fallback** (demote, do not remove) — **demo path only**           | Coverage when Groq down; real PII never reaches Gemini (see D9)     | Groq proves reliable enough to drop the fallback |
 | D9  | **Groq = the only LLM on the real-PII path**; Gemini = demo/synthetic only       | Gemini free tier trains on content + human review; terms forbid PII | Gemini offers a no-train, ZDR tier we can afford |
 | D10 | Route via `DATA_PATH=sensitive\|demo` behind one `Provider` interface            | Single choke point for the compliance boundary                      | —                                                |
 | D11 | **ElevenLabs rejected for STT**                                                  | ~30 min/mo free, no commercial license; parked for TTS only         | Budget exists for a paid STT license             |

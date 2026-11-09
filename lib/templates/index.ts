@@ -24,6 +24,7 @@ function buildTemplate(raw: RawTemplate): FormTemplate {
       id: f.id,
       label: f.label,
       labelUr: f.labelUr,
+      options: (f as { options?: string[] }).options,
       type,
       inputMode: defaultInputMode(type),
       printFormat: defaultPrintFormat(type),

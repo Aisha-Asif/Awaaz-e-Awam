@@ -14,7 +14,8 @@ export function validateCNIC(cnic: string): { valid: boolean; normalized: string
 
 // Validates a Pakistani mobile number (any 03/92 style) and normalizes it to 03XXXXXXXXX.
 export function validatePhone(phone: string): { valid: boolean; normalized: string; error?: string } {
-  let cleaned = phone.replace(/[\s-]/g, "");
+  // Drop spaces, dashes and a leading "+" so "+92 300 1234567" works like "923001234567".
+  let cleaned = phone.replace(/[\s-]/g, "").replace(/^\+/, "");
 
   if (cleaned.startsWith("92")) {
     cleaned = "0" + cleaned.slice(2);

@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { defaultInputMode, defaultPrintFormat, inputModeOf, printFormatOf, labelFor } from "@/lib/field-model";
+import {
+  defaultInputMode,
+  defaultPrintFormat,
+  effectiveInputMode,
+  inputModeOf,
+  isTypedOnlyType,
+  labelFor,
+  printFormatOf,
+} from "@/lib/field-model";
 
 describe("defaultInputMode", () => {
   it("makes CNIC, phone and date typed-only", () => {
@@ -46,5 +54,32 @@ describe("labelFor", () => {
     expect(labelFor({ label: "Full name", labelUr: "پورا نام" }, "ur")).toBe("پورا نام");
     expect(labelFor({ label: "Full name" }, "ur")).toBe("Full name");
     expect(labelFor({ label: "Full name", labelUr: "پورا نام" }, "en")).toBe("Full name");
+  });
+});
+
+describe("effectiveInputMode", () => {
+  it("shows buttons for a select field that has options", () => {
+    expect(effectiveInputMode({ type: "select", options: ["Male", "Female"] })).toBe("choice");
+  });
+
+  it("falls back to voice-or-type for a select field with no options, so it never dead-ends", () => {
+    expect(effectiveInputMode({ type: "select" })).toBe("voice-or-type");
+    expect(effectiveInputMode({ type: "select", options: [] })).toBe("voice-or-type");
+  });
+
+  it("keeps CNIC, phone and date typed-only", () => {
+    expect(effectiveInputMode({ type: "cnic" })).toBe("type");
+    expect(effectiveInputMode({ type: "phone", options: ["x"] })).toBe("type");
+  });
+});
+
+describe("isTypedOnlyType", () => {
+  it("is true only for cnic, phone and date", () => {
+    expect(isTypedOnlyType("cnic")).toBe(true);
+    expect(isTypedOnlyType("phone")).toBe(true);
+    expect(isTypedOnlyType("date")).toBe(true);
+    for (const t of ["text", "address", "select", "number", "unknown"] as const) {
+      expect(isTypedOnlyType(t)).toBe(false);
+    }
   });
 });

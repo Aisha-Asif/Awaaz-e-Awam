@@ -13,7 +13,7 @@ import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
 import { ResultList } from "@/components/ResultList";
-import { useSpeechRecognition } from "@/components/useSpeechRecognition";
+import { FieldInput } from "@/components/FieldInput";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 import { FilledForm } from "@/components/FilledForm";
@@ -77,13 +77,6 @@ export default function SpeakPage() {
     questionUrdu: string;
   } | null>(null);
   const [justSaved, setJustSaved] = useState(false);
-  const {
-    supported: srSupported,
-    listening: srListening,
-    error: srError,
-    start: srStart,
-    stop: srStop,
-  } = useSpeechRecognition("ur-PK");
 
   useEffect(() => {
     if (!justSaved) return;
@@ -218,6 +211,48 @@ export default function SpeakPage() {
     [showConfirmation, formSchema, answers],
   );
 
+  // A recorded answer: transcribe it, then submit the text like a typed answer.
+  const handleVoiceAnswer = useCallback(
+    async (blob: Blob) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const transcript = await transcribeAudioFile(blob);
+        await handleAnswerSubmit(transcript);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleAnswerSubmit],
+  );
+
+  // A button choice: saved directly (no AI call), then on to the next question.
+  const handleChoiceSelect = useCallback(
+    async (value: string) => {
+      if (!currentFieldId || !formSchema) return;
+      const field = formSchema.fields.find((f) => f.id === currentFieldId);
+      if (!field?.options?.includes(value)) return;
+      setError(null);
+      try {
+        const nextAnswers = { ...answers, [currentFieldId]: value };
+        setAnswers(nextAnswers);
+        setJustSaved(true);
+        const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
+        if (nextQ.nextField) {
+          setCurrentFieldId(nextQ.nextField);
+          setCurrentQuestion(nextQ.questionUrdu);
+        } else {
+          setStep("complete");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save your answer. Please try again.");
+      }
+    },
+    [currentFieldId, formSchema, answers],
+  );
+
   const getMissingRequiredFields = () => {
     if (!speechResponse || !formSchema) return [];
     return formSchema.fields.filter((f) => f.required && !answers[f.id]).map((f) => f.id);
@@ -315,6 +350,15 @@ export default function SpeakPage() {
               style={{ maxWidth: 520, margin: "24px auto 0" }}
             >
               Example: &quot;Mera naam Ali Raza hai, mere abu ka naam Ahmed Raza hai, main Lahore mein rehta hoon.&quot;
+            </p>
+            <p
+              className="text-center text-sm text-text-muted mt-3 font-body"
+              style={{ maxWidth: 520, margin: "12px auto 0" }}
+            >
+              Please do not say your CNIC, phone number or date of birth. You will type those next.
+              <span className="block font-urdu text-base mt-1 leading-relaxed" dir="rtl">
+                شناختی کارڈ، فون نمبر یا تاریخ پیدائش نہ بولیں۔ انہیں آپ بعد میں ٹائپ کریں گے۔
+              </span>
             </p>
           </div>
         </section>
@@ -462,67 +506,13 @@ export default function SpeakPage() {
 
             <Card variant="elevated" padding="lg" className="mt-4">
               <CardContent>
-                <AudioRecorder
-                  key={currentFieldId}
-                  onRecordingComplete={async (blob) => {
-                    setLoading(true);
-                    setError(null);
-                    try {
-                      const transcript = await transcribeAudioFile(blob);
-                      await handleAnswerSubmit(transcript);
-                    } catch (err) {
-                      setError(
-                        err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.",
-                      );
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  showUploadFallback={false}
+                <FieldInput
+                  field={field}
                   disabled={loading}
+                  onSubmitText={handleAnswerSubmit}
+                  onVoice={handleVoiceAnswer}
+                  onChoice={handleChoiceSelect}
                 />
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all font-body text-base"
-                    placeholder="Answer in Urdu (اردو) or English..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                        handleAnswerSubmit(e.currentTarget.value.trim());
-                        e.currentTarget.value = "";
-                      }
-                    }}
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
-                {srSupported && (
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={loading || srListening}
-                      onClick={() => {
-                        if (srListening) {
-                          srStop();
-                        } else {
-                          srStart((text) => handleAnswerSubmit(text));
-                        }
-                      }}
-                    >
-                      {srListening ? "Listening..." : "Tap to speak (on-device)"}
-                    </Button>
-                  </div>
-                )}
-                {srError && (
-                  <div
-                    className="mt-3 p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body"
-                    role="alert"
-                  >
-                    {srError}
-                  </div>
-                )}
                 {currentFieldId && answers[currentFieldId] && (
                   <p className="mt-3 text-sm text-jade font-medium break-words font-body">
                     Answer: <span className="font-semibold">{answers[currentFieldId]}</span>

@@ -52,6 +52,7 @@ const FormFieldInputSchema = z.object({
   labelUr: z.string().optional(),
   inputMode: InputModeSchema.optional(),
   printFormat: PrintFormatSchema.optional(),
+  options: z.array(z.string().min(1)).optional(),
   boundingBox: BoundingBoxSchema.optional(),
 });
 

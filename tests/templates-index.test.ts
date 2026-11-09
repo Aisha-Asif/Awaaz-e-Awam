@@ -72,6 +72,12 @@ describe("buildTemplate", () => {
     }
   });
 
+  it("gives every choice field in the template a non-empty list of options", () => {
+    const choices = TEMPLATES[0].schema.fields.filter((f) => f.inputMode === "choice");
+    expect(choices.map((f) => f.id)).toEqual(expect.arrayContaining(["gender", "maritalStatus", "twin"]));
+    for (const f of choices) expect(f.options?.length, f.id).toBeGreaterThan(0);
+  });
+
   it("keeps every write area inside the page", () => {
     for (const box of TEMPLATES[0].schema.fields.map((f) => f.boundingBox!)) {
       expect(box.x).toBeGreaterThanOrEqual(0);

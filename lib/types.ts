@@ -25,6 +25,8 @@ export type FormField = {
   // Optional overrides; when omitted, defaultInputMode / defaultPrintFormat (lib/field-model.ts) derive them from `type`.
   inputMode?: FieldInputMode;
   printFormat?: PrintFormat;
+  // Allowed values for a "choice" field (e.g. gender). A choice field without options falls back to voice-or-type.
+  options?: string[];
   required: boolean;
   questionUrdu: string;
   questionEnglish?: string;

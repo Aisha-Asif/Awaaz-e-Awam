@@ -28,6 +28,17 @@ export function inputModeOf(field: Pick<FormField, "type" | "inputMode">): Field
   return field.inputMode ?? defaultInputMode(field.type);
 }
 
+// What the interview actually uses: a choice field with no options cannot show buttons, so it falls back to voice-or-type.
+export function effectiveInputMode(field: Pick<FormField, "type" | "inputMode" | "options">): FieldInputMode {
+  const mode = inputModeOf(field);
+  return mode === "choice" && !field.options?.length ? "voice-or-type" : mode;
+}
+
+// True for types that must always be typed and never reach speech-to-text or an AI (CNIC, phone, date).
+export function isTypedOnlyType(type: FormFieldType): boolean {
+  return defaultInputMode(type) === "type";
+}
+
 // The field's effective print format: its own override, else the default for its type.
 export function printFormatOf(field: Pick<FormField, "type" | "printFormat">): PrintFormat {
   return field.printFormat ?? defaultPrintFormat(field.type);

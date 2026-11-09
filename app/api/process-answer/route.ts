@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractAnswer } from "@/lib/ai";
 import { ProcessAnswerRequestSchema } from "@/lib/schemas";
 import { getFieldValidator, requiresConfirmation } from "@/lib/validation";
+import { isTypedOnlyType } from "@/lib/field-model";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,10 @@ export async function POST(req: NextRequest) {
   const { fieldId, fieldType, transcript, label, questionUrdu } = parsed.data;
 
   try {
-    const extraction = await extractAnswer(fieldId, fieldType, label ?? fieldId, questionUrdu ?? "", transcript);
+    // CNIC, phone and date are typed by the user and parsed by our own validators below: they are never sent to an AI.
+    const extraction = isTypedOnlyType(fieldType)
+      ? { value: transcript.trim() }
+      : await extractAnswer(fieldId, fieldType, label ?? fieldId, questionUrdu ?? "", transcript);
 
     const value = extraction.value ?? "";
     if (value.trim() === "") {

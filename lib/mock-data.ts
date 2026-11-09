@@ -42,6 +42,7 @@ export const MOCK_FORM_SCHEMA: FormSchema = {
       id: "gender",
       label: "Gender",
       type: "select",
+      options: ["Male", "Female"],
       required: false,
       questionUrdu: "Aap ka jins kya hai?",
       questionEnglish: "What is your gender?",

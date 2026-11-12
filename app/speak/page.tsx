@@ -14,6 +14,9 @@ import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
 import { ResultList } from "@/components/ResultList";
 import { FieldInput } from "@/components/FieldInput";
+import { FormNotices } from "@/components/FormNotices";
+import { effectiveInputMode } from "@/lib/field-model";
+import { matchOption } from "@/lib/options";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 import { FilledForm } from "@/components/FilledForm";
@@ -77,6 +80,12 @@ export default function SpeakPage() {
     questionUrdu: string;
   } | null>(null);
   const [justSaved, setJustSaved] = useState(false);
+
+  // /speak?form=<id> preselects that form.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("form");
+    if (id && getTemplate(id)) setTemplateId(id);
+  }, []);
 
   useEffect(() => {
     if (!justSaved) return;
@@ -142,6 +151,31 @@ export default function SpeakPage() {
     [formSchema?.fields],
   );
 
+  // A button choice: saved directly (no AI call), then on to the next question.
+  const handleChoiceSelect = useCallback(
+    async (value: string) => {
+      if (!currentFieldId || !formSchema) return;
+      const field = formSchema.fields.find((f) => f.id === currentFieldId);
+      if (!field?.options?.includes(value)) return;
+      setError(null);
+      try {
+        const nextAnswers = { ...answers, [currentFieldId]: value };
+        setAnswers(nextAnswers);
+        setJustSaved(true);
+        const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
+        if (nextQ.nextField) {
+          setCurrentFieldId(nextQ.nextField);
+          setCurrentQuestion(nextQ.questionUrdu);
+        } else {
+          setStep("complete");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save your answer. Please try again.");
+      }
+    },
+    [currentFieldId, formSchema, answers],
+  );
+
   // Extracts one field's answer from a transcript; confirms-or-advances, then asks what's next.
   const handleAnswerSubmit = useCallback(
     async (transcript: string) => {
@@ -152,6 +186,14 @@ export default function SpeakPage() {
       try {
         const field = formSchema.fields.find((f) => f.id === currentFieldId);
         if (!field) return;
+
+        // A choice field: match what was said or typed to one of its options here (no AI call).
+        if (effectiveInputMode(field) === "choice") {
+          const option = matchOption(transcript, field.options ?? []);
+          if (option) await handleChoiceSelect(option);
+          else setError(`Please say or choose one of: ${(field.options ?? []).join(", ")}.`);
+          return;
+        }
 
         const response = await processAnswer(currentFieldId, field.type, transcript, field.label, field.questionUrdu);
 
@@ -183,7 +225,7 @@ export default function SpeakPage() {
         setLoading(false);
       }
     },
-    [currentFieldId, formSchema, answers],
+    [currentFieldId, formSchema, answers, handleChoiceSelect],
   );
 
   // Commits a confirmed value and advances to the next question.
@@ -228,31 +270,6 @@ export default function SpeakPage() {
     [handleAnswerSubmit],
   );
 
-  // A button choice: saved directly (no AI call), then on to the next question.
-  const handleChoiceSelect = useCallback(
-    async (value: string) => {
-      if (!currentFieldId || !formSchema) return;
-      const field = formSchema.fields.find((f) => f.id === currentFieldId);
-      if (!field?.options?.includes(value)) return;
-      setError(null);
-      try {
-        const nextAnswers = { ...answers, [currentFieldId]: value };
-        setAnswers(nextAnswers);
-        setJustSaved(true);
-        const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
-        if (nextQ.nextField) {
-          setCurrentFieldId(nextQ.nextField);
-          setCurrentQuestion(nextQ.questionUrdu);
-        } else {
-          setStep("complete");
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not save your answer. Please try again.");
-      }
-    },
-    [currentFieldId, formSchema, answers],
-  );
-
   const getMissingRequiredFields = () => {
     if (!speechResponse || !formSchema) return [];
     return formSchema.fields.filter((f) => f.required && !answers[f.id]).map((f) => f.id);
@@ -270,6 +287,7 @@ export default function SpeakPage() {
           <div className="wrap" style={{ maxWidth: 720 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
             <ConsentNotice />
+            {template && <FormNotices template={template} variant="intro" />}
             <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <h2>Speak Naturally</h2>
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
@@ -490,6 +508,11 @@ export default function SpeakPage() {
                 <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 text-rani flex items-center justify-center border border-rani/20 shadow-sm">
                   <MessageSquareQuote className="w-10 h-10" />
                 </div>
+                {field?.section && (
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted font-body">
+                    {field.section}
+                  </p>
+                )}
                 <h2 className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed" dir="auto">
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
@@ -585,6 +608,7 @@ export default function SpeakPage() {
                   <CardDescription>Your answers, written into the form. Download it to print.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <FormNotices template={template} variant="result" answers={answers} />
                   <FilledForm template={template} answers={answers} />
                 </CardContent>
               </Card>

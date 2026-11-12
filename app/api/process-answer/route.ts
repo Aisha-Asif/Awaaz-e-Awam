@@ -50,7 +50,9 @@ export async function POST(req: NextRequest) {
       needsConfirmation: result.valid && requiresConfirmation(fieldType),
       error: result.valid ? null : (result.error ?? "Invalid value."),
     });
-  } catch {
+  } catch (err) {
+    // Log the reason on the server only (the message never contains the user's answers).
+    console.error("[process-answer]", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: "Could not process this response. Please try again." }, { status: 500 });
   }
 }

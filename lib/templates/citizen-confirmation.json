@@ -1,0 +1,350 @@
+{
+  "id": "citizen-confirmation",
+  "title": "Citizen Confirmation Undertaking (Notarized)",
+  "description": "Sworn statement confirming the citizenship of an applicant (NADRA RP.6.0.1-B).",
+  "notes": [
+    "This is a sworn statement. Read it fully, then sign it in front of a notary. The app only fills in the blanks.",
+    "Clause d (a relative who is not available) is for fresh registration only. Skip it if it does not apply."
+  ],
+  "leaveBlank": [
+    "The deponent's signature, thumb impression and date",
+    "Both witnesses' signatures",
+    "The stamp and signature of the Notary Public"
+  ],
+  "imageUrl": "/templates/citizen-confirmation.png",
+  "imageWidth": 1250,
+  "imageHeight": 1576,
+  "fields": [
+    {
+      "id": "deponentName",
+      "label": "Deponent's name",
+      "labelUr": "بیان دینے والے کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Deponent",
+      "cell": {
+        "x": 96,
+        "y": 143,
+        "w": 343,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بیان حلفی دینے والے کا پورا نام کیا ہے؟",
+      "questionEnglish": "What is the full name of the person making this statement?"
+    },
+    {
+      "id": "deponentGuardianName",
+      "label": "Deponent's son / daughter / wife of",
+      "labelUr": "ولدیت / زوجیت",
+      "type": "text",
+      "required": true,
+      "section": "Deponent",
+      "cell": {
+        "x": 557,
+        "y": 143,
+        "w": 428,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "ان کے والد یا شوہر کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of their father or husband?"
+    },
+    {
+      "id": "deponentCnic",
+      "label": "Deponent's CNIC / NICOP",
+      "labelUr": "شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Deponent",
+      "cell": {
+        "x": 86,
+        "y": 169,
+        "w": 272,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "ان کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is their CNIC number?"
+    },
+    {
+      "id": "deponentResidence",
+      "label": "Resident of",
+      "labelUr": "رہائش",
+      "type": "address",
+      "required": true,
+      "section": "Deponent",
+      "cell": {
+        "x": 491,
+        "y": 169,
+        "w": 257,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "وہ کہاں رہتے ہیں؟",
+      "questionEnglish": "Where do they live?"
+    },
+    {
+      "id": "applicantName",
+      "label": "Applicant's name",
+      "labelUr": "درخواست دہندہ کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 359,
+        "y": 223,
+        "w": 231,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "جس کی تصدیق کی جا رہی ہے اس درخواست دہندہ کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the applicant being confirmed?"
+    },
+    {
+      "id": "applicantGuardianName",
+      "label": "Applicant's son / daughter / wife of",
+      "labelUr": "درخواست دہندہ کی ولدیت",
+      "type": "text",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 705,
+        "y": 223,
+        "w": 244,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "درخواست دہندہ کے والد یا شوہر کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the applicant's father or husband?"
+    },
+    {
+      "id": "knownDuration",
+      "label": "Known to the deponent for",
+      "labelUr": "کتنے عرصے سے جانتے ہیں",
+      "type": "text",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 394,
+        "y": 253,
+        "w": 158,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "آپ درخواست دہندہ کو کتنے عرصے سے جانتے ہیں؟",
+      "questionEnglish": "For how long have you known the applicant?"
+    },
+    {
+      "id": "relationToApplicant",
+      "label": "Applicant is my relative / neighbor / friend or",
+      "labelUr": "درخواست دہندہ سے تعلق",
+      "type": "text",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 651,
+        "y": 283,
+        "w": 173,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "درخواست دہندہ آپ کا رشتہ دار، پڑوسی یا دوست ہے؟",
+      "questionEnglish": "Is the applicant your relative, neighbor or friend?"
+    },
+    {
+      "id": "relativeKind",
+      "label": "Applicant's relative (Father / Mother / Sister / Brother / Son / Daughter)",
+      "labelUr": "درخواست دہندہ کا رشتہ دار",
+      "type": "select",
+      "required": false,
+      "section": "Relative (fresh registration only)",
+      "options": [
+        "Father",
+        "Mother",
+        "Sister",
+        "Brother",
+        "Son",
+        "Daughter"
+      ],
+      "cell": {
+        "x": 269,
+        "y": 343,
+        "w": 130,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "جو رشتہ دار موجود نہیں وہ درخواست دہندہ کا کیا لگتا ہے؟",
+      "questionEnglish": "How is the relative who is not available related to the applicant?"
+    },
+    {
+      "id": "relativeName",
+      "label": "Relative's name",
+      "labelUr": "رشتہ دار کا نام",
+      "type": "text",
+      "required": false,
+      "section": "Relative (fresh registration only)",
+      "cell": {
+        "x": 134,
+        "y": 375,
+        "w": 301,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "اس رشتہ دار کا نام کیا ہے؟",
+      "questionEnglish": "What is that relative's name?"
+    },
+    {
+      "id": "relativeCnic",
+      "label": "Relative's CNIC / NICOP",
+      "labelUr": "رشتہ دار کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": false,
+      "section": "Relative (fresh registration only)",
+      "cell": {
+        "x": 636,
+        "y": 375,
+        "w": 215,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "اس رشتہ دار کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is that relative's CNIC number?"
+    },
+    {
+      "id": "tidNumber",
+      "label": "Application tracking number (TID)",
+      "labelUr": "درخواست کا ٹریکنگ نمبر",
+      "type": "text",
+      "required": false,
+      "section": "Application",
+      "cell": {
+        "x": 136,
+        "y": 562,
+        "w": 170,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "درخواست کا ٹریکنگ نمبر (TID) کیا ہے؟",
+      "questionEnglish": "What is the application tracking number (TID)?"
+    },
+    {
+      "id": "deponentContact",
+      "label": "Deponent's contact no",
+      "labelUr": "رابطہ نمبر",
+      "type": "phone",
+      "required": true,
+      "section": "Deponent",
+      "cell": {
+        "x": 184,
+        "y": 813,
+        "w": 187,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "ان کا رابطہ نمبر کیا ہے؟",
+      "questionEnglish": "What is their contact number?"
+    },
+    {
+      "id": "witness1Name",
+      "label": "Witness 1: name",
+      "labelUr": "گواہ 1: نام",
+      "type": "text",
+      "required": true,
+      "section": "Witness 1",
+      "cell": {
+        "x": 128,
+        "y": 1021,
+        "w": 357,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "پہلے گواہ کا نام کیا ہے؟",
+      "questionEnglish": "What is the first witness's name?"
+    },
+    {
+      "id": "witness1Cnic",
+      "label": "Witness 1: CNIC",
+      "labelUr": "گواہ 1: شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Witness 1",
+      "cell": {
+        "x": 128,
+        "y": 1061,
+        "w": 343,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "پہلے گواہ کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the first witness's CNIC number?"
+    },
+    {
+      "id": "witness1Contact",
+      "label": "Witness 1: contact",
+      "labelUr": "گواہ 1: رابطہ نمبر",
+      "type": "phone",
+      "required": true,
+      "section": "Witness 1",
+      "cell": {
+        "x": 164,
+        "y": 1101,
+        "w": 314,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "پہلے گواہ کا رابطہ نمبر کیا ہے؟",
+      "questionEnglish": "What is the first witness's contact number?"
+    },
+    {
+      "id": "witness2Name",
+      "label": "Witness 2: name",
+      "labelUr": "گواہ 2: نام",
+      "type": "text",
+      "required": true,
+      "section": "Witness 2",
+      "cell": {
+        "x": 707,
+        "y": 1021,
+        "w": 357,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "دوسرے گواہ کا نام کیا ہے؟",
+      "questionEnglish": "What is the second witness's name?"
+    },
+    {
+      "id": "witness2Cnic",
+      "label": "Witness 2: CNIC",
+      "labelUr": "گواہ 2: شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Witness 2",
+      "cell": {
+        "x": 707,
+        "y": 1061,
+        "w": 343,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "دوسرے گواہ کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the second witness's CNIC number?"
+    },
+    {
+      "id": "witness2Contact",
+      "label": "Witness 2: contact",
+      "labelUr": "گواہ 2: رابطہ نمبر",
+      "type": "phone",
+      "required": true,
+      "section": "Witness 2",
+      "cell": {
+        "x": 744,
+        "y": 1101,
+        "w": 315,
+        "h": 28
+      },
+      "labelWidth": 0,
+      "questionUrdu": "دوسرے گواہ کا رابطہ نمبر کیا ہے؟",
+      "questionEnglish": "What is the second witness's contact number?"
+    }
+  ]
+}

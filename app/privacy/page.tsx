@@ -60,6 +60,32 @@ export default function PrivacyPage() {
             </div>
 
             <div>
+              <h3 className="font-display font-semibold text-text mb-1">Numbers you type</h3>
+              <p className="text-text-muted">
+                Your CNIC, phone number and dates are typed, never spoken. They are checked by the app itself and are
+                not sent to an AI provider. Anything in a spoken answer that looks like a CNIC or phone number is
+                removed before the text reaches the AI.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-display font-semibold text-text mb-1">Your filled form</h3>
+              <p className="text-text-muted">
+                The finished form is drawn in your browser and saved or printed from there. It is not uploaded, and
+                nothing is stored on the server. Signatures, thumb impressions, stamps and office areas are left blank
+                for you to complete by hand. One person fills one form; nothing is kept for the next one.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-display font-semibold text-text mb-1">Spoken answers</h3>
+              <p className="text-text-muted">
+                When you speak an answer, the recording is sent to a server-side speech-to-text service (Gemini). Do not
+                say numbers or private details you are not comfortable sharing; you can type any answer instead.
+              </p>
+            </div>
+
+            <div>
               <h3 className="font-display font-semibold text-text mb-1">Keys</h3>
               <p className="text-text-muted">
                 API keys are server-side only — never exposed to the browser and never committed.

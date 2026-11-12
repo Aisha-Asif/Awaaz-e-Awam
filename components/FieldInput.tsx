@@ -3,7 +3,8 @@
 // FieldInput: the answer control for one interview question, chosen by the field's input mode.
 //   type          -> typed only, with live validation (CNIC, phone, date). No microphone, so the value is never
 //                    spoken, transcribed or sent to an AI.
-//   choice        -> one button per option (gender, marital status, ...).
+//   choice        -> one button per option (gender, marital status, ...), and the same voice / typing
+//                    controls as free text; what is said or typed is matched to an option.
 //   voice-or-type -> microphone recorder, on-device speech button, or a text box (names, addresses, ...).
 import { useState } from "react";
 import { Button } from "@/components/Button";
@@ -55,6 +56,8 @@ export function FieldInput({ field, disabled, onSubmitText, onVoice, onChoice }:
             </Button>
           ))}
         </div>
+        <p className="mt-5 mb-2 text-sm font-medium text-text font-body">Or say it, or type it:</p>
+        <VoiceOrTypeInput key={`voice-${field.id}`} disabled={disabled} onSubmitText={onSubmitText} onVoice={onVoice} />
       </div>
     );
   }
@@ -139,25 +142,45 @@ function VoiceOrTypeInput({
   onVoice: (blob: Blob) => void | Promise<void>;
 }) {
   const { supported, listening, error, start, stop } = useSpeechRecognition("ur-PK");
+  // The typed answer. It is kept if the answer is rejected so it can be corrected, and cleared when the question changes
+  // (this component is keyed by the field id).
+  const [typed, setTyped] = useState("");
+  const canSave = typed.trim().length > 0 && !disabled;
+
+  const saveTyped = () => {
+    if (canSave) onSubmitText(typed.trim());
+  };
 
   return (
     <div>
       <AudioRecorder onRecordingComplete={onVoice} showUploadFallback={false} disabled={disabled} />
       <div className="mt-4">
-        <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
-        <input
-          type="text"
-          className={INPUT_CLASS}
-          placeholder="Answer in Urdu (اردو) or English..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && e.currentTarget.value.trim()) {
-              onSubmitText(e.currentTarget.value.trim());
-              e.currentTarget.value = "";
-            }
-          }}
-          disabled={disabled}
-          autoFocus
-        />
+        <label htmlFor="typed-answer" className="block text-sm font-medium text-text mb-2 font-body">
+          Or type your answer:
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="typed-answer"
+            type="text"
+            enterKeyHint="send"
+            autoComplete="off"
+            className={INPUT_CLASS}
+            placeholder="Answer in Urdu (اردو) or English..."
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                saveTyped();
+              }
+            }}
+            disabled={disabled}
+            autoFocus
+          />
+          <Button type="button" className="shrink-0" disabled={!canSave} onClick={saveTyped}>
+            Save
+          </Button>
+        </div>
       </div>
       {supported && (
         <div className="mt-4">

@@ -1,0 +1,605 @@
+{
+  "id": "marriage-registration",
+  "title": "Computerized Nikah Registration Application",
+  "description": "Application for computerized marriage (Nikah) registration. Bride and groom details are written in both the English and the Urdu parts of the form.",
+  "notes": [
+    "Each detail is written twice: in the English block and again in the Urdu block, as the form requires."
+  ],
+  "leaveBlank": [
+    "\"Signature of Application\" at the top",
+    "Date of entry and date of issuance (filled by the registrar)",
+    "The whole \"for office use\" box at the bottom"
+  ],
+  "imageUrl": "/templates/marriage-registration.png",
+  "imageWidth": 1508,
+  "imageHeight": 1951,
+  "fields": [
+    {
+      "id": "brideName",
+      "label": "Bride: name",
+      "labelUr": "دلہن: نام",
+      "type": "text",
+      "required": true,
+      "section": "Bride",
+      "cell": {
+        "x": 149,
+        "y": 770,
+        "w": 560,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 87,
+          "y": 388,
+          "w": 623,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کا نام کیا ہے؟",
+      "questionEnglish": "What is the bride's name?"
+    },
+    {
+      "id": "brideCnic",
+      "label": "Bride: CNIC",
+      "labelUr": "دلہن: شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Bride",
+      "cell": {
+        "x": 180,
+        "y": 816,
+        "w": 547,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 83,
+          "y": 434,
+          "w": 556,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the bride's CNIC number?"
+    },
+    {
+      "id": "brideFatherName",
+      "label": "Bride: father's name",
+      "labelUr": "دلہن: والد کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Bride",
+      "cell": {
+        "x": 305,
+        "y": 861,
+        "w": 432,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 426,
+          "y": 482,
+          "w": 250,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کے والد کا نام کیا ہے؟",
+      "questionEnglish": "What is the bride's father's name?"
+    },
+    {
+      "id": "brideFatherCnic",
+      "label": "Bride: father's CNIC",
+      "labelUr": "دلہن: والد کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": false,
+      "section": "Bride",
+      "cell": {
+        "x": 451,
+        "y": 907,
+        "w": 275,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 82,
+          "y": 482,
+          "w": 236,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کے والد کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the bride's father's CNIC number?"
+    },
+    {
+      "id": "brideAge",
+      "label": "Bride: age",
+      "labelUr": "دلہن: عمر",
+      "type": "number",
+      "required": true,
+      "section": "Bride",
+      "cell": {
+        "x": 131,
+        "y": 907,
+        "w": 202,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 575,
+          "y": 530,
+          "w": 119,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کی عمر کتنی ہے؟",
+      "questionEnglish": "What is the bride's age?"
+    },
+    {
+      "id": "brideMaritalStatus",
+      "label": "Bride: marital status",
+      "labelUr": "دلہن: ازدواجی حیثیت",
+      "type": "select",
+      "required": true,
+      "section": "Bride",
+      "options": [
+        "Virgin",
+        "Widow",
+        "Divorced"
+      ],
+      "cell": {
+        "x": 520,
+        "y": 954,
+        "w": 201,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 82,
+          "y": 530,
+          "w": 303,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کی ازدواجی حیثیت کیا ہے؟",
+      "questionEnglish": "What is the bride's marital status?"
+    },
+    {
+      "id": "brideAddress",
+      "label": "Bride: address",
+      "labelUr": "دلہن: پتہ",
+      "type": "address",
+      "required": true,
+      "section": "Bride",
+      "cell": {
+        "x": 193,
+        "y": 1000,
+        "w": 535,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 77,
+          "y": 578,
+          "w": 637,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دلہن کا پتہ کیا ہے؟",
+      "questionEnglish": "What is the bride's address?"
+    },
+    {
+      "id": "groomName",
+      "label": "Groom: name",
+      "labelUr": "دولہا: نام",
+      "type": "text",
+      "required": true,
+      "section": "Groom",
+      "cell": {
+        "x": 842,
+        "y": 770,
+        "w": 578,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 782,
+          "y": 388,
+          "w": 625,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کا نام کیا ہے؟",
+      "questionEnglish": "What is the groom's name?"
+    },
+    {
+      "id": "groomCnic",
+      "label": "Groom: CNIC",
+      "labelUr": "دولہا: شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Groom",
+      "cell": {
+        "x": 874,
+        "y": 816,
+        "w": 544,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 778,
+          "y": 434,
+          "w": 559,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the groom's CNIC number?"
+    },
+    {
+      "id": "groomFatherName",
+      "label": "Groom: father's name",
+      "labelUr": "دولہا: والد کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Groom",
+      "cell": {
+        "x": 963,
+        "y": 861,
+        "w": 458,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 1107,
+          "y": 482,
+          "w": 266,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کے والد کا نام کیا ہے؟",
+      "questionEnglish": "What is the groom's father's name?"
+    },
+    {
+      "id": "groomFatherCnic",
+      "label": "Groom: father's CNIC",
+      "labelUr": "دولہا: والد کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": false,
+      "section": "Groom",
+      "cell": {
+        "x": 1144,
+        "y": 907,
+        "w": 270,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 775,
+          "y": 482,
+          "w": 225,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کے والد کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the groom's father's CNIC number?"
+    },
+    {
+      "id": "groomAge",
+      "label": "Groom: age",
+      "labelUr": "دولہا: عمر",
+      "type": "number",
+      "required": true,
+      "section": "Groom",
+      "cell": {
+        "x": 823,
+        "y": 907,
+        "w": 136,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 1305,
+          "y": 530,
+          "w": 111,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کی عمر کتنی ہے؟",
+      "questionEnglish": "What is the groom's age?"
+    },
+    {
+      "id": "groomMaritalStatus",
+      "label": "Groom: marital status",
+      "labelUr": "دولہا: ازدواجی حیثیت",
+      "type": "select",
+      "required": true,
+      "section": "Groom",
+      "options": [
+        "Virgin",
+        "Widower",
+        "Divorced"
+      ],
+      "cell": {
+        "x": 1214,
+        "y": 954,
+        "w": 207,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 772,
+          "y": 530,
+          "w": 277,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کی ازدواجی حیثیت کیا ہے؟",
+      "questionEnglish": "What is the groom's marital status?"
+    },
+    {
+      "id": "groomAddress",
+      "label": "Groom: address",
+      "labelUr": "دولہا: پتہ",
+      "type": "address",
+      "required": true,
+      "section": "Groom",
+      "cell": {
+        "x": 889,
+        "y": 1000,
+        "w": 537,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 771,
+          "y": 578,
+          "w": 640,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "دولہا کا پتہ کیا ہے؟",
+      "questionEnglish": "What is the groom's address?"
+    },
+    {
+      "id": "marriageDate",
+      "label": "Date of marriage",
+      "labelUr": "نکاح کی تاریخ",
+      "type": "date",
+      "required": true,
+      "section": "Marriage",
+      "cell": {
+        "x": 262,
+        "y": 1105,
+        "w": 466,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 781,
+          "y": 1108,
+          "w": 566,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "نکاح کی تاریخ کیا ہے؟",
+      "questionEnglish": "What is the date of the marriage?"
+    },
+    {
+      "id": "dowerAmount",
+      "label": "Amount of dower with detail",
+      "labelUr": "رقم حق مہر بمعہ تفصیل",
+      "type": "text",
+      "required": true,
+      "section": "Marriage",
+      "cell": {
+        "x": 392,
+        "y": 1160,
+        "w": 335,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 781,
+          "y": 1163,
+          "w": 523,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "حق مہر کی رقم اور تفصیل کیا ہے؟",
+      "questionEnglish": "What is the amount of dower, with details?"
+    },
+    {
+      "id": "registrationFee",
+      "label": "Marriage registration fee",
+      "labelUr": "فیس نکاح",
+      "type": "text",
+      "required": false,
+      "section": "Marriage",
+      "cell": {
+        "x": 349,
+        "y": 1214,
+        "w": 379,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 794,
+          "y": 1217,
+          "w": 581,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "نکاح کی فیس کتنی ہے؟",
+      "questionEnglish": "What is the marriage registration fee?"
+    },
+    {
+      "id": "solemnizerName",
+      "label": "Marriage solemnized by (name)",
+      "labelUr": "نکاح خواں کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Marriage",
+      "cell": {
+        "x": 389,
+        "y": 1268,
+        "w": 337,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 791,
+          "y": 1271,
+          "w": 537,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "نکاح خواں کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the person who solemnized the marriage?"
+    },
+    {
+      "id": "solemnizerCnic",
+      "label": "Solemnizer's N.I.C. No.",
+      "labelUr": "نکاح خواں کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Marriage",
+      "cell": {
+        "x": 324,
+        "y": 1322,
+        "w": 406,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "mirrors": [
+        {
+          "x": 785,
+          "y": 1325,
+          "w": 465,
+          "h": 30
+        }
+      ],
+      "questionUrdu": "نکاح خواں کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the solemnizer's CNIC number?"
+    },
+    {
+      "id": "brideWitness1",
+      "label": "Witness 1 (bride)",
+      "labelUr": "گواہ 1 (دلہن)",
+      "type": "text",
+      "required": true,
+      "section": "Witnesses",
+      "cell": {
+        "x": 72,
+        "y": 1478,
+        "w": 555,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "گواہ 1 (دلہن) کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the witness 1 (bride)?"
+    },
+    {
+      "id": "groomWitness1",
+      "label": "Witness 1 (groom)",
+      "labelUr": "گواہ 1 (دولہا)",
+      "type": "text",
+      "required": true,
+      "section": "Witnesses",
+      "cell": {
+        "x": 762,
+        "y": 1478,
+        "w": 556,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "گواہ 1 (دولہا) کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the witness 1 (groom)?"
+    },
+    {
+      "id": "brideWitness2",
+      "label": "Witness 2 (bride)",
+      "labelUr": "گواہ 2 (دلہن)",
+      "type": "text",
+      "required": true,
+      "section": "Witnesses",
+      "cell": {
+        "x": 70,
+        "y": 1533,
+        "w": 555,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "گواہ 2 (دلہن) کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the witness 2 (bride)?"
+    },
+    {
+      "id": "groomWitness2",
+      "label": "Witness 2 (groom)",
+      "labelUr": "گواہ 2 (دولہا)",
+      "type": "text",
+      "required": true,
+      "section": "Witnesses",
+      "cell": {
+        "x": 770,
+        "y": 1533,
+        "w": 556,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "گواہ 2 (دولہا) کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the witness 2 (groom)?"
+    },
+    {
+      "id": "brideWakeel",
+      "label": "Wakeel (bride)",
+      "labelUr": "وکیل (دلہن)",
+      "type": "text",
+      "required": true,
+      "section": "Witnesses",
+      "cell": {
+        "x": 71,
+        "y": 1587,
+        "w": 568,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "وکیل (دلہن) کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the wakeel (bride)?"
+    },
+    {
+      "id": "groomWakeel",
+      "label": "Wakeel (groom)",
+      "labelUr": "وکیل (دولہا)",
+      "type": "text",
+      "required": true,
+      "section": "Witnesses",
+      "cell": {
+        "x": 762,
+        "y": 1587,
+        "w": 581,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "وکیل (دولہا) کا نام کیا ہے؟",
+      "questionEnglish": "What is the name of the wakeel (groom)?"
+    }
+  ]
+}

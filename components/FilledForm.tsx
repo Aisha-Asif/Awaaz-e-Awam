@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Printer } from "lucide-react";
 import { Button } from "@/components/Button";
-import { canvasToPdfBytes, canvasToPngBlob, downloadBlob, renderFilledForm } from "@/lib/fill-form";
+import { canvasToPdfBytes, canvasToPngBlob, downloadBlob, printCanvas, renderFilledForm } from "@/lib/fill-form";
 import type { FormTemplate } from "@/lib/types";
 
 type Props = {
@@ -15,9 +15,9 @@ type Props = {
 
 // The template's page image with the answers drawn into its boxes, plus PNG and
 // PDF download. Callers pass real answers only (no skip sentinels).
-export function FilledForm({ template, answers, showBoxes = false, filename = "awaaz-filled-form" }: Props) {
+export function FilledForm({ template, answers, showBoxes = false, filename = `${template.id}-filled` }: Props) {
   const previewRef = useRef<HTMLCanvasElement>(null);
-  const [busy, setBusy] = useState<"png" | "pdf" | null>(null);
+  const [busy, setBusy] = useState<"png" | "pdf" | "print" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Callers often build a fresh answers object each render; key on content so
@@ -42,7 +42,7 @@ export function FilledForm({ template, answers, showBoxes = false, filename = "a
   }, [template, answersKey, showBoxes]);
 
   // Re-renders clean (no alignment boxes) and downloads the chosen format.
-  const exportAs = async (kind: "png" | "pdf") => {
+  const exportAs = async (kind: "png" | "pdf" | "print") => {
     setBusy(kind);
     setError(null);
     try {
@@ -50,6 +50,8 @@ export function FilledForm({ template, answers, showBoxes = false, filename = "a
       const canvas = await renderFilledForm(template, answers);
       if (kind === "png") {
         downloadBlob(await canvasToPngBlob(canvas), `${filename}.png`);
+      } else if (kind === "print") {
+        await printCanvas(canvas, template.title);
       } else {
         const bytes = await canvasToPdfBytes(canvas);
         downloadBlob(new Blob([bytes], { type: "application/pdf" }), `${filename}.pdf`);
@@ -70,9 +72,12 @@ export function FilledForm({ template, answers, showBoxes = false, filename = "a
         <Button variant="marigold" loading={busy === "pdf"} onClick={() => exportAs("pdf")}>
           <FileText className="w-4 h-4" /> PDF
         </Button>
+        <Button variant="secondary" loading={busy === "print"} onClick={() => exportAs("print")}>
+          <Printer className="w-4 h-4" /> Print
+        </Button>
       </div>
       <p className="text-xs text-text-muted font-body">
-        Print at 100% / actual size so the boxes line up with the paper.
+        The whole form is printed on one A4 page with your answers filled in. Only the form is printed, not this screen.
       </p>
       {error && (
         <p className="text-sm text-rani font-body" role="alert">

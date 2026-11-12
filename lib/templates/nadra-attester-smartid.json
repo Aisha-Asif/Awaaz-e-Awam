@@ -1,6 +1,15 @@
 {
  "id": "nadra-attester-smartid",
  "title": "NADRA Attester Form – Smart ID",
+ "description": "NADRA attester form for a Smart ID: the applicant's details and an attester's confirmation.",
+ "notes": ["The attester must read the form and confirm the applicant's details in person."],
+ "leaveBlank": [
+  "Tracking ID",
+  "The applicant's fingerprints",
+  "The applicant's signature and date",
+  "The attester's signature and stamp"
+ ],
+ "speechSections": ["Applicant"],
  "imageUrl": "/templates/nadra-attester-smartid.png",
  "imageWidth": 1181,
  "imageHeight": 1701,

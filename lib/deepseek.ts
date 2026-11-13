@@ -4,6 +4,8 @@ import { MOCK_FORM_SCHEMA, getMockProcessAnswerResponse } from "@/lib/mock-data"
 import { sanitizeFormSchema, sanitizeAnswer, sanitizeSpeech } from "@/lib/schemas";
 import { SYSTEM_PROMPT, scanFormPrompt, answerPrompt, speechPrompt } from "@/lib/prompts";
 
+export const name = "deepseek";
+
 const BASE_URL = "https://api.deepseek.com/chat/completions";
 export const TEXT_MODEL = "deepseek-v4-flash";
 export const VISION_MODEL = "deepseek-v4-flash-vision-exp";

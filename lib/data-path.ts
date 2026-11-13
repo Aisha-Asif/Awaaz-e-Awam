@@ -4,12 +4,18 @@
 
 export type DataPath = "sensitive" | "demo";
 
-// Providers cleared to receive real citizen data. Empty until WS1 adds lib/groq.ts, so the
-// sensitive path currently fails closed (no provider can be served).
-const SENSITIVE_PROVIDERS: readonly string[] = [];
+// Providers cleared to receive real citizen data (DECISIONS.md D9). Groq is the only one:
+// it does not train on submitted data, so it is the sole LLM on the real-PII path.
+const SENSITIVE_PROVIDERS: readonly string[] = ["groq"];
 
 // Reads DATA_PATH, defaulting to "demo" so behaviour is unchanged when the var is unset.
-export const getDataPath = (): DataPath => (process.env.DATA_PATH === "sensitive" ? "sensitive" : "demo");
+// An unrecognized value throws instead of silently falling back to the permissive path: a typo
+// like "Sensitive" or "sensitiv" must fail loudly, not quietly disable the guard.
+export const getDataPath = (): DataPath => {
+  const raw = (process.env.DATA_PATH ?? "demo").trim().toLowerCase();
+  if (raw === "sensitive" || raw === "demo") return raw;
+  throw new Error(`Invalid DATA_PATH "${process.env.DATA_PATH}". Use "sensitive" or "demo".`);
+};
 
 // Throws when `name` is not permitted on the current DATA_PATH. On the sensitive path anything
 // outside SENSITIVE_PROVIDERS is rejected, so real data can never reach a training provider.

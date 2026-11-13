@@ -16,14 +16,15 @@ why, and what would make us revisit it. See `ROADMAP.md` for the phased plan.
 
 ## AI providers
 
-| #   | Decision                                                                         | Rationale                                                           | Revisit if                                       |
-| --- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
-| D7  | **Groq Whisper-large-v3 = primary STT** (Speak + Scan, shared `/api/transcribe`) | Strong Urdu/multi-dialect, fast, free tier                          | Urdu WER unacceptable vs alternatives            |
-| D8  | **Gemini STT = fallback** (demote, do not remove) — **demo path only**           | Coverage when Groq down; real PII never reaches Gemini (see D9)     | Groq proves reliable enough to drop the fallback |
-| D9  | **Groq = the only LLM on the real-PII path**; Gemini = demo/synthetic only       | Gemini free tier trains on content + human review; terms forbid PII | Gemini offers a no-train, ZDR tier we can afford |
-| D10 | Route via `DATA_PATH=sensitive\|demo` behind one `Provider` interface            | Single choke point for the compliance boundary                      | —                                                |
-| D11 | **ElevenLabs rejected for STT**                                                  | ~30 min/mo free, no commercial license; parked for TTS only         | Budget exists for a paid STT license             |
-| D12 | Eval bar: **WER < 30%, field F1 > 0.85**, validators pass                        | Objective quality gate before deadline                              | Bar proves unrepresentative of real usage        |
+| #   | Decision                                                                         | Rationale                                                             | Revisit if                                        |
+| --- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| D7  | **Groq Whisper-large-v3 = primary STT** (Speak + Scan, shared `/api/transcribe`) | Strong Urdu/multi-dialect, fast, free tier                            | Urdu WER unacceptable vs alternatives             |
+| D8  | **Gemini STT = fallback** (demote, do not remove) — **demo path only**           | Coverage when Groq down; real PII never reaches Gemini (see D9)       | Groq proves reliable enough to drop the fallback  |
+| D9  | **Groq = the only LLM on the real-PII path**; Gemini = demo/synthetic only       | Gemini free tier trains on content + human review; terms forbid PII   | Gemini offers a no-train, ZDR tier we can afford  |
+| D10 | Route via `DATA_PATH=sensitive\|demo` behind one `Provider` interface            | Single choke point for the compliance boundary                        | —                                                 |
+| D11 | **ElevenLabs rejected for STT**                                                  | ~30 min/mo free, no commercial license; parked for TTS only           | Budget exists for a paid STT license              |
+| D12 | Eval bar: **WER < 30%, field F1 > 0.85**, validators pass                        | Objective quality gate before deadline                                | Bar proves unrepresentative of real usage         |
+| D25 | **Groq chat model = `openai/gpt-oss-120b`** for extraction on the D9 path        | `llama-3.3-70b-versatile` retired; gpt-oss-120b honours `json_object` | A stronger JSON-mode model lands on the free tier |
 
 ## Export & scan
 
@@ -66,5 +67,7 @@ why, and what would make us revisit it. See `ROADMAP.md` for the phased plan.
   terms forbid submitting PII; EEA/CH/UK paid-only; "not for consumer use."
 - **Groq free tier:** no training unless permitted; Zero Data Retention available;
   30-day logs. Whisper 2,000 RPD; chat models ~1,000 RPD / 200k TPD each, org-wide.
+  Chat model for extraction is `openai/gpt-oss-120b` (D25) — `llama-3.3-70b-versatile`
+  was retired; free-tier output-tokens/min is low, so expect 429s under burst.
 - **ElevenLabs free:** 10k credits/mo; TTS 1 credit/char; STT 330 credits/min;
   no commercial use until Starter tier.

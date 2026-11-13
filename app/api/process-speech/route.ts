@@ -2,7 +2,7 @@
 // fields as possible in one shot, and reports which required fields are still missing.
 import { NextRequest, NextResponse } from "next/server";
 import { extractSpeech } from "@/lib/ai";
-import { transcribeAudio } from "@/lib/gemini-stt";
+import { transcribeAudio } from "@/lib/ai";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 import { getTemplate, isSpeakable } from "@/lib/templates";
 import { inputModeOf } from "@/lib/field-model";

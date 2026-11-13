@@ -1,6 +1,7 @@
 // Privacy page: server-rendered summary of PRIVACY.md, linked from the consent notice and footer.
 import Link from "next/link";
 import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { DEMO_WARNING_EN, DEMO_WARNING_UR } from "@/lib/privacy-copy";
 
 export const metadata = { title: "Privacy — Awaaz-e-Awam" };
 
@@ -34,9 +35,9 @@ export default function PrivacyPage() {
           <div className="mb-6 p-3.5 rounded-xl bg-marigold/10 border border-marigold/30 flex items-start gap-3 text-sm text-text-muted font-body">
             <ShieldAlert className="w-[18px] h-[18px] text-marigold shrink-0 mt-0.5" />
             <span>
-              This is a demo. Please don&apos;t enter real CNIC, phone, or identity information.
+              {DEMO_WARNING_EN}
               <span className="block font-urdu text-base mt-1 leading-relaxed" dir="rtl">
-                احتیاط: یہ ڈیمو ہے — اصل شناختی کارڈ یا فون نمبر درج نہ کریں۔
+                {DEMO_WARNING_UR}
               </span>
             </span>
           </div>
@@ -80,8 +81,9 @@ export default function PrivacyPage() {
             <div>
               <h3 className="font-display font-semibold text-text mb-1">Spoken answers</h3>
               <p className="text-text-muted">
-                When you speak an answer, the recording is sent to a server-side speech-to-text service (Gemini). Do not
-                say numbers or private details you are not comfortable sharing; you can type any answer instead.
+                When you speak an answer, the recording is sent to a server-side speech-to-text service (Groq Whisper on
+                the sensitive path, Gemini on the demo path). Do not say numbers or private details you are not
+                comfortable sharing; you can type any answer instead.
               </p>
             </div>
 

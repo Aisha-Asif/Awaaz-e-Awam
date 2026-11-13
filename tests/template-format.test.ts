@@ -25,6 +25,7 @@ const raw: RawTemplate = {
       mirrors: [{ x: 600, y: 200, w: 300, h: 44 }],
       align: "center",
       questionUrdu: "q",
+      questionRoman: "Aap ka naam kya hai?",
     },
     {
       id: "vaccinated",
@@ -80,6 +81,11 @@ describe("buildTemplate: extended format", () => {
     expect(v.boundingBox).toBeUndefined();
     expect(Object.keys(v.ticks!)).toEqual(["Yes", "No"]);
     expect(v.ticks!.Yes).toEqual({ x: 0.1, y: 0.5, width: 0.02, height: 0.01 });
+  });
+
+  it("passes the Roman Urdu question through", () => {
+    expect(by("name").questionRoman).toBe("Aap ka naam kya hai?");
+    expect(by("blank").questionRoman).toBeUndefined();
   });
 
   it("passes alignment and options through", () => {

@@ -102,6 +102,14 @@ describe.each(TEMPLATES.map((t) => [t.id, t] as const))("template %s", (_id, t) 
     }
   });
 
+  it("has a Roman Urdu question for every field, in Latin letters only, so it can be read aloud without an Urdu voice", () => {
+    for (const f of t.schema.fields) {
+      expect(f.questionRoman, f.id).toBeTruthy();
+      expect(f.questionRoman, f.id).toMatch(/^[ -~]+$/);
+      expect(f.questionRoman, f.id).toMatch(/[?.]$/);
+    }
+  });
+
   it("names a section for every field", () => {
     for (const f of t.schema.fields) expect(f.section, f.id).toBeTruthy();
   });

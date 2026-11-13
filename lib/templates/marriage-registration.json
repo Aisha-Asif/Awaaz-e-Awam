@@ -37,6 +37,7 @@
         }
       ],
       "questionUrdu": "دلہن کا نام کیا ہے؟",
+      "questionRoman": "Dulhan ka naam kya hai?",
       "questionEnglish": "What is the bride's name?"
     },
     {
@@ -62,6 +63,7 @@
         }
       ],
       "questionUrdu": "دلہن کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Dulhan ka shanakhti card number kya hai?",
       "questionEnglish": "What is the bride's CNIC number?"
     },
     {
@@ -87,6 +89,7 @@
         }
       ],
       "questionUrdu": "دلہن کے والد کا نام کیا ہے؟",
+      "questionRoman": "Dulhan ke walid ka naam kya hai?",
       "questionEnglish": "What is the bride's father's name?"
     },
     {
@@ -112,6 +115,7 @@
         }
       ],
       "questionUrdu": "دلہن کے والد کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Dulhan ke walid ka shanakhti card number kya hai?",
       "questionEnglish": "What is the bride's father's CNIC number?"
     },
     {
@@ -137,6 +141,7 @@
         }
       ],
       "questionUrdu": "دلہن کی عمر کتنی ہے؟",
+      "questionRoman": "Dulhan ki umar kitni hai?",
       "questionEnglish": "What is the bride's age?"
     },
     {
@@ -167,6 +172,7 @@
         }
       ],
       "questionUrdu": "دلہن کی ازدواجی حیثیت کیا ہے؟",
+      "questionRoman": "Dulhan ki azdawaji haisiyat kya hai?",
       "questionEnglish": "What is the bride's marital status?"
     },
     {
@@ -192,6 +198,7 @@
         }
       ],
       "questionUrdu": "دلہن کا پتہ کیا ہے؟",
+      "questionRoman": "Dulhan ka pata kya hai?",
       "questionEnglish": "What is the bride's address?"
     },
     {
@@ -217,6 +224,7 @@
         }
       ],
       "questionUrdu": "دولہا کا نام کیا ہے؟",
+      "questionRoman": "Dulha ka naam kya hai?",
       "questionEnglish": "What is the groom's name?"
     },
     {
@@ -242,6 +250,7 @@
         }
       ],
       "questionUrdu": "دولہا کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Dulha ka shanakhti card number kya hai?",
       "questionEnglish": "What is the groom's CNIC number?"
     },
     {
@@ -267,6 +276,7 @@
         }
       ],
       "questionUrdu": "دولہا کے والد کا نام کیا ہے؟",
+      "questionRoman": "Dulha ke walid ka naam kya hai?",
       "questionEnglish": "What is the groom's father's name?"
     },
     {
@@ -292,6 +302,7 @@
         }
       ],
       "questionUrdu": "دولہا کے والد کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Dulha ke walid ka shanakhti card number kya hai?",
       "questionEnglish": "What is the groom's father's CNIC number?"
     },
     {
@@ -317,6 +328,7 @@
         }
       ],
       "questionUrdu": "دولہا کی عمر کتنی ہے؟",
+      "questionRoman": "Dulha ki umar kitni hai?",
       "questionEnglish": "What is the groom's age?"
     },
     {
@@ -347,6 +359,7 @@
         }
       ],
       "questionUrdu": "دولہا کی ازدواجی حیثیت کیا ہے؟",
+      "questionRoman": "Dulha ki azdawaji haisiyat kya hai?",
       "questionEnglish": "What is the groom's marital status?"
     },
     {
@@ -372,6 +385,7 @@
         }
       ],
       "questionUrdu": "دولہا کا پتہ کیا ہے؟",
+      "questionRoman": "Dulha ka pata kya hai?",
       "questionEnglish": "What is the groom's address?"
     },
     {
@@ -397,6 +411,7 @@
         }
       ],
       "questionUrdu": "نکاح کی تاریخ کیا ہے؟",
+      "questionRoman": "Nikah ki tareekh kya hai?",
       "questionEnglish": "What is the date of the marriage?"
     },
     {
@@ -422,6 +437,7 @@
         }
       ],
       "questionUrdu": "حق مہر کی رقم اور تفصیل کیا ہے؟",
+      "questionRoman": "Haq mehr ki raqam aur tafseel kya hai?",
       "questionEnglish": "What is the amount of dower, with details?"
     },
     {
@@ -447,6 +463,7 @@
         }
       ],
       "questionUrdu": "نکاح کی فیس کتنی ہے؟",
+      "questionRoman": "Nikah ki fees kitni hai?",
       "questionEnglish": "What is the marriage registration fee?"
     },
     {
@@ -472,6 +489,7 @@
         }
       ],
       "questionUrdu": "نکاح خواں کا نام کیا ہے؟",
+      "questionRoman": "Nikah khwan ka naam kya hai?",
       "questionEnglish": "What is the name of the person who solemnized the marriage?"
     },
     {
@@ -497,6 +515,7 @@
         }
       ],
       "questionUrdu": "نکاح خواں کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Nikah khwan ka shanakhti card number kya hai?",
       "questionEnglish": "What is the solemnizer's CNIC number?"
     },
     {
@@ -514,6 +533,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "گواہ 1 (دلہن) کا نام کیا ہے؟",
+      "questionRoman": "Dulhan ke pehle gawah ka naam kya hai?",
       "questionEnglish": "What is the name of the witness 1 (bride)?"
     },
     {
@@ -531,6 +551,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "گواہ 1 (دولہا) کا نام کیا ہے؟",
+      "questionRoman": "Dulha ke pehle gawah ka naam kya hai?",
       "questionEnglish": "What is the name of the witness 1 (groom)?"
     },
     {
@@ -548,6 +569,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "گواہ 2 (دلہن) کا نام کیا ہے؟",
+      "questionRoman": "Dulhan ke doosre gawah ka naam kya hai?",
       "questionEnglish": "What is the name of the witness 2 (bride)?"
     },
     {
@@ -565,6 +587,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "گواہ 2 (دولہا) کا نام کیا ہے؟",
+      "questionRoman": "Dulha ke doosre gawah ka naam kya hai?",
       "questionEnglish": "What is the name of the witness 2 (groom)?"
     },
     {
@@ -582,6 +605,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "وکیل (دلہن) کا نام کیا ہے؟",
+      "questionRoman": "Dulhan ke wakeel ka naam kya hai?",
       "questionEnglish": "What is the name of the wakeel (bride)?"
     },
     {
@@ -599,6 +623,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "وکیل (دولہا) کا نام کیا ہے؟",
+      "questionRoman": "Dulha ke wakeel ka naam kya hai?",
       "questionEnglish": "What is the name of the wakeel (groom)?"
     }
   ]

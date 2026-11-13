@@ -80,6 +80,7 @@ export function buildTemplate(raw: RawTemplate): FormTemplate {
       required: f.required,
       section: f.section,
       questionUrdu: f.questionUrdu,
+      questionRoman: f.questionRoman,
       questionEnglish: f.questionEnglish,
       boundingBox,
       extraBoxes: f.mirrors?.map(toBox),

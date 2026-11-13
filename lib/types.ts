@@ -29,6 +29,8 @@ export type FormField = {
   options?: string[];
   required: boolean;
   questionUrdu: string;
+  // The same question in Roman Urdu (Latin letters). Read aloud when the device has no Urdu voice.
+  questionRoman?: string;
   questionEnglish?: string;
   // Normalized 0-1 on the form image. For a template this is the write area:
   // the empty part of the printed box, clear of the printed label.

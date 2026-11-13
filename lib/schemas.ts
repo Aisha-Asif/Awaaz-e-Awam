@@ -48,6 +48,7 @@ const FormFieldInputSchema = z.object({
   type: FormFieldTypeSchema.optional().default("unknown"),
   required: z.boolean().optional().default(false),
   questionUrdu: z.string().optional().default(""),
+  questionRoman: z.string().optional(),
   questionEnglish: z.string().optional(),
   labelUr: z.string().optional(),
   inputMode: InputModeSchema.optional(),

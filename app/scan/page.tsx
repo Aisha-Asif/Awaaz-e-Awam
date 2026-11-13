@@ -516,7 +516,11 @@ export default function ScanPage() {
                         )}
                         <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
                       </button>
-                      <TTSButton text={field.questionUrdu || field.label} className="ml-2 shrink-0" />
+                      <TTSButton
+                        text={field.questionUrdu || field.label}
+                        fallbackText={field.questionRoman ?? field.questionEnglish}
+                        className="ml-2 shrink-0"
+                      />
                     </div>
                   ))}
                 </CardContent>
@@ -563,7 +567,10 @@ export default function ScanPage() {
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
-                  <TTSButton text={field?.questionUrdu || currentQuestion || field?.label || ""} />
+                  <TTSButton
+                    text={field?.questionUrdu || currentQuestion || field?.label || ""}
+                    fallbackText={field?.questionRoman ?? field?.questionEnglish}
+                  />
                 </div>
                 {field?.questionEnglish && (
                   <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">

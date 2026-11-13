@@ -1,63 +1,48 @@
 "use client";
 
-// TTS: Urdu text-to-speech via speechSynthesis — Urdu/Hindi voice selection, Listen/Stop button.
-import { useCallback, useEffect, useRef, useState } from "react";
+// TTS: text-to-speech via speechSynthesis. useTTS speaks text with the best voice for it (see lib/speech.ts: an Urdu voice
+// for Urdu script, an English voice for Roman Urdu / English / numbers) and TTSButton is a Listen / Stop button that
+// explains itself when this device cannot read the text aloud.
+import { useCallback, useEffect, useState } from "react";
 import { Volume2, Square } from "lucide-react";
+import { chooseSpeech } from "@/lib/speech";
 
 interface UseTTSOptions {
-  lang?: string;
   rate?: number;
   pitch?: number;
   volume?: number;
 }
 
-// Prefers an Urdu voice, then the requested lang, then a Hindi voice.
-function pickUrduVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
-  const urdu = voices.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith("ur"));
-  if (urdu.length > 0) return urdu[0];
-  // fall back to lining up with the requested lang, then any Hindi voice
-  const exact = voices.find((v) => v.lang.replace("_", "-").toLowerCase() === lang.toLowerCase());
-  if (exact) return exact;
-  return voices.find((v) => v.lang.toLowerCase().startsWith("hi"));
-}
-
-// speechSynthesis hook: speak/stop/pause/resume with Urdu-weighted voice pick and availability flags.
+// speechSynthesis hook: speak/stop/pause/resume, plus the device's voices so callers can tell what can be read.
 export function useTTS(options: UseTTSOptions = {}) {
-  const { lang = "ur-PK", rate = 0.9, pitch = 1, volume = 1 } = options;
+  const { rate = 0.9, pitch = 1, volume = 1 } = options;
   const [speaking, setSpeaking] = useState(false);
   const [supported, setSupported] = useState(false);
-  const [voiceUnavailable, setVoiceUnavailable] = useState(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const voiceRef = useRef<SpeechSynthesisVoice | undefined>(undefined);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     setSupported(true);
 
-    const refresh = () => {
-      const voices = window.speechSynthesis.getVoices();
-      voiceRef.current = pickUrduVoice(voices, lang);
-      // ponytail: many devices ship no Urdu voice; surface it rather than
-      // silently reading with a wrong/default voice.
-      setVoiceUnavailable(voices.length > 0 && !voiceRef.current);
-    };
-
+    // Voices often load after the page does, so listen for the list changing.
+    const refresh = () => setVoices(window.speechSynthesis.getVoices());
     refresh();
     window.speechSynthesis.addEventListener("voiceschanged", refresh);
     return () => window.speechSynthesis.removeEventListener("voiceschanged", refresh);
-  }, [lang]);
+  }, []);
 
+  // Says the text, using fallbackText (Roman Urdu or English) when the device has no voice for the original.
+  // Returns false when nothing could be spoken.
   const speak = useCallback(
-    (text: string) => {
-      if (!supported) return;
+    (text: string, fallbackText?: string): boolean => {
+      if (!supported) return false;
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (voiceRef.current) {
-        utterance.voice = voiceRef.current;
-        utterance.lang = voiceRef.current.lang;
-      } else {
-        utterance.lang = lang;
-      }
+      const choice = chooseSpeech(text, fallbackText, window.speechSynthesis.getVoices());
+      if (!choice) return false;
+
+      const utterance = new SpeechSynthesisUtterance(choice.text);
+      if (choice.voice) utterance.voice = choice.voice;
+      utterance.lang = choice.lang;
       utterance.rate = rate;
       utterance.pitch = pitch;
       utterance.volume = volume;
@@ -66,11 +51,12 @@ export function useTTS(options: UseTTSOptions = {}) {
       utterance.onend = () => setSpeaking(false);
       utterance.onerror = () => setSpeaking(false);
 
-      utteranceRef.current = utterance;
+      // Stop anything already speaking so answers do not overlap.
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
+      return true;
     },
-    [supported, lang, rate, pitch, volume],
+    [supported, rate, pitch, volume],
   );
 
   const stop = useCallback(() => {
@@ -92,35 +78,46 @@ export function useTTS(options: UseTTSOptions = {}) {
     }
   }, [supported]);
 
-  return { speak, stop, pause, resume, speaking, supported, voiceUnavailable };
+  return { speak, stop, pause, resume, speaking, supported, voices };
 }
 
 interface TTSButtonProps {
   text: string;
-  lang?: string;
+  // Roman Urdu or English version, read when the device cannot read the original (for example no Urdu voice).
+  fallbackText?: string;
   className?: string;
   disabled?: boolean;
 }
 
 // Listen/Stop toggle; hidden where speechSynthesis is unsupported.
-export function TTSButton({ text, lang = "ur-PK", className = "", disabled = false }: TTSButtonProps) {
-  const { speak, stop, speaking, supported, voiceUnavailable } = useTTS({ lang });
+export function TTSButton({ text, fallbackText, className = "", disabled = false }: TTSButtonProps) {
+  const { speak, stop, speaking, supported, voices } = useTTS();
 
   if (!supported) return null;
+
+  const choice = chooseSpeech(text, fallbackText, voices);
+  // Nothing to read, or this device cannot read it: say so instead of staying silent.
+  const unreadable = !!text.trim() && choice === null;
 
   const handleClick = () => {
     if (speaking) {
       stop();
     } else {
-      speak(text);
+      speak(text, fallbackText);
     }
   };
+
+  const title = unreadable
+    ? "This device has no Urdu voice, so this cannot be read aloud. Please read it on the screen."
+    : choice?.usedFallback
+      ? "No Urdu voice on this device: reading the Roman Urdu version."
+      : undefined;
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={disabled || !text.trim()}
+      disabled={disabled || !text.trim() || unreadable}
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-card text-xs font-semibold font-body transition-all duration-200 border
         ${
           speaking
@@ -130,7 +127,7 @@ export function TTSButton({ text, lang = "ur-PK", className = "", disabled = fal
         disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       aria-label={speaking ? "Stop reading" : "Read aloud"}
       aria-pressed={speaking}
-      title={voiceUnavailable ? "No Urdu voice available on this device; using best available" : undefined}
+      title={title}
     >
       {speaking ? <Square className="w-3.5 h-3.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5 text-jade" />}
       <span>{speaking ? "Stop" : "Listen"}</span>

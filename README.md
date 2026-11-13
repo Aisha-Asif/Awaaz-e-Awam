@@ -241,7 +241,9 @@ and the sample family registration certificates are documents NADRA _issues_, so
 
 - One person fills in one form. There are no accounts, so nothing is carried from one form to the next: a new form means
   new answers.
-- Questions are asked one at a time, in Urdu, and read aloud. Names and addresses can be spoken or typed.
+- Questions are asked one at a time, in Urdu, and can be read aloud (Listen). If the device has no Urdu voice, the Roman
+  Urdu version of the question is read with an English voice instead; if nothing can be read, the button says so.
+  Names and addresses can be spoken or typed.
 - **CNIC, phone numbers and dates are typed only.** They are checked by the app's own code, read back for confirmation,
   and never spoken, transcribed or sent to an AI.
 - Choices (gender, marital status, yes/no, place of birth) are buttons, and can also be said or typed.

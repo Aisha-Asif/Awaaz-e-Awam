@@ -30,6 +30,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "بیان حلفی دینے والے کا پورا نام کیا ہے؟",
+      "questionRoman": "Bayan e halfi dene wale ka poora naam kya hai?",
       "questionEnglish": "What is the full name of the person making this statement?"
     },
     {
@@ -47,6 +48,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "ان کے والد یا شوہر کا نام کیا ہے؟",
+      "questionRoman": "Un ke walid ya shohar ka naam kya hai?",
       "questionEnglish": "What is the name of their father or husband?"
     },
     {
@@ -64,6 +66,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "ان کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Un ka shanakhti card number kya hai?",
       "questionEnglish": "What is their CNIC number?"
     },
     {
@@ -81,6 +84,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "وہ کہاں رہتے ہیں؟",
+      "questionRoman": "Woh kahan rehte hain?",
       "questionEnglish": "Where do they live?"
     },
     {
@@ -98,6 +102,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "جس کی تصدیق کی جا رہی ہے اس درخواست دہندہ کا نام کیا ہے؟",
+      "questionRoman": "Darkhwast dene wale ka naam kya hai?",
       "questionEnglish": "What is the name of the applicant being confirmed?"
     },
     {
@@ -115,6 +120,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "درخواست دہندہ کے والد یا شوہر کا نام کیا ہے؟",
+      "questionRoman": "Darkhwast dene wale ke walid ya shohar ka naam kya hai?",
       "questionEnglish": "What is the name of the applicant's father or husband?"
     },
     {
@@ -132,6 +138,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "آپ درخواست دہندہ کو کتنے عرصے سے جانتے ہیں؟",
+      "questionRoman": "Aap darkhwast dene wale ko kitne arse se jaante hain?",
       "questionEnglish": "For how long have you known the applicant?"
     },
     {
@@ -149,6 +156,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "درخواست دہندہ آپ کا رشتہ دار، پڑوسی یا دوست ہے؟",
+      "questionRoman": "Darkhwast dene wala aap ka rishtedar, parosi ya dost hai?",
       "questionEnglish": "Is the applicant your relative, neighbor or friend?"
     },
     {
@@ -174,6 +182,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "جو رشتہ دار موجود نہیں وہ درخواست دہندہ کا کیا لگتا ہے؟",
+      "questionRoman": "Jo rishtedar maujood nahi woh darkhwast dene wale ka kya lagta hai?",
       "questionEnglish": "How is the relative who is not available related to the applicant?"
     },
     {
@@ -191,6 +200,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "اس رشتہ دار کا نام کیا ہے؟",
+      "questionRoman": "Us rishtedar ka naam kya hai?",
       "questionEnglish": "What is that relative's name?"
     },
     {
@@ -208,6 +218,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "اس رشتہ دار کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Us rishtedar ka shanakhti card number kya hai?",
       "questionEnglish": "What is that relative's CNIC number?"
     },
     {
@@ -225,6 +236,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "درخواست کا ٹریکنگ نمبر (TID) کیا ہے؟",
+      "questionRoman": "Darkhwast ka tracking number, yaani TID, kya hai?",
       "questionEnglish": "What is the application tracking number (TID)?"
     },
     {
@@ -242,6 +254,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "ان کا رابطہ نمبر کیا ہے؟",
+      "questionRoman": "Un ka raabta number kya hai?",
       "questionEnglish": "What is their contact number?"
     },
     {
@@ -259,6 +272,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "پہلے گواہ کا نام کیا ہے؟",
+      "questionRoman": "Pehle gawah ka naam kya hai?",
       "questionEnglish": "What is the first witness's name?"
     },
     {
@@ -276,6 +290,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "پہلے گواہ کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Pehle gawah ka shanakhti card number kya hai?",
       "questionEnglish": "What is the first witness's CNIC number?"
     },
     {
@@ -293,6 +308,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "پہلے گواہ کا رابطہ نمبر کیا ہے؟",
+      "questionRoman": "Pehle gawah ka raabta number kya hai?",
       "questionEnglish": "What is the first witness's contact number?"
     },
     {
@@ -310,6 +326,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "دوسرے گواہ کا نام کیا ہے؟",
+      "questionRoman": "Doosre gawah ka naam kya hai?",
       "questionEnglish": "What is the second witness's name?"
     },
     {
@@ -327,6 +344,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "دوسرے گواہ کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionRoman": "Doosre gawah ka shanakhti card number kya hai?",
       "questionEnglish": "What is the second witness's CNIC number?"
     },
     {
@@ -344,6 +362,7 @@
       },
       "labelWidth": 0,
       "questionUrdu": "دوسرے گواہ کا رابطہ نمبر کیا ہے؟",
+      "questionRoman": "Doosre gawah ka raabta number kya hai?",
       "questionEnglish": "What is the second witness's contact number?"
     }
   ]

@@ -21,6 +21,31 @@ The app reads `DATA_PATH` (see `.env.example`) and behaves differently per value
 - Scanned-form history is kept in the browser's `localStorage` only (`app/scan/page.tsx`);
   once on-device OCR lands (Phase 2) the image never leaves the browser.
 
+## Numbers you type (CNIC, phone, date)
+
+CNIC numbers, phone numbers and dates are **typed**, never spoken. The interview shows a typed box with live checking and
+no microphone for these fields. The server validates them with its own code (`/api/process-answer`) and does **not** send
+them to any AI provider. In the one-shot Speak flow the AI is never asked for these fields, anything it returns for them
+is ignored, and anything that looks like a CNIC or phone number is removed from the text before it reaches the AI
+(`lib/redact.ts`). The redaction is a safety net: it cannot un-send audio that was already transcribed.
+
+Choice questions (gender, marital status, yes/no) are matched to their options by local code (`lib/options.ts`).
+
+## Filled forms
+
+The finished form (the blank form image with the answers written on it) is drawn in the browser and saved or printed from
+there (`lib/fill-form.ts`). It is **not uploaded**, and nothing is stored on the server. Signatures, thumb impressions,
+stamps, notary areas and office-use boxes are never filled in; the app lists them on screen only.
+
+One person fills one form. There are no accounts, and answers are not kept or reused between forms.
+
+## Known gaps
+
+- **Audio is not covered by the `DATA_PATH` guard.** Spoken answers are transcribed by Gemini speech-to-text
+  (`/api/transcribe`, `/api/process-speech`), which the guard does not check. Do not use real data with spoken answers
+  until the guard also covers speech-to-text and an approved provider exists for it.
+- The `sensitive` path has no approved provider yet, so it refuses every AI call.
+
 ## Providers
 
 - **Gemini free tier:** content may be used to improve products and reviewed by humans; its

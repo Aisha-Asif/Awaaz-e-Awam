@@ -517,7 +517,10 @@ export default function SpeakPage() {
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
-                  <TTSButton text={field?.questionUrdu || currentQuestion || field?.label || ""} />
+                  <TTSButton
+                    text={field?.questionUrdu || currentQuestion || field?.label || ""}
+                    fallbackText={field?.questionRoman ?? field?.questionEnglish}
+                  />
                 </div>
                 {field?.questionEnglish && (
                   <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">

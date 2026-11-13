@@ -52,6 +52,16 @@ why, and what would make us revisit it. See `ROADMAP.md` for the phased plan.
 | D22 | WhatsApp session state in a **free-tier KV** (Upstash/Vercel), keyed by `wa_id` | Only justified exception to "no DB"; WhatsApp is stateless/multi-turn                             | A stateless encoding scheme proves workable |
 | D23 | WhatsApp reply format = **undecided** (link vs PDF document)                    | Decide after Scan/export settle                                                                   | —                                           |
 
+## Forms and private data (Nov 2026)
+
+| #   | Decision                                                                                                        | Rationale                                                                                  | Revisit if                                           |
+| --- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| D26 | **One person fills one form; nothing is reused between forms.** New form, new input                             | No login or storage (D1), so there is nothing safe to carry over                           | Accounts or a consent-based profile are introduced   |
+| D27 | **CNIC, phone and date are typed only**: never spoken, transcribed or sent to an AI; validated by local code    | The most sensitive, most error-prone values; code validates them better than an LLM        | An approved on-device or PII-safe speech path exists |
+| D28 | **Signature, thumb, stamp, notary, registrar and office-use areas stay blank**; they are listed in the app only | Those must be completed by hand; writing notes on the form itself would alter the document | A form needs one of them pre-filled                  |
+| D29 | **Output is the whole form on one A4 page** (PNG, PDF, print), drawn in the browser and never uploaded          | The filled form holds real identity data; the printout must work on plain paper            | Multi-page forms are added                           |
+| D30 | **Issued NADRA certificates (e.g. family registration certificates) are not fillable forms**                    | They are documents NADRA issues with photos, codes and a registrar's signature             | NADRA publishes a blank application form for them    |
+
 ## Constraints
 
 - **Zero budget** — free tiers only; flag any card-gated service.

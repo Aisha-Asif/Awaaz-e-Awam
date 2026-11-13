@@ -2,7 +2,7 @@
 
 // Marketing homepage: hero, three-step explainer, Speak/Scan mode cards, demo-is-not-real footer.
 import Link from "next/link";
-import { Mic, ScanLine, MessageSquare, Check, ShieldAlert, CheckCircle2, ArrowRight } from "lucide-react";
+import { Mic, ScanLine, MessageSquare, Check, ShieldAlert, CheckCircle2, ArrowRight, FileText } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -47,6 +47,10 @@ export default function HomePage() {
               <Link href="/scan" className="btn btn-outline">
                 <ScanLine className="w-[18px] h-[18px]" />
                 Scan a form
+              </Link>
+              <Link href="/forms" className="btn btn-outline">
+                <FileText className="w-[18px] h-[18px]" />
+                Browse forms
               </Link>
             </div>
             <div className="hero-note">

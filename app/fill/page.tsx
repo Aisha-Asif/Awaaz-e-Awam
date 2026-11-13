@@ -1,6 +1,7 @@
 "use client";
 
-// Fill demo page: hand-typed answers on the template's field list, drawn live onto the form preview. Synthetic data only.
+// Fill demo page: hand-typed answers on a form's field list, drawn live onto the form preview. Pick any available form.
+// Synthetic data only.
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Eye } from "lucide-react";
@@ -8,6 +9,7 @@ import { Button } from "@/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { FilledForm } from "@/components/FilledForm";
 import { TEMPLATES } from "@/lib/templates";
+import type { FormField, FormTemplate } from "@/lib/types";
 import { getFieldValidator } from "@/lib/validation";
 
 // Synthetic data only: never real identity details.
@@ -35,8 +37,33 @@ const DEMO: Record<string, string> = {
   attesterMobile: "03001234567",
 };
 
+// A made-up answer for any field, so every form can be previewed filled in. Never real identity details.
+function demoValue(field: FormField): string {
+  if (DEMO[field.id]) return DEMO[field.id];
+  if (field.options?.length) return field.options[0];
+  switch (field.type) {
+    case "cnic":
+      return "3520112345671";
+    case "phone":
+      return "03001234567";
+    case "date":
+      return "12/04/1998";
+    case "number":
+      return "28";
+    case "address":
+      return "House 12, Street 4, Model Town, Lahore";
+    default:
+      return /name|wakeel|witness/i.test(field.id) ? "Ali Raza" : "Lahore";
+  }
+}
+
+function demoAnswers(template: FormTemplate): Record<string, string> {
+  return Object.fromEntries(template.schema.fields.map((f) => [f.id, demoValue(f)]));
+}
+
 export default function FillPage() {
-  const template = TEMPLATES[0];
+  const [templateId, setTemplateId] = useState(TEMPLATES[0].id);
+  const template = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0];
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showBoxes, setShowBoxes] = useState(false);
 
@@ -56,10 +83,18 @@ export default function FillPage() {
     return r.valid ? null : (r.error ?? "Invalid value.");
   };
 
-  // /fill?demo=1 opens pre-filled, handy for screenshots and demos.
+  // /fill?form=<id>&demo=1 opens that form pre-filled, handy for screenshots and demos.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("demo") === "1") setAnswers(DEMO);
+    const params = new URLSearchParams(window.location.search);
+    const found = TEMPLATES.find((t) => t.id === params.get("form"));
+    if (found) setTemplateId(found.id);
+    if (params.get("demo") === "1") setAnswers(demoAnswers(found ?? TEMPLATES[0]));
   }, []);
+
+  const switchForm = (id: string) => {
+    setTemplateId(id);
+    setAnswers({});
+  };
 
   const set = (id: string, value: string) => setAnswers((a) => ({ ...a, [id]: value }));
 
@@ -80,8 +115,22 @@ export default function FillPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] items-start">
         <div className="flex flex-col gap-5">
           <Card padding="sm">
+            <label className="mb-3 block text-sm text-text-muted">
+              Form
+              <select
+                value={templateId}
+                onChange={(e) => switchForm(e.target.value)}
+                className="mt-1 w-full rounded-card border border-line bg-white px-3 py-2 text-text"
+              >
+                {TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="secondary" onClick={() => setAnswers(DEMO)}>
+              <Button size="sm" variant="secondary" onClick={() => setAnswers(demoAnswers(template))}>
                 Fill demo data
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setAnswers({})}>

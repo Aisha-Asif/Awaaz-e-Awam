@@ -22,7 +22,9 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await audio.arrayBuffer());
     const transcript = await transcribeAudio(mimeType, buffer);
     return NextResponse.json({ transcript });
-  } catch {
+  } catch (err) {
+    // Log the reason on the server only (the message never contains the user's answers).
+    console.error("[transcribe]", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: "Could not transcribe the audio. Please try again." }, { status: 500 });
   }
 }

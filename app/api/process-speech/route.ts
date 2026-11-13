@@ -4,7 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractSpeech } from "@/lib/ai";
 import { transcribeAudio } from "@/lib/gemini-stt";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
-import { getTemplate } from "@/lib/templates";
+import { getTemplate, isSpeakable } from "@/lib/templates";
+import { inputModeOf } from "@/lib/field-model";
+import { redactPrivateNumbers } from "@/lib/redact";
+import { matchOption } from "@/lib/options";
 
 export const runtime = "nodejs";
 
@@ -31,7 +34,9 @@ export async function POST(req: NextRequest) {
       const mimeType = (audio as File).type || "audio/webm";
       const buffer = Buffer.from(await audio.arrayBuffer());
       transcript = await transcribeAudio(mimeType, buffer);
-    } catch {
+    } catch (err) {
+      // Log the reason on the server only (the message never contains the user's answers).
+      console.error("[process-speech transcribe]", err instanceof Error ? err.message : err);
       return NextResponse.json({ error: "Could not transcribe the audio. Please try again." }, { status: 500 });
     }
   }
@@ -53,9 +58,9 @@ export async function POST(req: NextRequest) {
 
   // The person speaking is the applicant, so the one-shot extraction only covers
   // their fields; anyone else's (the attester) is asked about in the interview.
-  const speakable = template
-    ? schema.fields.filter((f) => !f.section || f.section.startsWith("Applicant"))
-    : schema.fields;
+  // Typed-only fields (CNIC, phone, date) are never taken from speech: they are asked for, typed, in the interview.
+  // A form that names speech sections (several people on one form) only takes speech for those sections.
+  const speakable = schema.fields.filter((f) => isSpeakable(template, f) && inputModeOf(f) !== "type");
 
   // The prompt only receives ids, so for a template spell out what each id means.
   // "presentCity" vs "permanentCity" is otherwise a guess.
@@ -63,17 +68,24 @@ export async function POST(req: NextRequest) {
     ? `${template.title}. Field meanings: ${speakable.map((f) => `${f.id} = ${f.label}`).join("; ")}`
     : (FORM_TITLES[formType] ?? formType);
 
+  // Safety net: strip anything that looks like a CNIC or phone number before the text reaches the AI.
+  const safeTranscript = redactPrivateNumbers(transcript);
+
   try {
     const result = await extractSpeech(
-      transcript,
+      safeTranscript,
       formLabel,
       speakable.map((f) => f.id),
     );
 
     const extracted: Record<string, string | null> = {};
     for (const field of schema.fields) {
-      const value = result.extracted[field.id] ?? null;
-      extracted[field.id] = value && value.trim() !== "" ? value : null;
+      // Only speakable fields may be filled from speech; typed-only fields stay empty for the interview.
+      const value = speakable.some((f) => f.id === field.id) ? (result.extracted[field.id] ?? null) : null;
+      const text = value && value.trim() !== "" ? value.trim() : null;
+      // A choice field only keeps a value that is one of its options, so the right box gets ticked. Anything else is
+      // dropped and the interview asks the question again.
+      extracted[field.id] = text && field.options?.length ? matchOption(text, field.options) : text;
     }
 
     const missingFields = schema.fields.filter((f) => f.required && !extracted[f.id]).map((f) => f.id);
@@ -82,7 +94,7 @@ export async function POST(req: NextRequest) {
       missingFields.length > 0 ? (schema.fields.find((f) => f.id === missingFields[0])?.questionUrdu ?? null) : null;
 
     return NextResponse.json({
-      transcript: result.transcript || transcript,
+      transcript: redactPrivateNumbers(result.transcript || safeTranscript),
       extracted,
       validation: {
         valid: missingFields.length === 0,
@@ -91,7 +103,9 @@ export async function POST(req: NextRequest) {
       },
       followUpQuestion,
     });
-  } catch {
+  } catch (err) {
+    // Log the reason on the server only (the message never contains the user's answers).
+    console.error("[process-speech]", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: "Could not process this response. Please try again." }, { status: 500 });
   }
 }

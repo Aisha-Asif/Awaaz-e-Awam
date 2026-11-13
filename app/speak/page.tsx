@@ -4,7 +4,7 @@
 // -> per-field interview -> filled form with copy/export.
 import Link from "next/link";
 import { useState, useCallback, useEffect, ReactNode } from "react";
-import { ArrowLeft, Check, CheckCircle2, Copy, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { ConsentNotice } from "@/components/ConsentNotice";
@@ -12,7 +12,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/Button";
 import { Progress } from "@/components/Progress";
 import { TTSButton } from "@/components/TTS";
-import { useSpeechRecognition } from "@/components/useSpeechRecognition";
+import { ResultList } from "@/components/ResultList";
+import { FieldInput } from "@/components/FieldInput";
+import { FormNotices } from "@/components/FormNotices";
+import { effectiveInputMode } from "@/lib/field-model";
+import { matchOption } from "@/lib/options";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 import { FilledForm } from "@/components/FilledForm";
@@ -76,15 +80,12 @@ export default function SpeakPage() {
     questionUrdu: string;
   } | null>(null);
   const [justSaved, setJustSaved] = useState(false);
-  const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
-  const [copiedJson, setCopiedJson] = useState(false);
-  const {
-    supported: srSupported,
-    listening: srListening,
-    error: srError,
-    start: srStart,
-    stop: srStop,
-  } = useSpeechRecognition("ur-PK");
+
+  // /speak?form=<id> preselects that form.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("form");
+    if (id && getTemplate(id)) setTemplateId(id);
+  }, []);
 
   useEffect(() => {
     if (!justSaved) return;
@@ -150,6 +151,31 @@ export default function SpeakPage() {
     [formSchema?.fields],
   );
 
+  // A button choice: saved directly (no AI call), then on to the next question.
+  const handleChoiceSelect = useCallback(
+    async (value: string) => {
+      if (!currentFieldId || !formSchema) return;
+      const field = formSchema.fields.find((f) => f.id === currentFieldId);
+      if (!field?.options?.includes(value)) return;
+      setError(null);
+      try {
+        const nextAnswers = { ...answers, [currentFieldId]: value };
+        setAnswers(nextAnswers);
+        setJustSaved(true);
+        const nextQ = await getNextQuestion(formSchema.fields, nextAnswers);
+        if (nextQ.nextField) {
+          setCurrentFieldId(nextQ.nextField);
+          setCurrentQuestion(nextQ.questionUrdu);
+        } else {
+          setStep("complete");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save your answer. Please try again.");
+      }
+    },
+    [currentFieldId, formSchema, answers],
+  );
+
   // Extracts one field's answer from a transcript; confirms-or-advances, then asks what's next.
   const handleAnswerSubmit = useCallback(
     async (transcript: string) => {
@@ -160,6 +186,14 @@ export default function SpeakPage() {
       try {
         const field = formSchema.fields.find((f) => f.id === currentFieldId);
         if (!field) return;
+
+        // A choice field: match what was said or typed to one of its options here (no AI call).
+        if (effectiveInputMode(field) === "choice") {
+          const option = matchOption(transcript, field.options ?? []);
+          if (option) await handleChoiceSelect(option);
+          else setError(`Please say or choose one of: ${(field.options ?? []).join(", ")}.`);
+          return;
+        }
 
         const response = await processAnswer(currentFieldId, field.type, transcript, field.label, field.questionUrdu);
 
@@ -191,7 +225,7 @@ export default function SpeakPage() {
         setLoading(false);
       }
     },
-    [currentFieldId, formSchema, answers],
+    [currentFieldId, formSchema, answers, handleChoiceSelect],
   );
 
   // Commits a confirmed value and advances to the next question.
@@ -219,6 +253,23 @@ export default function SpeakPage() {
     [showConfirmation, formSchema, answers],
   );
 
+  // A recorded answer: transcribe it, then submit the text like a typed answer.
+  const handleVoiceAnswer = useCallback(
+    async (blob: Blob) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const transcript = await transcribeAudioFile(blob);
+        await handleAnswerSubmit(transcript);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleAnswerSubmit],
+  );
+
   const getMissingRequiredFields = () => {
     if (!speechResponse || !formSchema) return [];
     return formSchema.fields.filter((f) => f.required && !answers[f.id]).map((f) => f.id);
@@ -236,6 +287,7 @@ export default function SpeakPage() {
           <div className="wrap" style={{ maxWidth: 720 }}>
             <PageBackLink href="/">Back to home</PageBackLink>
             <ConsentNotice />
+            {template && <FormNotices template={template} variant="intro" />}
             <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <h2>Speak Naturally</h2>
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
@@ -316,6 +368,15 @@ export default function SpeakPage() {
               style={{ maxWidth: 520, margin: "24px auto 0" }}
             >
               Example: &quot;Mera naam Ali Raza hai, mere abu ka naam Ahmed Raza hai, main Lahore mein rehta hoon.&quot;
+            </p>
+            <p
+              className="text-center text-sm text-text-muted mt-3 font-body"
+              style={{ maxWidth: 520, margin: "12px auto 0" }}
+            >
+              Please do not say your CNIC, phone number or date of birth. You will type those next.
+              <span className="block font-urdu text-base mt-1 leading-relaxed" dir="rtl">
+                شناختی کارڈ، فون نمبر یا تاریخ پیدائش نہ بولیں۔ انہیں آپ بعد میں ٹائپ کریں گے۔
+              </span>
             </p>
           </div>
         </section>
@@ -447,6 +508,11 @@ export default function SpeakPage() {
                 <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 text-rani flex items-center justify-center border border-rani/20 shadow-sm">
                   <MessageSquareQuote className="w-10 h-10" />
                 </div>
+                {field?.section && (
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted font-body">
+                    {field.section}
+                  </p>
+                )}
                 <h2 className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed" dir="auto">
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
@@ -463,67 +529,13 @@ export default function SpeakPage() {
 
             <Card variant="elevated" padding="lg" className="mt-4">
               <CardContent>
-                <AudioRecorder
-                  key={currentFieldId}
-                  onRecordingComplete={async (blob) => {
-                    setLoading(true);
-                    setError(null);
-                    try {
-                      const transcript = await transcribeAudioFile(blob);
-                      await handleAnswerSubmit(transcript);
-                    } catch (err) {
-                      setError(
-                        err instanceof Error ? err.message : "Could not transcribe your answer. Please try again.",
-                      );
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  showUploadFallback={false}
+                <FieldInput
+                  field={field}
                   disabled={loading}
+                  onSubmitText={handleAnswerSubmit}
+                  onVoice={handleVoiceAnswer}
+                  onChoice={handleChoiceSelect}
                 />
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-text mb-2 font-body">Or type your answer:</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-card border border-line bg-paper-card text-text placeholder-text-muted/70 focus:border-jade focus:ring-2 focus:ring-jade/20 focus:outline-none transition-all font-body text-base"
-                    placeholder="Answer in Urdu (اردو) or English..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.currentTarget.value.trim()) {
-                        handleAnswerSubmit(e.currentTarget.value.trim());
-                        e.currentTarget.value = "";
-                      }
-                    }}
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
-                {srSupported && (
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={loading || srListening}
-                      onClick={() => {
-                        if (srListening) {
-                          srStop();
-                        } else {
-                          srStart((text) => handleAnswerSubmit(text));
-                        }
-                      }}
-                    >
-                      {srListening ? "Listening..." : "Tap to speak (on-device)"}
-                    </Button>
-                  </div>
-                )}
-                {srError && (
-                  <div
-                    className="mt-3 p-3 bg-rani/10 border border-rani/30 rounded-card text-rani text-sm text-center font-body"
-                    role="alert"
-                  >
-                    {srError}
-                  </div>
-                )}
                 {currentFieldId && answers[currentFieldId] && (
                   <p className="mt-3 text-sm text-jade font-medium break-words font-body">
                     Answer: <span className="font-semibold">{answers[currentFieldId]}</span>
@@ -565,19 +577,6 @@ export default function SpeakPage() {
   }
 
   if (step === "complete") {
-    const handleCopyField = (fieldId: string, val: string) => {
-      navigator.clipboard.writeText(val);
-      setCopiedFieldId(fieldId);
-      setTimeout(() => setCopiedFieldId(null), 2000);
-    };
-
-    const handleCopyJson = () => {
-      const json = JSON.stringify(answers, null, 2);
-      navigator.clipboard.writeText(json);
-      setCopiedJson(true);
-      setTimeout(() => setCopiedJson(false), 2000);
-    };
-
     return (
       <>
         <PageHeader />
@@ -589,7 +588,7 @@ export default function SpeakPage() {
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <h2>Form Complete!</h2>
-              <p>All required fields have been filled.</p>
+              <p>Check your answers below, then copy them or download the filled form.</p>
             </div>
 
             <Card variant="elevated" padding="lg">
@@ -597,57 +596,9 @@ export default function SpeakPage() {
                 <CardTitle>Your Information</CardTitle>
                 <CardDescription>Ready to copy or use on your physical form</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {(formSchema?.fields ?? []).map((field) => {
-                  const fieldId = field.id;
-                  const value = answers[fieldId];
-                  if (!value) return null;
-                  const isCopied = copiedFieldId === fieldId;
-                  return (
-                    <div
-                      key={fieldId}
-                      className="flex items-center justify-between p-3.5 bg-paper rounded-card border border-line/50"
-                    >
-                      <div>
-                        <p className="text-sm text-text-muted font-body">{field.label}</p>
-                        <p className="font-medium text-text font-body" style={{ wordBreak: "break-all" }}>
-                          {value}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TTSButton text={value} />
-                        <button
-                          onClick={() => handleCopyField(fieldId, value)}
-                          className="p-2 text-text-muted hover:text-text hover:bg-line rounded-card transition-colors"
-                          title={isCopied ? "Copied!" : "Copy value"}
-                          aria-label={`Copy ${field.label}`}
-                        >
-                          {isCopied ? (
-                            <Check className="w-4 h-4 text-jade stroke-[2.5]" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <CardContent>
+                <ResultList fields={formSchema?.fields ?? []} answers={answers} />
               </CardContent>
-              <CardFooter>
-                <Button size="lg" className="w-full" onClick={handleCopyJson}>
-                  {copiedJson ? (
-                    <>
-                      <Check className="w-5 h-5 text-paper stroke-[2.5]" />
-                      JSON Copied to Clipboard!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-5 h-5" />
-                      Copy All as JSON
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
             </Card>
 
             {template && (
@@ -657,6 +608,7 @@ export default function SpeakPage() {
                   <CardDescription>Your answers, written into the form. Download it to print.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <FormNotices template={template} variant="result" answers={answers} />
                   <FilledForm template={template} answers={answers} />
                 </CardContent>
               </Card>

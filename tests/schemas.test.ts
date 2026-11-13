@@ -41,6 +41,17 @@ describe("NextQuestionRequestSchema", () => {
     ).toEqual({ a: "x", b: null });
   });
 
+  it("accepts the optional field-model properties and rejects bad ones", () => {
+    const ok = NextQuestionRequestSchema.parse({
+      fields: [{ id: "a", label: "A", inputMode: "type", printFormat: "cnic-dashes", labelUr: "الف" }],
+      answers: {},
+    });
+    expect(ok.fields[0].inputMode).toBe("type");
+    expect(() =>
+      NextQuestionRequestSchema.parse({ fields: [{ id: "a", label: "A", inputMode: "shout" }], answers: {} }),
+    ).toThrow();
+  });
+
   it("requires at least one field", () => {
     expect(() => NextQuestionRequestSchema.parse({ fields: [], answers: {} })).toThrow();
   });
@@ -73,6 +84,23 @@ describe("sanitizeFormSchema", () => {
     expect(cnic.required).toBe(false);
 
     expect(s.fields.find((f) => f.id === "wtf")!.type).toBe("unknown");
+  });
+
+  it("derives inputMode and printFormat from the type, ignoring anything the AI sent", () => {
+    const s = sanitizeFormSchema({
+      fields: [
+        { id: "cnic", type: "cnic", inputMode: "voice-or-type" },
+        { id: "nick", type: "text" },
+        { id: "gender", type: "select" },
+        { id: "dob", type: "date" },
+      ],
+    });
+    const by = Object.fromEntries(s.fields.map((f) => [f.id, f]));
+    expect(by.cnic.inputMode).toBe("type");
+    expect(by.cnic.printFormat).toBe("cnic-dashes");
+    expect(by.nick.inputMode).toBe("voice-or-type");
+    expect(by.gender.inputMode).toBe("choice");
+    expect(by.dob.printFormat).toBe("date-dmy");
   });
 
   it("renormalizes mixed- and multi-word ids to lowercase humps", () => {

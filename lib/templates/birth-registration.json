@@ -1,0 +1,361 @@
+{
+  "id": "birth-registration",
+  "title": "Birth Registration Application",
+  "description": "Application for computerized birth registration (NADRA / CBW). Office record only.",
+  "notes": [
+    "This form is for office record only. It is not a birth certificate."
+  ],
+  "leaveBlank": [
+    "Applicant's signature and its date",
+    "The whole \"for office use\" box at the bottom"
+  ],
+  "imageUrl": "/templates/birth-registration.png",
+  "imageWidth": 1210,
+  "imageHeight": 1582,
+  "fields": [
+    {
+      "id": "applicantName",
+      "label": "Applicant's Name",
+      "labelUr": "درخواست دہندہ کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 253,
+        "y": 222,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "درخواست دہندہ کا نام کیا ہے؟",
+      "questionEnglish": "What is the applicant's name?"
+    },
+    {
+      "id": "applicantCnic",
+      "label": "Applicant's CNIC No",
+      "labelUr": "درخواست دہندہ کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 253,
+        "y": 285,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "درخواست دہندہ کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the applicant's CNIC number?"
+    },
+    {
+      "id": "relation",
+      "label": "Relation to the child",
+      "labelUr": "بچے سے رشتہ",
+      "type": "text",
+      "required": true,
+      "section": "Applicant",
+      "cell": {
+        "x": 253,
+        "y": 395,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے سے آپ کا کیا رشتہ ہے؟",
+      "questionEnglish": "What is your relation to the child?"
+    },
+    {
+      "id": "childName",
+      "label": "Child's Name",
+      "labelUr": "بچے کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Child",
+      "cell": {
+        "x": 253,
+        "y": 337,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے کا نام کیا ہے؟",
+      "questionEnglish": "What is the child's name?"
+    },
+    {
+      "id": "gender",
+      "label": "Gender",
+      "labelUr": "جنس",
+      "type": "select",
+      "required": true,
+      "section": "Child",
+      "options": [
+        "Male",
+        "Female"
+      ],
+      "cell": {
+        "x": 253,
+        "y": 456,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے کی جنس کیا ہے؟",
+      "questionEnglish": "What is the child's gender?"
+    },
+    {
+      "id": "religion",
+      "label": "Religion",
+      "labelUr": "مذہب",
+      "type": "text",
+      "required": true,
+      "section": "Child",
+      "cell": {
+        "x": 253,
+        "y": 510,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے کا مذہب کیا ہے؟",
+      "questionEnglish": "What is the child's religion?"
+    },
+    {
+      "id": "dateOfBirth",
+      "label": "Date of Birth",
+      "labelUr": "تاریخ پیدائش",
+      "type": "date",
+      "required": true,
+      "section": "Child",
+      "cell": {
+        "x": 253,
+        "y": 866,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے کی تاریخ پیدائش کیا ہے؟",
+      "questionEnglish": "What is the child's date of birth?"
+    },
+    {
+      "id": "birthDistrict",
+      "label": "Distt./Cantt Area of Birth",
+      "labelUr": "پیدائش کا ضلع / چھاؤنی",
+      "type": "text",
+      "required": true,
+      "section": "Child",
+      "cell": {
+        "x": 263,
+        "y": 805,
+        "w": 244,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچہ کس ضلع یا چھاؤنی کے علاقے میں پیدا ہوا؟",
+      "questionEnglish": "In which district or cantonment area was the child born?"
+    },
+    {
+      "id": "placeOfBirth",
+      "label": "Place of birth",
+      "labelUr": "جائے پیدائش",
+      "type": "select",
+      "required": true,
+      "section": "Child",
+      "options": [
+        "Hospital",
+        "Home"
+      ],
+      "ticks": [
+        {
+          "option": "Hospital",
+          "box": {
+            "x": 892,
+            "y": 869,
+            "w": 35,
+            "h": 36
+          }
+        },
+        {
+          "option": "Home",
+          "box": {
+            "x": 720,
+            "y": 869,
+            "w": 35,
+            "h": 36
+          }
+        }
+      ],
+      "questionUrdu": "بچہ کہاں پیدا ہوا، ہسپتال میں یا گھر پر؟",
+      "questionEnglish": "Was the child born in a hospital or at home?"
+    },
+    {
+      "id": "vaccinated",
+      "label": "Vaccinated",
+      "labelUr": "ویکسین شدہ",
+      "type": "select",
+      "required": false,
+      "section": "Child",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "ticks": [
+        {
+          "option": "Yes",
+          "box": {
+            "x": 255,
+            "y": 939,
+            "w": 36,
+            "h": 34
+          }
+        },
+        {
+          "option": "No",
+          "box": {
+            "x": 434,
+            "y": 939,
+            "w": 36,
+            "h": 34
+          }
+        }
+      ],
+      "questionUrdu": "کیا بچے کو ویکسین لگ چکی ہے؟",
+      "questionEnglish": "Has the child been vaccinated?"
+    },
+    {
+      "id": "disability",
+      "label": "Disability",
+      "labelUr": "معذوری",
+      "type": "text",
+      "required": false,
+      "section": "Child",
+      "cell": {
+        "x": 253,
+        "y": 981,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "کیا بچے میں کوئی معذوری ہے؟ اگر نہیں تو 'کوئی نہیں' کہیں۔",
+      "questionEnglish": "Does the child have a disability? Say \"None\" if not."
+    },
+    {
+      "id": "fatherName",
+      "label": "Father's Name",
+      "labelUr": "والد کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Father",
+      "cell": {
+        "x": 253,
+        "y": 572,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے کے والد کا نام کیا ہے؟",
+      "questionEnglish": "What is the father's name?"
+    },
+    {
+      "id": "fatherCnic",
+      "label": "Father's CNIC No",
+      "labelUr": "والد کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Father",
+      "cell": {
+        "x": 253,
+        "y": 633,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "والد کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the father's CNIC number?"
+    },
+    {
+      "id": "motherName",
+      "label": "Mother's Name",
+      "labelUr": "والدہ کا نام",
+      "type": "text",
+      "required": true,
+      "section": "Mother",
+      "cell": {
+        "x": 253,
+        "y": 687,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "بچے کی والدہ کا نام کیا ہے؟",
+      "questionEnglish": "What is the mother's name?"
+    },
+    {
+      "id": "motherCnic",
+      "label": "Mother's CNIC No",
+      "labelUr": "والدہ کا شناختی کارڈ نمبر",
+      "type": "cnic",
+      "required": true,
+      "section": "Mother",
+      "cell": {
+        "x": 253,
+        "y": 748,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "والدہ کا شناختی کارڈ نمبر کیا ہے؟",
+      "questionEnglish": "What is the mother's CNIC number?"
+    },
+    {
+      "id": "address",
+      "label": "Address",
+      "labelUr": "پتہ",
+      "type": "address",
+      "required": true,
+      "section": "Address",
+      "cell": {
+        "x": 253,
+        "y": 1100,
+        "w": 745,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "آپ کا پتہ کیا ہے؟",
+      "questionEnglish": "What is your address?"
+    },
+    {
+      "id": "district",
+      "label": "District",
+      "labelUr": "ضلع",
+      "type": "text",
+      "required": true,
+      "section": "Address",
+      "cell": {
+        "x": 254,
+        "y": 1159,
+        "w": 315,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "آپ کا ضلع کون سا ہے؟",
+      "questionEnglish": "What is your district?"
+    },
+    {
+      "id": "ucNumber",
+      "label": "Union Council Number",
+      "labelUr": "یونین کونسل نمبر",
+      "type": "text",
+      "required": false,
+      "section": "Address",
+      "cell": {
+        "x": 621,
+        "y": 1159,
+        "w": 378,
+        "h": 36
+      },
+      "labelWidth": 0,
+      "questionUrdu": "آپ کی یونین کونسل کا نمبر کیا ہے؟",
+      "questionEnglish": "What is your union council number?"
+    }
+  ]
+}

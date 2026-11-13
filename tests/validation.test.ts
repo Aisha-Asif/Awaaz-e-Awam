@@ -29,6 +29,8 @@ describe("validatePhone", () => {
   it("normalizes 92 and 92-with-space prefixes to 03", () => {
     expect(validatePhone("92 300 1234567").normalized).toBe("03001234567");
     expect(validatePhone("923001234567").normalized).toBe("03001234567");
+    expect(validatePhone("+92 300 1234567").normalized).toBe("03001234567");
+    expect(validatePhone("+923001234567").valid).toBe(true);
   });
 
   it("rejects short or malformed numbers", () => {

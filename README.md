@@ -222,6 +222,52 @@ CNIC normalization supports `35202-1234567-1` and `3520212345671`. Phone validat
 
 ---
 
+## Forms
+
+The app fills in ready-made forms. Open `/forms` for the list, or start from `/scan?form=<id>` (answer questions one at a
+time) or `/speak?form=<id>` (describe the form out loud first).
+
+| Form                                         | Source file (in `forms/`)                          | Notes                                                                                 |
+| -------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| NADRA Attester Form, Smart ID                | `public/templates/nadra-attester-smartid.png`      | Original form. An applicant section and an attester section.                          |
+| Birth Registration Application               | `birth registration certificate.jpeg`              | Enlarged from a 484 x 633 JPEG. Writes the English side; the Urdu blanks stay empty.  |
+| Citizen Confirmation Undertaking (Notarized) | `citizen confirmation.jpeg`                        | Enlarged from a 625 x 788 JPEG. A sworn statement: it must be signed before a notary. |
+| Computerized Nikah Registration Application  | `NADRA-Marriage-Registration-Certificate-Form.pdf` | A one-page scan. Every detail is written in both the English and the Urdu block.      |
+
+The two guides in `forms/` (`Birth_Death_Public_Guide_Punjab.pdf`, `digital_ID_Citizen_Guide.pdf`) are reading material,
+and the sample family registration certificates are documents NADRA _issues_, so none of these are fillable forms.
+
+**How a form is filled**
+
+- One person fills in one form. There are no accounts, so nothing is carried from one form to the next: a new form means
+  new answers.
+- Questions are asked one at a time, in Urdu, and read aloud. Names and addresses can be spoken or typed.
+- **CNIC, phone numbers and dates are typed only.** They are checked by the app's own code, read back for confirmation,
+  and never spoken, transcribed or sent to an AI.
+- Choices (gender, marital status, yes/no, place of birth) are buttons, and can also be said or typed.
+- At the end the whole form, with the answers written in, can be downloaded as PNG or PDF (one A4 page) or printed.
+
+**Left blank on purpose.** Signatures, thumb impressions, stamps, notary areas, dates of signing and the "for office use"
+boxes are never filled in. They are listed in the app (before filling and on the result screen) so the person completes
+them by hand. Nothing about them is written on the form.
+
+> **This app does not submit anything to NADRA or to any office.** It prepares a filled copy to print or save. Forms
+> change, so check the printout against the official form before using it.
+
+### Adding a new form
+
+1. Put a clear image of the blank form in `public/templates/` (PNG; about 1200 px wide or more prints well).
+2. Write `lib/templates/<id>.json`: the title, description, notes, a `leaveBlank` list, and one entry per field (id,
+   English and Urdu label, type, required, section, options, and the Urdu question). See an existing file for the shape.
+3. Run `npm run dev` and open `/calibrate`. Pick the image, paste the field list, choose Area / + Mirror / Tick for each
+   field and drag on the image. Copy the exported boxes into the template file. (Use "+ Mirror" when a detail is printed in
+   two places, and a Tick box per option for tick-box choices.)
+4. Register the file in `lib/templates/index.ts`.
+5. Check it at `/fill?form=<id>&demo=1` (use "Show boxes"), then run `npm test`. The template tests fail if a box
+   overlaps another, leaves the page, or the image size does not match the template.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -243,6 +289,8 @@ npm install
 cp .env.example .env.local
 # Add your Gemini API key to .env.local:
 # GEMINI_API_KEY=your_key_here
+# No key yet? Put AI_MODE=mock in .env.local: the whole app then works offline with simple built-in extraction.
+# Restart `npm run dev` after changing .env.local.
 
 # Start the development server
 npm run dev
@@ -324,6 +372,9 @@ During the build phase:
 - No user accounts or session storage are created
 - No real government APIs are called
 - Synthetic demo data is used throughout
+
+Typed-only CNIC, phone and date fields never leave the device through speech or an AI call, and the filled form is
+drawn in the browser and never uploaded.
 
 See [PRIVACY.md](./PRIVACY.md) for the full data-handling policy. The app enforces the compliance
 boundary via `DATA_PATH` (`demo` vs `sensitive`) — the sensitive path fails closed and never routes

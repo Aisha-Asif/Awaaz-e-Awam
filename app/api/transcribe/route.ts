@@ -1,6 +1,6 @@
 // POST /api/transcribe: audio blob -> Urdu transcript via the STT provider.
 import { NextRequest, NextResponse } from "next/server";
-import { transcribeAudio } from "@/lib/gemini-stt";
+import { transcribeAudio } from "@/lib/ai";
 
 export const runtime = "nodejs";
 

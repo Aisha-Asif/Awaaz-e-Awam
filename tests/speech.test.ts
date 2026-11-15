@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { chooseSpeech, hasUrduScript } from "@/lib/speech";
+import { chooseSpeech, hasUrduScript, voiceQuality } from "@/lib/speech";
 
 const URDU_Q = "آپ کا پورا نام کیا ہے؟";
 const ROMAN_Q = "Aap ka poora naam kya hai?";
@@ -65,5 +65,41 @@ describe("chooseSpeech", () => {
 
   it("returns null for empty text", () => {
     expect(chooseSpeech("   ", ROMAN_Q, [URDU])).toBeNull();
+  });
+
+  it("prefers the clearest (natural / online) voice for the same language", () => {
+    const robotic = { lang: "ur-PK", name: "Microsoft Urdu", localService: true };
+    const natural = { lang: "ur-PK", name: "Microsoft Uzma Online (Natural) - Urdu (Pakistan)", localService: false };
+    expect(chooseSpeech(URDU_Q, ROMAN_Q, [robotic, natural])?.voice).toBe(natural);
+
+    const enRobotic = { lang: "en-IN", name: "Microsoft Heera", localService: true };
+    const enGoogle = { lang: "en-IN", name: "Google English (India)", localService: false };
+    expect(chooseSpeech(URDU_Q, ROMAN_Q, [enRobotic, enGoogle])?.voice).toBe(enGoogle);
+  });
+});
+
+describe("voiceQuality", () => {
+  it("ranks natural / online voices above plain system voices", () => {
+    expect(voiceQuality({ lang: "ur-PK", name: "Google اردو" })).toBeGreaterThan(voiceQuality({ lang: "ur-PK" }));
+    expect(voiceQuality({ lang: "en-IN", localService: false })).toBeGreaterThan(
+      voiceQuality({ lang: "en-IN", localService: true }),
+    );
+  });
+});
+
+describe("chooseSpeech for private text (a person's own answers)", () => {
+  const online = { lang: "en-IN", name: "Google English (India)", localService: false };
+  const local = { lang: "en-US", name: "Microsoft David", localService: true };
+
+  it("never uses an online voice, even though online voices are preferred for questions", () => {
+    expect(chooseSpeech("35202-1234567-1", undefined, [online, local], { private: true })?.voice).toBe(local);
+    expect(chooseSpeech("35202-1234567-1", undefined, [online, local])?.voice).toBe(online);
+  });
+
+  it("reads nothing when the device has only online voices, or has not listed its voices yet", () => {
+    expect(chooseSpeech("Ali Raza", undefined, [online], { private: true })).toBeNull();
+    expect(chooseSpeech("Ali Raza", undefined, [], { private: true })).toBeNull();
+    // A voice whose kind is unknown is treated as possibly online.
+    expect(chooseSpeech("Ali Raza", undefined, [{ lang: "en-US" }], { private: true })).toBeNull();
   });
 });

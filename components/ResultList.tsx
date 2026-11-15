@@ -79,7 +79,7 @@ export function ResultList({ fields, answers }: Props) {
                   </div>
                   {row.status === "answered" && row.display && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <TTSButton text={row.display} />
+                      <TTSButton text={row.display} private />
                       <button
                         type="button"
                         onClick={() => copy(row.display ?? "", { kind: "field", id: row.id })}

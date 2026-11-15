@@ -603,3 +603,54 @@ dialog::backdrop {
     transform: scaleY(1);
   }
 }
+
+/* ---------- Urdu text ----------
+   Nastaliq letters climb and drop far above and below the line, so at normal line heights the dots and tails of one
+   line run into the next and get clipped, which makes the text hard to read. Give it room, and keep the weight
+   regular: bold Nastaliq blurs at phone sizes. :where() keeps this at zero specificity, so a leading-* class on an
+   element (for example a short Urdu label inside a button) still wins. */
+:where(.font-urdu, .urdu) {
+  line-height: 2.2;
+  word-spacing: 0.08em;
+  text-rendering: optimizeLegibility;
+}
+.wordmark .urd {
+  line-height: 1.4;
+}
+
+/* ---------- phones ---------- */
+@media (max-width: 640px) {
+  .wrap {
+    padding: 0 16px;
+  }
+  .headerbar {
+    padding: 14px 16px;
+  }
+  .section {
+    padding: 28px 0 40px;
+  }
+  .section-head {
+    margin-bottom: 24px;
+  }
+  .section-head h2 {
+    font-size: 24px;
+  }
+  .section-head p {
+    font-size: 15px;
+  }
+  .hero {
+    padding: 16px 0 48px;
+  }
+  .hero h1 {
+    font-size: 30px;
+  }
+  .demo {
+    padding: 22px 18px;
+  }
+  .mode-card {
+    padding: 22px;
+  }
+  footer {
+    padding: 20px 0 32px;
+  }
+}

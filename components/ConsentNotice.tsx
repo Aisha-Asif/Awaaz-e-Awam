@@ -25,7 +25,7 @@ export const ConsentNotice = () => {
             Privacy
           </Link>
         </p>
-        <p className="font-urdu text-base mt-1 leading-relaxed" dir="rtl">
+        <p className="font-urdu text-lg mt-1" dir="rtl">
           {DEMO_WARNING_UR}
         </p>
       </div>

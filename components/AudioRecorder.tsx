@@ -172,6 +172,15 @@ interface AudioRecorderProps {
   onRecordingStateChange?: (isRecording: boolean) => void;
 }
 
+// A short Urdu word inside a button, with enough line height for Nastaliq but not so much that the button grows.
+function Ur({ children }: { children: string }) {
+  return (
+    <span className="font-urdu leading-[1.9]" lang="ur">
+      {children}
+    </span>
+  );
+}
+
 // Mic button UI around useAudioRecorder, plus upload fallback and a status ring.
 export function AudioRecorder({
   onRecordingComplete,
@@ -221,7 +230,7 @@ export function AudioRecorder({
   };
 
   const statusLabels: Record<RecordingStatus, string> = {
-    idle: "Ready",
+    idle: "Tap the microphone and speak",
     recording: "Recording...",
     processing: "Processing...",
     success: "Recorded",
@@ -241,8 +250,13 @@ export function AudioRecorder({
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
       <div className="flex flex-col items-center justify-center gap-3 py-2">
-        <div
-          className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 relative ${
+        {/* The big circle is itself a button (start / stop): easier to find and hit than the text button below. */}
+        <button
+          type="button"
+          onClick={status === "recording" ? stopRecording : status === "idle" ? startRecording : undefined}
+          disabled={disabled || (status !== "idle" && status !== "recording")}
+          aria-label={status === "recording" ? "Stop recording" : "Start recording"}
+          className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 relative disabled:cursor-default ${
             status === "recording"
               ? "bg-rani/15 ring-8 ring-rani/20 scale-105 shadow-lg shadow-rani/20"
               : status === "processing"
@@ -251,7 +265,7 @@ export function AudioRecorder({
                   ? "bg-jade/15 ring-8 ring-jade/20"
                   : status === "error"
                     ? "bg-rani/15 ring-8 ring-rani/20"
-                    : "bg-paper-subtle border border-line ring-4 ring-line/40 shadow-sm"
+                    : "bg-marigold/15 border-2 border-marigold ring-4 ring-marigold/20 shadow-sm hover:bg-marigold/25"
           }`}
         >
           {status === "recording" && <span className="w-6 h-6 bg-rani rounded-md animate-pulse shadow-sm" />}
@@ -259,9 +273,9 @@ export function AudioRecorder({
           {status === "success" && <Check className="w-9 h-9 text-jade stroke-[2.5]" />}
           {status === "error" && <AlertCircle className="w-9 h-9 text-rani" />}
           {status === "idle" && (
-            <Mic className="w-9 h-9 text-ink transition-transform duration-200 group-hover:scale-110" />
+            <Mic className="w-11 h-11 text-ink transition-transform duration-200 group-hover:scale-110" />
           )}
-        </div>
+        </button>
 
         {status === "recording" && (
           <div className="w-full max-w-sm mt-3 space-y-3 animate-in fade-in duration-200">
@@ -354,14 +368,14 @@ export function AudioRecorder({
             className="w-full sm:w-auto min-w-[180px]"
           >
             <Mic className="w-5 h-5" />
-            Start Recording
+            Speak / <Ur>بولیں</Ur>
           </Button>
         )}
 
         {status === "recording" && (
           <Button size="lg" variant="danger" onClick={stopRecording} className="w-full sm:w-auto min-w-[180px]">
             <Square className="w-4 h-4 fill-current" />
-            Stop Recording
+            Stop / <Ur>روکیں</Ur>
           </Button>
         )}
 
@@ -369,7 +383,7 @@ export function AudioRecorder({
           <>
             <Button size="md" variant="outline" onClick={cancelRecording} className="w-full sm:w-auto">
               <RotateCcw className="w-4 h-4" />
-              Re-record
+              Again / <Ur>دوبارہ</Ur>
             </Button>
             <Button
               size="md"
@@ -378,7 +392,7 @@ export function AudioRecorder({
               className="w-full sm:w-auto"
             >
               <Check className="w-4 h-4" />
-              Use Recording
+              Send / <Ur>بھیجیں</Ur>
             </Button>
           </>
         )}
@@ -386,7 +400,7 @@ export function AudioRecorder({
         {status === "error" && (
           <Button size="lg" variant="secondary" onClick={startRecording} className="w-full sm:w-auto min-w-[180px]">
             <RotateCcw className="w-4 h-4" />
-            Try Again
+            Try again / <Ur>دوبارہ</Ur>
           </Button>
         )}
       </div>

@@ -7,11 +7,13 @@
 //                    controls as free text; what is said or typed is matched to an option.
 //   voice-or-type -> microphone recorder, on-device speech button, or a text box (names, addresses, ...).
 import { useState } from "react";
+import { Keyboard } from "lucide-react";
 import { Button } from "@/components/Button";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { useSpeechRecognition } from "@/components/useSpeechRecognition";
 import { effectiveInputMode } from "@/lib/field-model";
 import { getFieldValidator } from "@/lib/validation";
+import { optionLabel } from "@/lib/options";
 import type { FormField, FormFieldType } from "@/lib/types";
 
 type Props = {
@@ -48,15 +50,34 @@ export function FieldInput({ field, disabled, onSubmitText, onVoice, onChoice }:
   if (field && mode === "choice") {
     return (
       <div>
-        <p className="block text-sm font-medium text-text mb-2 font-body">Choose one:</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {field.options?.map((option) => (
-            <Button key={option} variant="secondary" size="lg" disabled={disabled} onClick={() => onChoice(option)}>
-              {option}
-            </Button>
-          ))}
+        <p className="block text-sm font-medium text-text mb-2 font-body">
+          Choose one / <span className="font-urdu">ایک چنیں</span>
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {field.options?.map((option) => {
+            const ur = optionLabel(option)?.ur;
+            return (
+              <Button
+                key={option}
+                variant="secondary"
+                size="lg"
+                disabled={disabled}
+                onClick={() => onChoice(option)}
+                className="min-h-[72px] flex-col !gap-0 border-2 hover:border-jade"
+              >
+                {ur && (
+                  <span className="font-urdu text-2xl font-medium leading-[1.9]" lang="ur">
+                    {ur}
+                  </span>
+                )}
+                <span className={ur ? "text-sm text-text-muted font-medium" : ""}>{option}</span>
+              </Button>
+            );
+          })}
         </div>
-        <p className="mt-5 mb-2 text-sm font-medium text-text font-body">Or say it, or type it:</p>
+        <p className="mt-6 mb-2 text-sm font-medium text-text font-body">
+          Or say it / <span className="font-urdu">یا بول کر بتائیں</span>
+        </p>
         <VoiceOrTypeInput key={`voice-${field.id}`} disabled={disabled} onSubmitText={onSubmitText} onVoice={onVoice} />
       </div>
     );
@@ -97,12 +118,12 @@ function TypedInput({
         role="note"
       >
         For your privacy, type this one. Please do not say it out loud.
-        <span className="block font-urdu text-base mt-1 leading-relaxed" dir="rtl">
+        <span className="block font-urdu text-lg mt-1" dir="rtl">
           آپ کی رازداری کے لیے اسے ٹائپ کریں، بول کر نہ بتائیں۔
         </span>
       </div>
       <label className="block text-sm font-medium text-text mb-2 font-body" htmlFor={`typed-${field.id}`}>
-        Type your answer:
+        Type your answer / <span className="font-urdu">یہاں لکھیں</span>
       </label>
       <input
         id={`typed-${field.id}`}
@@ -145,6 +166,9 @@ function VoiceOrTypeInput({
   // The typed answer. It is kept if the answer is rejected so it can be corrected, and cleared when the question changes
   // (this component is keyed by the field id).
   const [typed, setTyped] = useState("");
+  // Speaking is the main way to answer; typing is one tap away. Keeping the text box closed also stops the phone
+  // keyboard from opening by itself and covering the question.
+  const [showTyping, setShowTyping] = useState(false);
   const canSave = typed.trim().length > 0 && !disabled;
 
   const saveTyped = () => {
@@ -154,45 +178,56 @@ function VoiceOrTypeInput({
   return (
     <div>
       <AudioRecorder onRecordingComplete={onVoice} showUploadFallback={false} disabled={disabled} />
-      <div className="mt-4">
-        <label htmlFor="typed-answer" className="block text-sm font-medium text-text mb-2 font-body">
-          Or type your answer:
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="typed-answer"
-            type="text"
-            enterKeyHint="send"
-            autoComplete="off"
-            className={INPUT_CLASS}
-            placeholder="Answer in Urdu (اردو) or English..."
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                saveTyped();
-              }
-            }}
-            disabled={disabled}
-            autoFocus
-          />
-          <Button type="button" className="shrink-0" disabled={!canSave} onClick={saveTyped}>
-            Save
+      {!showTyping ? (
+        <div className="mt-5 flex justify-center">
+          <Button type="button" variant="ghost" disabled={disabled} onClick={() => setShowTyping(true)}>
+            <Keyboard className="w-5 h-5" />
+            Type instead / <span className="font-urdu leading-[1.9]">لکھ کر بتائیں</span>
           </Button>
         </div>
-      </div>
-      {supported && (
-        <div className="mt-4">
-          <Button
-            variant="outline"
-            className="w-full"
-            disabled={disabled || listening}
-            onClick={() => (listening ? stop() : start((text) => onSubmitText(text)))}
-          >
-            {listening ? "Listening..." : "Tap to speak (on-device)"}
-          </Button>
-        </div>
+      ) : (
+        <>
+          <div className="mt-4">
+            <label htmlFor="typed-answer" className="block text-sm font-medium text-text mb-2 font-body">
+              Type your answer:
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="typed-answer"
+                type="text"
+                enterKeyHint="send"
+                autoComplete="off"
+                className={INPUT_CLASS}
+                placeholder="Answer in Urdu (اردو) or English..."
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveTyped();
+                  }
+                }}
+                disabled={disabled}
+                autoFocus
+              />
+              <Button type="button" className="shrink-0" disabled={!canSave} onClick={saveTyped}>
+                Save
+              </Button>
+            </div>
+          </div>
+          {supported && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={disabled || listening}
+                onClick={() => (listening ? stop() : start((text) => onSubmitText(text)))}
+              >
+                {listening ? "Listening..." : "Speak using this phone's own voice typing"}
+              </Button>
+            </div>
+          )}
+        </>
       )}
       {error && (
         <div

@@ -1,6 +1,9 @@
 // Option matching: turns what a person said or typed ("mard", "female", "shadi shuda", "ہاں") into one of a choice
 // field's options ("Male", "Female", "Married", "Yes"). Pure local logic: nothing is sent to an AI provider.
 
+import { effectiveInputMode } from "@/lib/field-model";
+import type { FormField } from "@/lib/types";
+
 // Known synonyms per option, keyed by the option's normalized text. English, Roman Urdu and Urdu script.
 const SYNONYMS: Record<string, string[]> = {
   male: ["m", "man", "boy", "mard", "ladka", "larka", "aadmi", "مرد", "لڑکا", "مذکر", "آدمی"],
@@ -86,4 +89,61 @@ export function matchOption(text: string, options: readonly string[]): string | 
   );
   const matched = Array.from(new Set(standing.map((h) => h.option)));
   return matched.length === 1 ? matched[0] : null;
+}
+
+// How each option is shown and spoken in Urdu (Urdu script + Roman Urdu), so a choice button can be recognised by
+// someone who reads Urdu but not English, and the options can be read aloud after the question.
+const LABELS: Record<string, { ur: string; roman: string }> = {
+  male: { ur: "مرد", roman: "Mard" },
+  female: { ur: "عورت", roman: "Aurat" },
+  transgender: { ur: "خواجہ سرا", roman: "Khwaja sira" },
+  single: { ur: "غیر شادی شدہ", roman: "Ghair shadi shuda" },
+  married: { ur: "شادی شدہ", roman: "Shadi shuda" },
+  widowed: { ur: "بیوہ / رنڈوا", roman: "Bewa ya randwa" },
+  divorced: { ur: "طلاق یافتہ", roman: "Talaq yafta" },
+  virgin: { ur: "کنواری", roman: "Kunwari" },
+  widow: { ur: "بیوہ", roman: "Bewa" },
+  widower: { ur: "رنڈوا", roman: "Randwa" },
+  father: { ur: "والد", roman: "Walid" },
+  mother: { ur: "والدہ", roman: "Walida" },
+  sister: { ur: "بہن", roman: "Behan" },
+  brother: { ur: "بھائی", roman: "Bhai" },
+  son: { ur: "بیٹا", roman: "Beta" },
+  daughter: { ur: "بیٹی", roman: "Beti" },
+  yes: { ur: "ہاں", roman: "Haan" },
+  no: { ur: "نہیں", roman: "Nahin" },
+  hospital: { ur: "ہسپتال", roman: "Hospital" },
+  home: { ur: "گھر", roman: "Ghar" },
+};
+
+// The Urdu and Roman Urdu name of an option, or undefined for an option without one.
+export function optionLabel(option: string): { ur: string; roman: string } | undefined {
+  return LABELS[normalizeText(option)];
+}
+
+// The options as one spoken sentence ("مرد، یا عورت"), Urdu script and Roman Urdu. Options without an Urdu name are
+// said as written.
+export function spokenOptions(options: readonly string[]): { ur: string; roman: string } {
+  const labels = options.map((o) => optionLabel(o) ?? { ur: o, roman: o });
+  return {
+    ur: labels.map((l) => l.ur).join("، یا "),
+    roman: labels.map((l) => l.roman).join(", ya "),
+  };
+}
+
+// What the Listen button says for a question: the question, then, for a choice field, its options ("... مرد، یا عورت"),
+// since not everyone can read the buttons. `text` is the Urdu question; `fallback` is the Roman Urdu (or English) one,
+// read when the device has no Urdu voice.
+export function questionSpeech(
+  field: FormField | undefined,
+  question: string | null,
+): { text: string; fallback: string | undefined } {
+  const text = field?.questionUrdu || question || field?.label || "";
+  const fallback = field?.questionRoman ?? field?.questionEnglish;
+  if (!field?.options?.length || effectiveInputMode(field) !== "choice") return { text, fallback };
+  const choices = spokenOptions(field.options);
+  return {
+    text: text ? `${text} ${choices.ur}` : text,
+    fallback: field.questionRoman ? `${field.questionRoman} ${choices.roman}` : fallback,
+  };
 }

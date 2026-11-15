@@ -78,7 +78,7 @@ export default function HomePage() {
                     <span className="w-1 h-4 bg-marigold rounded-full animate-[waveBar_0.7s_ease-in-out_0.3s_infinite_alternate]" />
                   </div>
                 </div>
-                <p className="text-base sm:text-lg text-on-ink font-urdu leading-relaxed text-right" dir="rtl">
+                <p className="text-base sm:text-lg text-on-ink font-urdu text-right" dir="rtl">
                   &ldquo;میرا نام فاطمہ بی بی ہے، شناختی کارڈ 35202-1234567-2، لاہور میں رہتی ہوں۔&rdquo;
                 </p>
                 <p className="text-xs text-on-ink-muted font-body mt-1">

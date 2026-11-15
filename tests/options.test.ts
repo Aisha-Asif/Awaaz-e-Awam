@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { matchOption, normalizeText } from "@/lib/options";
+import { matchOption, normalizeText, optionLabel, spokenOptions, questionSpeech } from "@/lib/options";
+import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
+import { TEMPLATES } from "@/lib/templates";
 
 const GENDER = ["Male", "Female", "Transgender"];
 const MARITAL = ["Single", "Married", "Widowed", "Divorced"];
@@ -72,5 +74,41 @@ describe("matchOption", () => {
     expect(matchOption("bhai", kin)).toBe("Brother");
     expect(matchOption("beti", kin)).toBe("Daughter");
     expect(matchOption("بہن", kin)).toBe("Sister");
+  });
+});
+
+describe("optionLabel / spokenOptions", () => {
+  it("has an Urdu name for every option used by a form", () => {
+    const all = [...MOCK_FORM_SCHEMA.fields, ...TEMPLATES.flatMap((t) => t.schema.fields)].flatMap(
+      (f) => f.options ?? [],
+    );
+    expect(all.length).toBeGreaterThan(0);
+    for (const o of all) expect(optionLabel(o)?.ur, o).toBeTruthy();
+  });
+
+  it("joins options into one spoken sentence, in Urdu and in Roman Urdu", () => {
+    expect(spokenOptions(["Male", "Female"])).toEqual({ ur: "مرد، یا عورت", roman: "Mard, ya Aurat" });
+    expect(spokenOptions(["Other"])).toEqual({ ur: "Other", roman: "Other" });
+  });
+});
+
+describe("questionSpeech", () => {
+  const base = { id: "g", label: "Gender", type: "text" as const, required: true };
+
+  it("adds the options after a choice question, in Urdu and Roman Urdu", () => {
+    const field = {
+      ...base,
+      questionUrdu: "جنس؟",
+      questionRoman: "Jins?",
+      options: ["Male", "Female"],
+      inputMode: "choice" as const,
+    };
+    expect(questionSpeech(field, null)).toEqual({ text: "جنس؟ مرد، یا عورت", fallback: "Jins? Mard, ya Aurat" });
+  });
+
+  it("reads other questions as written", () => {
+    const field = { ...base, questionUrdu: "نام؟", questionRoman: "Naam?" };
+    expect(questionSpeech(field, null)).toEqual({ text: "نام؟", fallback: "Naam?" });
+    expect(questionSpeech(undefined, "سوال")).toEqual({ text: "سوال", fallback: undefined });
   });
 });

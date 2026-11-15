@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { ArrowLeft, ChevronRight, Check, CheckCircle2, RotateCcw, MessageSquareQuote } from "lucide-react";
 import { ImageCapture } from "@/components/ImageCapture";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { ErrorDialog } from "@/components/ErrorDialog";
 import { ConsentNotice } from "@/components/ConsentNotice";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -16,7 +17,7 @@ import { ResultList } from "@/components/ResultList";
 import { FieldInput } from "@/components/FieldInput";
 import { FormNotices } from "@/components/FormNotices";
 import { effectiveInputMode } from "@/lib/field-model";
-import { matchOption } from "@/lib/options";
+import { matchOption, questionSpeech } from "@/lib/options";
 import { scanForm, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { SKIP_SENTINEL } from "@/lib/schemas";
 import { FilledForm } from "@/components/FilledForm";
@@ -401,14 +402,7 @@ export default function ScanPage() {
               </CardContent>
             </Card>
 
-            {error && (
-              <div
-                className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
+            <ErrorDialog message={error} onClose={() => setError(null)} />
 
             {TEMPLATES.length > 0 && (
               <Card variant="elevated" padding="lg" className="mt-4">
@@ -563,17 +557,23 @@ export default function ScanPage() {
                     {field.section}
                   </p>
                 )}
-                <h2 className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed" dir="auto">
+                <h2 className="text-3xl sm:text-4xl font-medium font-urdu text-text mb-3" dir="auto" lang="ur">
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
+                  {/* Read each question aloud as soon as it appears (with its options, for a choice). */}
                   <TTSButton
-                    text={field?.questionUrdu || currentQuestion || field?.label || ""}
-                    fallbackText={field?.questionRoman ?? field?.questionEnglish}
+                    text={questionSpeech(field, currentQuestion).text}
+                    fallbackText={questionSpeech(field, currentQuestion).fallback}
+                    autoPlay
+                    size="lg"
                   />
                 </div>
+                {field?.questionRoman && (
+                  <p className="mt-3 text-text font-body text-base sm:text-lg">{field.questionRoman}</p>
+                )}
                 {field?.questionEnglish && (
-                  <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">
+                  <p className="mt-1 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">
                     {field.questionEnglish}
                   </p>
                 )}
@@ -611,14 +611,7 @@ export default function ScanPage() {
               </CardContent>
             </Card>
 
-            {error && (
-              <div
-                className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
+            <ErrorDialog message={error} onClose={() => setError(null)} />
 
             {/* Accessible Focus-Trapping Confirmation Modal */}
             <ConfirmationDialog

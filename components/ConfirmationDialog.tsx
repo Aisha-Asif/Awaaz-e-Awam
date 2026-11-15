@@ -118,7 +118,7 @@ export const ConfirmationDialog = ({
           Tasdeeq / Verification Required
         </p>
 
-        <p id="dialog-desc" className="text-text-muted mb-3 font-urdu text-2xl leading-relaxed" dir="auto">
+        <p id="dialog-desc" className="text-text-muted mb-3 font-urdu text-2xl" dir="auto">
           {questionUrdu}
         </p>
 

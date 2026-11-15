@@ -9,7 +9,8 @@
 //   - text written in Latin letters (names, numbers, Roman Urdu) is read by an English voice;
 //   - if nothing readable exists, there is no speech and the caller says so, instead of staying silent.
 
-export type VoiceLike = { lang: string };
+// name and localService are optional so plain { lang } objects still work (tests, older browsers).
+export type VoiceLike = { lang: string; name?: string; localService?: boolean };
 
 export type SpeechChoice<V extends VoiceLike> = {
   text: string;
@@ -29,19 +30,58 @@ export function hasUrduScript(text: string): boolean {
 
 const normalize = (lang: string) => lang.replace("_", "-").toLowerCase();
 
+// Neural / cloud voices ("Microsoft Uzma Online (Natural)", "Google ...") sound far clearer than the old robotic
+// system voices, so among voices for the same language the best-sounding one is chosen.
+const CLEAR_VOICE = /natural|neural|online|google|enhanced|premium/i;
+
+// Higher is clearer. Exported for tests.
+export function voiceQuality(v: VoiceLike): number {
+  let score = 0;
+  if (v.name && CLEAR_VOICE.test(v.name)) score += 2;
+  if (v.localService === false) score += 1;
+  return score;
+}
+
+// The clearest voice whose language matches, or undefined.
+function bestVoice<V extends VoiceLike>(voices: readonly V[], matches: (lang: string) => boolean): V | undefined {
+  let best: V | undefined;
+  for (const v of voices) {
+    if (!matches(normalize(v.lang))) continue;
+    if (!best || voiceQuality(v) > voiceQuality(best)) best = v;
+  }
+  return best;
+}
+
 // Picks an English voice (Indian English first, since it suits Roman Urdu best).
 function englishVoice<V extends VoiceLike>(voices: readonly V[]): V | undefined {
-  return voices.find((v) => normalize(v.lang) === "en-in") ?? voices.find((v) => normalize(v.lang).startsWith("en"));
+  return bestVoice(voices, (l) => l === "en-in") ?? bestVoice(voices, (l) => l.startsWith("en"));
 }
+
+export type SpeechOptions = {
+  // The text is a person's own answer (name, CNIC, phone, address). Online voices ("Google ...", "... Online
+  // (Natural)") send the text to Google's or Microsoft's servers to be spoken, so private text is read only by a voice
+  // that runs on the device, and not read at all when there is none. Fixed question text does not need this.
+  private?: boolean;
+};
 
 // Returns what to say and with which voice, or null when this device cannot read the text aloud.
 export function chooseSpeech<V extends VoiceLike>(
   text: string,
   fallbackText: string | undefined,
-  voices: readonly V[],
+  allVoices: readonly V[],
+  options: SpeechOptions = {},
 ): SpeechChoice<V> | null {
   const main = text.trim();
   if (!main) return null;
+
+  if (options.private) {
+    // Only voices the browser says are on-device; an unlisted or default voice might be an online one.
+    const local = allVoices.filter((v) => v.localService === true);
+    if (local.length === 0) return null;
+    const choice = chooseSpeech(main, fallbackText, local);
+    return choice?.voice ? choice : null;
+  }
+  const voices = allVoices;
 
   const english = (spoken: string, usedFallback: boolean): SpeechChoice<V> => {
     const voice = englishVoice(voices);
@@ -52,7 +92,7 @@ export function chooseSpeech<V extends VoiceLike>(
   if (!hasUrduScript(main)) return english(main, false);
 
   // Urdu script and an Urdu voice: read it as written.
-  const urdu = voices.find((v) => normalize(v.lang).startsWith("ur"));
+  const urdu = bestVoice(voices, (l) => l.startsWith("ur"));
   if (urdu) return { text: main, voice: urdu, lang: urdu.lang, usedFallback: false };
 
   // The device has not listed any voices yet, so we cannot tell: try the Urdu text and let the browser decide.

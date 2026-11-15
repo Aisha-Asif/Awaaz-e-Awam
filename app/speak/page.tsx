@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, ReactNode } from "react";
 import { ArrowLeft, Check, CheckCircle2, RotateCcw, MessageSquareQuote, Loader2 } from "lucide-react";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { ErrorDialog } from "@/components/ErrorDialog";
 import { ConsentNotice } from "@/components/ConsentNotice";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/Card";
 import { Button } from "@/components/Button";
@@ -16,12 +17,18 @@ import { ResultList } from "@/components/ResultList";
 import { FieldInput } from "@/components/FieldInput";
 import { FormNotices } from "@/components/FormNotices";
 import { effectiveInputMode } from "@/lib/field-model";
-import { matchOption } from "@/lib/options";
+import { matchOption, questionSpeech } from "@/lib/options";
 import { processSpeech, getNextQuestion, processAnswer, transcribeAudioFile } from "@/lib/api";
 import { MOCK_FORM_SCHEMA } from "@/lib/mock-data";
 import { FilledForm } from "@/components/FilledForm";
 import { TEMPLATES, getTemplate } from "@/lib/templates";
 import { FormSchema, ProcessSpeechResponse } from "@/lib/types";
+
+// Spoken on the first screen, for people who cannot read the instructions.
+const RECORD_HELP_UR =
+  "پیلے مائیک کو دبائیں اور اپنا نام، اپنے والد کا نام اور اپنا پتہ بولیں۔ پھر روکنے کا بٹن دبائیں۔ شناختی کارڈ اور فون نمبر نہ بولیں۔";
+const RECORD_HELP_ROMAN =
+  "Peelay mic ko dabaein aur apna naam, apne walid ka naam aur apna pata bolein. Phir rokne ka button dabaein. Shanakhti card aur phone number na bolein.";
 
 function PageHeader() {
   return (
@@ -290,17 +297,23 @@ export default function SpeakPage() {
             {template && <FormNotices template={template} variant="intro" />}
             <div className="section-head" style={{ textAlign: "center", marginBottom: 32 }}>
               <h2>Speak Naturally</h2>
+              <p className="font-urdu text-xl text-text mt-2" dir="rtl" lang="ur">
+                مائیک دبائیں اور اپنی معلومات بولیں
+              </p>
               <p>Record your information in Urdu or Roman Urdu. We&apos;ll extract the form fields for you.</p>
+              <div className="mt-4 flex justify-center">
+                <TTSButton text={RECORD_HELP_UR} fallbackText={RECORD_HELP_ROMAN} autoPlay size="lg" />
+              </div>
             </div>
 
             {TEMPLATES.length > 0 && (
-              <label className="block mb-4 text-center font-body">
-                <span className="text-sm text-text-muted mr-2">Form</span>
+              <label className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-2 mb-4 font-body">
+                <span className="text-sm text-text-muted">Form</span>
                 <select
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
                   disabled={loading || isRecording}
-                  className="rounded-card border border-line bg-white px-3 py-2 text-text focus:outline-none focus:ring-2 focus:ring-jade"
+                  className="w-full sm:w-auto rounded-card border border-line bg-white px-3 py-3 sm:py-2 text-base text-text focus:outline-none focus:ring-2 focus:ring-jade"
                 >
                   <option value="">Citizen information (basic)</option>
                   {TEMPLATES.map((t) => (
@@ -314,7 +327,7 @@ export default function SpeakPage() {
 
             {/* Live recording banner */}
             {isRecording && (
-              <div className="mb-4 p-3.5 rounded-xl bg-rani/10 border border-rani/30 flex items-center justify-between text-rani text-sm animate-in fade-in duration-200">
+              <div className="mb-4 p-3.5 rounded-xl bg-rani/10 border border-rani/30 flex flex-col sm:flex-row items-center sm:justify-between gap-2 text-rani text-sm animate-in fade-in duration-200">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rani opacity-75"></span>
@@ -322,7 +335,7 @@ export default function SpeakPage() {
                   </span>
                   <span className="font-semibold font-body">Recording your details...</span>
                 </div>
-                <span className="font-urdu text-sm" dir="rtl">
+                <span className="font-urdu text-base" dir="rtl">
                   اپنا نام، ولدیت، شناختی کارڈ اور پتہ بولیں
                 </span>
               </div>
@@ -345,7 +358,7 @@ export default function SpeakPage() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Analyzing speech & extracting form fields...</span>
                 </div>
-                <p className="text-sm text-text-muted font-urdu" dir="rtl">
+                <p className="text-base text-text-muted font-urdu" dir="rtl">
                   آپ کی آواز سے معلومات حاصل کی جا رہی ہے...
                 </p>
                 <div className="mt-3.5 h-2 w-full max-w-xs mx-auto bg-paper rounded-full overflow-hidden border border-jade/30 p-0.5">
@@ -354,14 +367,7 @@ export default function SpeakPage() {
               </div>
             )}
 
-            {error && (
-              <div
-                className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body mt-4"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
+            <ErrorDialog message={error} onClose={() => setError(null)} />
 
             <p
               className="text-center text-sm text-text-muted mt-6 font-body"
@@ -374,7 +380,7 @@ export default function SpeakPage() {
               style={{ maxWidth: 520, margin: "12px auto 0" }}
             >
               Please do not say your CNIC, phone number or date of birth. You will type those next.
-              <span className="block font-urdu text-base mt-1 leading-relaxed" dir="rtl">
+              <span className="block font-urdu text-lg mt-1" dir="rtl">
                 شناختی کارڈ، فون نمبر یا تاریخ پیدائش نہ بولیں۔ انہیں آپ بعد میں ٹائپ کریں گے۔
               </span>
             </p>
@@ -428,8 +434,8 @@ export default function SpeakPage() {
                 {filledFields.map(([fieldId, value]) => {
                   const field = formSchema?.fields.find((f) => f.id === fieldId);
                   return (
-                    <div key={fieldId} className="flex items-center justify-between p-3 bg-paper rounded-card">
-                      <div className="flex-1">
+                    <div key={fieldId} className="flex items-center justify-between gap-2 p-3 bg-paper rounded-card">
+                      <div className="flex-1 min-w-0 break-words">
                         <p className="text-sm text-text-muted font-body">{field?.label || fieldId}</p>
                         <p className="font-medium text-text font-body">{value}</p>
                       </div>
@@ -487,8 +493,11 @@ export default function SpeakPage() {
 
   if (step === "interview") {
     const field = formSchema?.fields.find((f) => f.id === currentFieldId);
-    const progress = Object.keys(answers).filter((k) => answers[k]).length;
-    const totalRequired = formSchema?.fields.filter((f) => f.required).length ?? 0;
+    const required = formSchema?.fields.filter((f) => f.required) ?? [];
+    const totalRequired = required.length;
+    // Only required answers count, so the bar cannot pass 100% because of optional ones.
+    const progress = required.filter((f) => answers[f.id]).length;
+    const spoken = questionSpeech(field, currentQuestion);
 
     return (
       <>
@@ -500,12 +509,18 @@ export default function SpeakPage() {
               Back to Review
             </Button>
             <div className="mb-6">
-              <Progress value={progress} max={totalRequired} showLabel label="Interview Progress" size="lg" />
+              <Progress
+                value={progress}
+                max={totalRequired}
+                showLabel
+                label={`Answered ${progress} of ${totalRequired}`}
+                size="lg"
+              />
             </div>
 
             <Card variant="elevated" padding="lg">
-              <CardContent className="text-center py-8">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 text-rani flex items-center justify-center border border-rani/20 shadow-sm">
+              <CardContent className="text-center py-2 sm:py-8">
+                <div className="hidden sm:flex w-20 h-20 mx-auto mb-6 rounded-card bg-rani/10 text-rani items-center justify-center border border-rani/20 shadow-sm">
                   <MessageSquareQuote className="w-10 h-10" />
                 </div>
                 {field?.section && (
@@ -513,17 +528,18 @@ export default function SpeakPage() {
                     {field.section}
                   </p>
                 )}
-                <h2 className="text-2xl sm:text-3xl font-bold font-urdu text-text mb-3 leading-relaxed" dir="auto">
+                <h2 className="text-3xl sm:text-4xl font-medium font-urdu text-text mb-3" dir="auto" lang="ur">
                   {field?.questionUrdu || currentQuestion || field?.label}
                 </h2>
                 <div className="mt-3 flex justify-center">
-                  <TTSButton
-                    text={field?.questionUrdu || currentQuestion || field?.label || ""}
-                    fallbackText={field?.questionRoman ?? field?.questionEnglish}
-                  />
+                  {/* Read each question aloud as soon as it appears: many users cannot read it. */}
+                  <TTSButton text={spoken.text} fallbackText={spoken.fallback} autoPlay size="lg" />
                 </div>
+                {field?.questionRoman && (
+                  <p className="mt-3 text-text font-body text-base sm:text-lg">{field.questionRoman}</p>
+                )}
                 {field?.questionEnglish && (
-                  <p className="mt-3 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">
+                  <p className="mt-1 text-text-muted font-body text-sm sm:text-base max-w-md mx-auto">
                     {field.questionEnglish}
                   </p>
                 )}
@@ -553,14 +569,7 @@ export default function SpeakPage() {
               </CardContent>
             </Card>
 
-            {error && (
-              <div
-                className="p-4 bg-rani/10 border border-rani/30 rounded-card text-rani text-center font-body"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
+            <ErrorDialog message={error} onClose={() => setError(null)} />
 
             {/* Accessible Focus-Trapping Confirmation Modal */}
             <ConfirmationDialog

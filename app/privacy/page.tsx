@@ -36,7 +36,7 @@ export default function PrivacyPage() {
             <ShieldAlert className="w-[18px] h-[18px] text-marigold shrink-0 mt-0.5" />
             <span>
               {DEMO_WARNING_EN}
-              <span className="block font-urdu text-base mt-1 leading-relaxed" dir="rtl">
+              <span className="block font-urdu text-lg mt-1" dir="rtl">
                 {DEMO_WARNING_UR}
               </span>
             </span>
